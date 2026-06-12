@@ -50,6 +50,10 @@ const state = {
   isAdmin: sessionStorage.getItem(config.adminSessionKey) === 'true',
   submissions: [],
   selectedSubmissionId: null,
+  adminFilters: {
+    status: 'all',
+    sortOrder: 'unchecked-first',
+  },
   practiceAnswers: createBlankAnswers(practiceQuestions),
   practiceResult: null,
   examAnswers: createBlankAnswers(examQuestions),
@@ -82,26 +86,73 @@ function updateHeroStats() {
   }
 }
 
+function getReviewLabel(reviewStatus) {
+  if (reviewStatus === 'passed') {
+    return 'Сдал';
+  }
+
+  if (reviewStatus === 'failed') {
+    return 'Не сдал';
+  }
+
+  return 'Не проверено';
+}
+
+function getReviewClass(reviewStatus) {
+  if (reviewStatus === 'passed' || reviewStatus === 'failed' || reviewStatus === 'unchecked') {
+    return reviewStatus;
+  }
+
+  return 'unchecked';
+}
+
 function renderSubmissionList() {
   if (!dom.submissionList || !dom.adminSearch) {
     return;
   }
 
   const query = normalize(dom.adminSearch?.value ?? '');
+  const statusFilter = dom.statusFilter?.value ?? state.adminFilters.status;
+  const sortOrder = dom.sortOrder?.value ?? state.adminFilters.sortOrder;
+
+  state.adminFilters.status = statusFilter;
+  state.adminFilters.sortOrder = sortOrder;
+
   const filtered = [...state.submissions]
     .filter((submission) =>
       !query || [submission.name, submission.squad, submission.contact, submission.id].some((value) => normalize(value).includes(query)),
     )
-    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+    .filter((submission) => statusFilter === 'all' || submission.reviewStatus === statusFilter)
+    .sort((left, right) => {
+      if (sortOrder === 'oldest') {
+        return left.submittedAt.localeCompare(right.submittedAt);
+      }
+
+      if (sortOrder === 'newest') {
+        return right.submittedAt.localeCompare(left.submittedAt);
+      }
+
+      const leftPriority = left.reviewStatus === 'unchecked' ? 0 : left.reviewStatus === 'passed' ? 1 : 2;
+      const rightPriority = right.reviewStatus === 'unchecked' ? 0 : right.reviewStatus === 'passed' ? 1 : 2;
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      return right.submittedAt.localeCompare(left.submittedAt);
+    });
 
   dom.submissionList.innerHTML = filtered.length
     ? filtered
         .map(
           (submission) => `
-            <button type="button" class="submission-item ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
+            <button type="button" class="submission-item ${getReviewClass(submission.reviewStatus)} ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
               <strong>${submission.name}</strong>
               <span>${submission.squad}</span>
-              <small>${submission.reviewStatus === 'passed' ? 'Сдал' : submission.reviewStatus === 'failed' ? 'Не сдал' : 'Ожидает проверки'} · ${formatDate(submission.submittedAt)}</small>
+              <small>
+                <span class="status-pill ${getReviewClass(submission.reviewStatus)}">${getReviewLabel(submission.reviewStatus)}</span>
+                · ${formatDate(submission.submittedAt)}
+              </small>
             </button>
           `,
         )
@@ -137,7 +188,7 @@ function renderAdminDetail() {
         <span>Выбрана попытка</span>
         <h3>${selected.name}</h3>
       </div>
-      <strong>${selected.reviewStatus === 'passed' ? 'Сдал' : selected.reviewStatus === 'failed' ? 'Не сдал' : 'Не проверено'}</strong>
+      <strong class="status-pill ${getReviewClass(selected.reviewStatus)}">${getReviewLabel(selected.reviewStatus)}</strong>
     </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
@@ -325,6 +376,20 @@ function bindAdminControls() {
     });
   }
 
+  if (dom.statusFilter) {
+    dom.statusFilter.addEventListener('change', () => {
+      renderSubmissionList();
+      renderAdminDetail();
+    });
+  }
+
+  if (dom.sortOrder) {
+    dom.sortOrder.addEventListener('change', () => {
+      renderSubmissionList();
+      renderAdminDetail();
+    });
+  }
+
   if (dom.exportJson) {
     dom.exportJson.addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(state.submissions, null, 2)], { type: 'application/json' });
@@ -377,6 +442,8 @@ async function init() {
     submissionList: document.getElementById('submission-list'),
     adminDetail: document.getElementById('admin-detail'),
     adminSearch: document.getElementById('admin-search'),
+    statusFilter: document.getElementById('status-filter'),
+    sortOrder: document.getElementById('sort-order'),
     adminCodeInput: document.getElementById('admin-code'),
     adminStatusOff: document.getElementById('admin-status-off'),
     adminStatusOn: document.getElementById('admin-status-on'),

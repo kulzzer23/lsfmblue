@@ -427,6 +427,13 @@
         flex-wrap: wrap;
       }
 
+      .admin-filters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
       .submission-list {
         display: grid;
         gap: 10px;
@@ -443,6 +450,48 @@
         background: rgba(255, 255, 255, 0.04);
         border: 1px solid rgba(255, 255, 255, 0.06);
         text-align: left;
+      }
+
+      .submission-item.passed {
+        border-color: rgba(61, 203, 154, 0.42);
+        background: rgba(61, 203, 154, 0.08);
+      }
+
+      .submission-item.failed {
+        border-color: rgba(255, 111, 111, 0.42);
+        background: rgba(255, 111, 111, 0.08);
+      }
+
+      .submission-item.unchecked {
+        border-color: rgba(255, 198, 88, 0.34);
+        background: rgba(255, 198, 88, 0.06);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .status-pill.passed {
+        color: #85f0c7;
+        background: rgba(61, 203, 154, 0.14);
+      }
+
+      .status-pill.failed {
+        color: #ffb4b4;
+        background: rgba(255, 111, 111, 0.14);
+      }
+
+      .status-pill.unchecked {
+        color: #ffd27d;
+        background: rgba(255, 198, 88, 0.14);
       }
 
       .submission-item.active {
@@ -525,9 +574,14 @@
         .admin-topbar,
         .breakdown-item,
         .submission-item,
-        .form-footer {
+        .form-footer,
+        .admin-filters {
           flex-direction: column;
           align-items: flex-start;
+        }
+
+        .admin-filters {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -648,6 +702,19 @@
         <div class="admin-grid">
           <div class="admin-list">
             <input id="admin-search" class="text-input" placeholder="Поиск по имени, отряду или ID" />
+            <div class="admin-filters">
+              <select id="status-filter" class="text-input">
+                <option value="all">Все статусы</option>
+                <option value="unchecked">Только непроверенные</option>
+                <option value="passed">Сдал</option>
+                <option value="failed">Не сдал</option>
+              </select>
+              <select id="sort-order" class="text-input">
+                <option value="unchecked-first">Сначала непроверенные</option>
+                <option value="newest">Сначала новые</option>
+                <option value="oldest">Сначала старые</option>
+              </select>
+            </div>
             <div class="submission-list" id="submission-list"></div>
           </div>
 
