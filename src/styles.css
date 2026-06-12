@@ -383,18 +383,66 @@ label {
   gap: 18px;
 }
 
-.learning-grid {
+.learning-reader {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.learning-toc {
+  position: sticky;
+  top: 18px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.learning-toc h3 {
+  margin: 8px 0 10px;
+  font-size: 1.25rem;
+}
+
+.learning-toc p {
+  margin: 0 0 14px;
+  color: #bcc8e2;
+}
+
+.learning-toc nav {
+  display: grid;
+  gap: 10px;
+}
+
+.learning-toc a {
+  color: #eaf0ff;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.learning-content {
+  display: grid;
   gap: 16px;
 }
 
+.learning-intro,
 .lesson-card,
 .practice-result {
   padding: 20px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.learning-intro p {
+  color: #d5def2;
+}
+
+.learning-section-card {
+  scroll-margin-top: 20px;
 }
 
 .lesson-card h3 {
@@ -529,7 +577,7 @@ label {
   .layout,
   .admin-grid,
   .grid-3,
-  .learning-grid {
+  .learning-reader {
     grid-template-columns: 1fr;
   }
 
@@ -559,5 +607,9 @@ label {
   .form-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .learning-toc {
+    position: static;
   }
 }

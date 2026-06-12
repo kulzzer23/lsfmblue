@@ -1,17 +1,49 @@
 import { escapeHtml } from '../lib/dom.js';
 
-export function renderLearningSection(container, lessons) {
-  container.innerHTML = lessons
-    .map(
-      (lesson) => `
-        <article class="lesson-card">
-          <h3>${escapeHtml(lesson.title)}</h3>
-          <p>${escapeHtml(lesson.summary)}</p>
-          <ul>
-            ${lesson.points.map((point) => `<li>${escapeHtml(point)}</li>`).join('')}
-          </ul>
+export function renderLearningSection(container, learningContent) {
+  const sections = learningContent.sections ?? [];
+
+  container.innerHTML = `
+    <div class="learning-reader">
+      <aside class="learning-toc">
+        <span class="eyebrow">Оглавление</span>
+        <h3>${escapeHtml(learningContent.title)}</h3>
+        <p>${escapeHtml(learningContent.intro)}</p>
+        <nav>
+          ${sections
+            .map(
+              (section) => `
+                <a href="#learning-${escapeHtml(section.id)}">${escapeHtml(section.title)}</a>
+              `,
+            )
+            .join('')}
+        </nav>
+      </aside>
+
+      <div class="learning-content">
+        <article class="learning-intro">
+          <h3>${escapeHtml(learningContent.title)}</h3>
+          <p>${escapeHtml(learningContent.intro)}</p>
         </article>
-      `,
-    )
-    .join('');
+
+        ${sections
+          .map(
+            (section, index) => `
+              <article class="lesson-card learning-section-card" id="learning-${escapeHtml(section.id)}">
+                <div class="section-title">
+                  <span>Раздел ${index + 1}</span>
+                  <strong>${escapeHtml(section.title)}</strong>
+                </div>
+                <p>${escapeHtml(section.summary)}</p>
+                ${section.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
+                <ul>
+                  ${section.bullets.map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}
+                </ul>
+              </article>
+            `,
+          )
+          .join('')}
+      </div>
+    </div>
+  `;
 }

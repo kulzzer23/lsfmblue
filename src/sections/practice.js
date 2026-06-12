@@ -106,6 +106,7 @@ export function renderPracticeResult(resultEl, result) {
               <div>
                 <strong>${escapeHtml(item.title)}</strong>
                 <p>${escapeHtml(item.note)}</p>
+                <p><b>Правильный ответ:</b> ${escapeHtml(item.correctAnswer)}</p>
               </div>
               <span>${item.score}/${item.maxScore}</span>
             </article>

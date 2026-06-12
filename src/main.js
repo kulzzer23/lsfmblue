@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { lessons } from './data/learning.js';
+import { learningContent } from './data/learning.js';
 import { practiceQuestions } from './data/practice.js';
 import { examQuestions } from './data/exam.js';
 import { renderLearningSection } from './sections/learning.js';
@@ -91,7 +91,7 @@ function setSection(section) {
 
 function updateHeroStats() {
   dom.questionsCount.textContent = String(practiceQuestions.length + examQuestions.length);
-  dom.lessonsCount.textContent = String(lessons.length);
+  dom.lessonsCount.textContent = String(learningContent.sections.length);
   dom.savedCount.textContent = String(state.submissions.length);
 
   const pending = state.submissions.filter((submission) => submission.reviewStatus === 'unchecked').length;
@@ -257,6 +257,14 @@ async function submitPractice(event) {
       score: result.score,
       maxScore: 1,
       note: result.note,
+      correctAnswer:
+        question.kind === 'multi'
+          ? Array.isArray(question.correctAnswer)
+            ? question.correctAnswer.join(', ')
+            : String(question.correctAnswer ?? '—')
+          : question.kind === 'text'
+            ? `Ожидаемые идеи: ${(question.keywords ?? []).join(', ') || '—'}`
+            : String(question.correctAnswer ?? '—'),
     };
   });
 
@@ -436,7 +444,7 @@ async function init() {
     exportJson: document.getElementById('export-json'),
   };
 
-  renderLearningSection(dom.learningGrid, lessons);
+  renderLearningSection(dom.learningGrid, learningContent);
 
   renderPracticeSection({
     formEl: dom.practiceForm,
