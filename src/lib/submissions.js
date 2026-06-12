@@ -66,21 +66,13 @@ function fromRow(row) {
     answers: row.answers,
     breakdown: row.breakdown,
     responses: row.responses,
+    reviewStatus: row.review_status ?? 'unchecked',
+    reviewedAt: row.reviewed_at ?? null,
+    reviewedBy: row.reviewed_by ?? null,
   });
 }
 
-function toCurrentRow(submission) {
-  return {
-    id: submission.id,
-    name: submission.name,
-    squad: submission.squad,
-    contact: submission.contact,
-    submitted_at: submission.submittedAt,
-    responses: submission.responses,
-  };
-}
-
-function toLegacyRow(submission) {
+function toRow(submission) {
   return {
     id: submission.id,
     name: submission.name,
@@ -91,6 +83,9 @@ function toLegacyRow(submission) {
     max_score: submission.maxScore,
     answers: submission.answers,
     breakdown: submission.breakdown,
+    review_status: submission.reviewStatus ?? 'unchecked',
+    reviewed_at: submission.reviewedAt ?? null,
+    reviewed_by: submission.reviewedBy ?? null,
   };
 }
 
@@ -123,7 +118,8 @@ async function fetchRows(path, init) {
     return [];
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 export function createSubmissionStore() {
@@ -146,23 +142,11 @@ export function createSubmissionStore() {
         throw new Error('Supabase is not configured');
       }
 
-      try {
-        await fetchRows(config.supabaseTable, {
-          method: 'POST',
-          headers: { Prefer: 'return=minimal' },
-          body: JSON.stringify(toCurrentRow(submission)),
-        });
-      } catch (error) {
-        try {
-          await fetchRows(config.supabaseTable, {
-            method: 'POST',
-            headers: { Prefer: 'return=minimal' },
-            body: JSON.stringify(toLegacyRow(submission)),
-          });
-        } catch (legacyError) {
-          throw legacyError instanceof Error ? legacyError : error;
-        }
-      }
+      await fetchRows(config.supabaseTable, {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(toRow(submission)),
+      });
 
       return nextSubmissions;
     },
