@@ -179,15 +179,37 @@ function renderAdminDetail() {
     <div class="breakdown-list">
       ${(selected.breakdown ?? selected.responses ?? [])
         .map(
-          (response) => `
-            <article class="breakdown-item">
-              <div>
-                <strong>${response.label ?? response.title ?? response.questionId}</strong>
-                <p>${response.note ?? response.prompt ?? ''}</p>
-                <p><b>Ответ:</b> ${response.answer ? response.answer : 'Нет ответа'}</p>
-              </div>
-            </article>
-          `,
+          (response) => {
+            // Безопасный поиск подсказки
+            let hint = '';
+            try {
+              // ВАЖНО: Если массив экзамена в этом файле называется не content.exam, 
+              // а например examQuestions, замени его в строке ниже!
+              const targetArray = typeof content !== 'undefined' && content.exam ? content.exam : (typeof examQuestions !== 'undefined' ? examQuestions : []);
+              const qId = response.questionId || response.id;
+              const question = targetArray.find(q => q.id === qId);
+              
+              if (question && question.reviewHint) {
+                hint = question.reviewHint;
+              }
+            } catch (e) {
+              console.error("Шпаргалка не найдена", e);
+            }
+
+            return `
+              <article class="breakdown-item" style="flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;">
+                <div style="width: 100%;">
+                  <strong>${response.label ?? response.title ?? response.questionId}</strong>
+                  <p style="margin: 6px 0 0 0;"><b>Ответ:</b> ${response.answer ? response.answer : 'Нет ответа'}</p>
+                </div>
+                ${hint ? `
+                  <div style="margin-top: 6px; padding: 12px 16px; background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); border-radius: 12px; font-size: 0.9rem; color: #ffda75; width: 100%;">
+                    <b style="color: #ffbb00;">Шпаргалка ПРО:</b> ${hint}
+                  </div>
+                ` : ''}
+              </article>
+            `;
+          }
         )
         .join('')}
     </div>
@@ -271,15 +293,15 @@ async function submitPractice(event) {
   event.preventDefault();
 
   const details = practiceQuestions.map((question) => {
-    const userAnswer = state.practiceAnswers[question.id]; // Получаем ответ
+    const userAnswer = state.practiceAnswers[question.id];
     const result = scorePracticeQuestion(question, userAnswer);
     
     return {
+      id: question.id, // <-- ВАЖНО! Без этого инлайн-рендер не найдет вопрос
       title: question.title,
       score: result.score,
       maxScore: 1,
       note: result.note,
-      // Преобразуем массив ответов (multi) в строку для отображения
       userAnswer: Array.isArray(userAnswer) ? userAnswer.join(', ') : (userAnswer || '—'),
       correctAnswer:
         question.kind === 'multi'
@@ -294,7 +316,26 @@ async function submitPractice(event) {
 
   const score = details.reduce((sum, item) => sum + item.score, 0);
   state.practiceResult = { score, maxQuestions: practiceQuestions.length, details };
-  renderPracticeSummary();
+  
+  // 1. Рендерим плашку с общим счетом
+  renderPracticeSummary(); 
+  
+  // 2. ПЕРЕРЕНДЕРИВАЕМ ФОРМУ, передавая туда result!
+  renderPracticeSection({
+    formEl: dom.practiceForm,
+    resultEl: dom.practiceResult,
+    questions: practiceQuestions,
+    state: { answers: state.practiceAnswers },
+    onAnswerChange: setPracticeAnswer,
+    onSubmit: submitPractice,
+    result: state.practiceResult // <-- Передаем результат
+  });
+
+  // 3. Плавно скроллим в самый верх (к результату)
+  window.scrollTo({ 
+    top: dom.practiceSection.offsetTop - 20, 
+    behavior: 'smooth' 
+  });
 }
 
 async function submitExam(event) {
@@ -469,7 +510,23 @@ async function init() {
   };
 
   renderLearningSection(dom.learningGrid, learningContent);
+  // Находим кнопки
+  const btnTop = document.getElementById('scroll-to-top');
+  const btnBottom = document.getElementById('scroll-to-bottom');
 
+  // Скролл наверх
+  if (btnTop) {
+    btnTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // Скролл вниз
+  if (btnBottom) {
+    btnBottom.addEventListener('click', () => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+  }
   renderPracticeSection({
     formEl: dom.practiceForm,
     resultEl: dom.practiceResult,

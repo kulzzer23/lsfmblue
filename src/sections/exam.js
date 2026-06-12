@@ -41,10 +41,6 @@ function createQuestionMarkup(question, index, currentAnswer) {
       <h3>${escapeHtml(question.title)}</h3>
       <p>${escapeHtml(question.prompt)}</p>
       ${optionsMarkup}
-      <details class="question-hint">
-        <summary>Подсказка для проверяющего</summary>
-        <p>${escapeHtml(question.reviewHint ?? 'Проверяется вручную.')}</p>
-      </details>
     </article>
   `;
 }
@@ -54,15 +50,11 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     <div class="grid-3">
       <label>
         Имя
-        <input id="exam-name" class="text-input" value="${escapeHtml(state.meta.name)}" placeholder="Например, Никита" />
+        <input id="exam-name" class="text-input" value="${escapeHtml(state.meta.name)}" placeholder="Имя_Фамилия" />
       </label>
       <label>
-        Отряд / группа
-        <input id="exam-squad" class="text-input" value="${escapeHtml(state.meta.squad)}" placeholder="ЛСФМ-1" />
-      </label>
-      <label>
-        Контакт
-        <input id="exam-contact" class="text-input" value="${escapeHtml(state.meta.contact)}" placeholder="Telegram или ник" />
+        Организация
+        <input id="exam-squad" class="text-input" value="${escapeHtml(state.meta.squad)}" placeholder="Организация" />
       </label>
     </div>
     ${questions.map((question, index) => createQuestionMarkup(question, index, state.answers[question.id])).join('')}
@@ -78,9 +70,9 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
   formEl.querySelector('#exam-squad').addEventListener('input', (event) => {
     onMetaChange('squad', event.currentTarget.value);
   });
-  formEl.querySelector('#exam-contact').addEventListener('input', (event) => {
-    onMetaChange('contact', event.currentTarget.value);
-  });
+  // formEl.querySelector('#exam-contact').addEventListener('input', (event) => {
+  //  onMetaChange('contact', event.currentTarget.value);
+  //});
 
   formEl.querySelectorAll('input[type="radio"]').forEach((input) => {
     input.addEventListener('change', (event) => {

@@ -564,8 +564,8 @@
         <aside class="login-panel">
           <div id="admin-status-off">
             <div class="panel-badge">Admin Gate</div>
-            <h2>Вход для администратора</h2>
-            <p>Код по умолчанию: pro-2026. Лучше заменить через VITE_ADMIN_CODE.</p>
+            <h2>LSFM Admin</h2>
+            <p>Код у старшего состава LSFM</p>
             <input id="admin-code" class="text-input" placeholder="Введите код администратора" />
             <button id="admin-login" class="secondary-button" type="button">Открыть админ-панель</button>
           </div>
@@ -667,5 +667,13 @@
     <script type="module">
       import('./src/main.js?v=20260612-1');
     </script>
+    <div class="scroll-actions">
+  <button id="scroll-to-top" class="scroll-btn" title="В самый верх">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
+  </button>
+  <button id="scroll-to-bottom" class="scroll-btn" title="В самый низ">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+  </button>
+</div>
   </body>
 </html>

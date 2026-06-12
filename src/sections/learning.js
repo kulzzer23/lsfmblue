@@ -27,15 +27,22 @@ export function renderLearningSection(container, learningContent) {
         <h3>${escapeHtml(learningContent.title)}</h3>
         <p>${escapeHtml(learningContent.intro)}</p>
         
-        <nav class="pill-nav">
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
           ${sections
             .map(
               (section) => `
-                <a href="#learning-${escapeHtml(section.id)}" class="nav-pill">${escapeHtml(section.title)}</a>
+                <button 
+                  type="button" 
+                  class="secondary-button" 
+                  style="text-align: left; padding: 12px 16px;"
+                  onclick="document.getElementById('learning-${escapeHtml(section.id)}').scrollIntoView({behavior: 'smooth'})"
+                >
+                  ${escapeHtml(section.title)}
+                </button>
               `,
             )
             .join('')}
-        </nav>
+        </div>
       </aside>
 
       <div class="learning-content">
@@ -56,13 +63,18 @@ export function renderLearningSection(container, learningContent) {
                 ${hasSubsections ? `
                   <div class="subsection-nav">
                     <span>Главы в этом разделе:</span>
-                    <nav class="pill-nav">
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                       ${section.subsections.map((sub, subIndex) => `
-                        <a href="#learning-${escapeHtml(section.id)}-sub-${subIndex}" class="nav-pill">
+                        <button 
+                          type="button" 
+                          class="secondary-button"
+                          style="padding: 10px 16px; font-size: 0.9rem;"
+                          onclick="document.getElementById('learning-${escapeHtml(section.id)}-sub-${subIndex}').scrollIntoView({behavior: 'smooth'})"
+                        >
                           ${escapeHtml(sub.title)}
-                        </a>
+                        </button>
                       `).join('')}
-                    </nav>
+                    </div>
                   </div>
                 ` : ''}
 

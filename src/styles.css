@@ -910,6 +910,18 @@ label {
   width: fit-content;
 }
 
+/* Зеленая рамка для правильных ответов */
+.highlight-correct {
+  border: 1px solid #2ecc71 !important;
+  background-color: rgba(46, 204, 113, 0.1) !important;
+}
+
+/* Красная рамка для того, куда юзер тыкнул по ошибке */
+.highlight-wrong {
+  border: 1px solid #e74c3c !important;
+  background-color: rgba(231, 76, 60, 0.1) !important;
+}
+
 .rule-note {
   margin: 16px 0 16px 16px !important;
   padding: 14px 18px !important;
@@ -917,4 +929,51 @@ label {
   border: 1px solid rgba(255, 187, 0, 0.15);
   border-radius: 14px;
   color: #ffda75;
+}
+
+/* --- ПЛАВАЮЩИЕ КНОПКИ СКРОЛЛА --- */
+.scroll-actions {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999; /* Чтобы кнопки всегда были поверх всего */
+}
+
+.scroll-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(7, 13, 28, 0.8);
+  border: 1px solid rgba(127, 227, 255, 0.15);
+  color: #7fe3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.scroll-btn:hover {
+  background: rgba(127, 227, 255, 0.15);
+  color: #fff;
+  border-color: rgba(127, 227, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(127, 227, 255, 0.15);
+}
+
+/* На мобильных телефонах делаем их чуть меньше и сдвигаем ближе к краю */
+@media (max-width: 640px) {
+  .scroll-actions {
+    bottom: 20px;
+    right: 16px;
+  }
+  .scroll-btn {
+    width: 42px;
+    height: 42px;
+  }
 }
