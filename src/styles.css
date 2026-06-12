@@ -72,6 +72,52 @@ button {
   z-index: 1;
 }
 
+.subsection-nav {
+  margin: 24px 0 16px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.subsection-nav span {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: #97a7c6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.subsection-nav nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subsection-link {
+  color: #eaf0ff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+}
+
+.subsection-link:hover {
+  background: rgba(86, 179, 255, 0.15);
+  border-color: rgba(86, 179, 255, 0.3);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.subsection-card {
+  scroll-margin-top: 24px; 
+}
+
+
 .section-tabs {
   display: flex;
   gap: 10px;
