@@ -32,17 +32,19 @@ export function renderLearningSection(container, learningContent) {
                   <strong>${escapeHtml(section.title)}</strong>
                 </div>
                 <p>${escapeHtml(section.summary)}</p>
+                
                 ${(section.paragraphs || []).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
+                
                 <ul>
                   ${(section.bullets || []).map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}
                 </ul>
 
                 ${hasSubsections ? `
                   <div class="subsection-nav">
-                    <span>В этом разделе:</span>
-                    <nav>
+                    <span>Главы в этом разделе:</span>
+                    <nav class="subsection-nav-links">
                       ${section.subsections.map((sub, subIndex) => `
-                        <a href="#learning-${escapeHtml(section.id)}-sub-${subIndex}" class="subsection-link">
+                        <a href="#learning-${escapeHtml(section.id)}-sub-${subIndex}">
                           ${escapeHtml(sub.title)}
                         </a>
                       `).join('')}
@@ -56,7 +58,9 @@ export function renderLearningSection(container, learningContent) {
                       (subsection, subIndex) => `
                         <article class="subsection-card" id="learning-${escapeHtml(section.id)}-sub-${subIndex}">
                           <h4>${escapeHtml(subsection.title)}</h4>
-                          <p>${escapeHtml(subsection.text)}</p>
+                          <div class="subsection-text-rules">
+                            ${subsection.text.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}
+                          </div>
                         </article>
                       `,
                     )

@@ -72,55 +72,72 @@ button {
   z-index: 1;
 }
 
+/* --- КРАСИВАЯ НАВИГАЦИЯ ПО ГЛАВАМ (Кнопки-пилюли) --- */
 .subsection-nav {
-  margin: 24px 0 16px;
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  margin: 32px 0 24px;
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(7, 13, 28, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .subsection-nav span {
   display: block;
-  margin-bottom: 12px;
-  font-size: 0.8rem;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
   color: #97a7c6;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.subsection-nav nav {
+.subsection-nav-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
-.subsection-link {
-  color: #eaf0ff;
+.subsection-nav-links a {
+  background: rgba(127, 227, 255, 0.1);
+  color: #7fe3ff;
+  border: 1px solid rgba(127, 227, 255, 0.2);
+  padding: 10px 16px;
+  border-radius: 99px;
   text-decoration: none;
   font-size: 0.95rem;
-  padding: 8px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.2s ease;
 }
 
-.subsection-link:hover {
-  background: rgba(86, 179, 255, 0.15);
-  border-color: rgba(86, 179, 255, 0.3);
+.subsection-nav-links a:hover {
+  background: rgba(127, 227, 255, 0.25);
   color: #fff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+/* --- ЧТОБЫ КАЖДОЕ ПРАВИЛО БЫЛО С НОВОЙ СТРОКИ --- */
+.subsection-text-rules p {
+  margin: 0 0 10px 0 !important;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #d5def2;
+}
+
+.subsection-text-rules p:last-child {
+  margin-bottom: 0 !important;
 }
 
 .subsection-card {
-  scroll-margin-top: 24px; 
+  scroll-margin-top: 24px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.subsection-card p {
-  margin: 0;
-  font-size: 0.98rem;
-  line-height: 1.7;
-  white-space: pre-wrap; /* Это заставит браузер видеть переносы строк */
+
+.subsection-card h4 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+  color: #f4f8ff;
 }
 
 .section-tabs {
