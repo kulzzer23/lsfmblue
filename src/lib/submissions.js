@@ -1,23 +1,55 @@
 import { config } from '../config.js';
 
-function readLocalSubmissions() {
-  try {
-    const raw = window.localStorage.getItem(config.storageKey);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeLocalSubmissions(submissions) {
-  window.localStorage.setItem(config.storageKey, JSON.stringify(submissions));
-}
-
 function normalizeSubmission(submission) {
+  const responses = Array.isArray(submission.responses)
+    ? submission.responses
+    : Array.isArray(submission.breakdown)
+      ? submission.breakdown.map((item) => ({
+          questionId: item.questionId ?? item.label ?? item.title ?? '',
+          title: item.label ?? item.title ?? item.questionId ?? '',
+          prompt: item.prompt ?? '',
+          answer: item.answer ?? '',
+        }))
+      : submission.answers && typeof submission.answers === 'object'
+        ? Object.entries(submission.answers).map(([questionId, answer]) => ({
+            questionId,
+            title: questionId,
+            prompt: '',
+            answer: Array.isArray(answer) ? answer.join(', ') : String(answer ?? ''),
+          }))
+        : [];
+
+  const answers =
+    submission.answers && typeof submission.answers === 'object'
+      ? submission.answers
+      : responses.reduce((accumulator, response) => {
+          accumulator[response.questionId] = response.answer;
+          return accumulator;
+        }, {});
+
+  const breakdown = Array.isArray(submission.breakdown)
+    ? submission.breakdown
+    : responses.map((response) => {
+        const answer = String(response.answer ?? '').trim();
+        return {
+          questionId: response.questionId,
+          label: response.title ?? response.questionId,
+          score: answer ? 1 : 0,
+          maxScore: 1,
+          note: answer ? 'Ответ сохранен' : 'Нет ответа',
+          answer: response.answer ?? '',
+        };
+      });
+
+  const score = typeof submission.score === 'number' ? submission.score : responses.filter((response) => String(response.answer ?? '').trim()).length;
+  const maxScore = typeof submission.maxScore === 'number' ? submission.maxScore : responses.length;
+
   return {
-    reviewStatus: 'unchecked',
-    reviewedAt: null,
-    reviewedBy: null,
+    score,
+    maxScore,
+    answers,
+    breakdown,
+    responses,
     ...submission,
   };
 }
@@ -29,14 +61,15 @@ function fromRow(row) {
     squad: row.squad,
     contact: row.contact,
     submittedAt: row.submitted_at,
-    responses: row.responses ?? [],
-    reviewStatus: row.review_status ?? 'unchecked',
-    reviewedAt: row.reviewed_at ?? null,
-    reviewedBy: row.reviewed_by ?? null,
+    score: row.score,
+    maxScore: row.max_score,
+    answers: row.answers,
+    breakdown: row.breakdown,
+    responses: row.responses,
   });
 }
 
-function toRow(submission) {
+function toCurrentRow(submission) {
   return {
     id: submission.id,
     name: submission.name,
@@ -44,9 +77,20 @@ function toRow(submission) {
     contact: submission.contact,
     submitted_at: submission.submittedAt,
     responses: submission.responses,
-    review_status: submission.reviewStatus,
-    reviewed_at: submission.reviewedAt,
-    reviewed_by: submission.reviewedBy,
+  };
+}
+
+function toLegacyRow(submission) {
+  return {
+    id: submission.id,
+    name: submission.name,
+    squad: submission.squad,
+    contact: submission.contact,
+    submitted_at: submission.submittedAt,
+    score: submission.score,
+    max_score: submission.maxScore,
+    answers: submission.answers,
+    breakdown: submission.breakdown,
   };
 }
 
@@ -86,75 +130,40 @@ export function createSubmissionStore() {
   return {
     async load() {
       if (!isConfigured()) {
-        return readLocalSubmissions().map(normalizeSubmission);
+        return [];
       }
 
-      try {
-        const rows = await fetchRows(
-          `${config.supabaseTable}?select=*&order=submitted_at.desc`,
-          { method: 'GET' },
-        );
-        const submissions = rows.map(fromRow);
-        writeLocalSubmissions(submissions);
-        return submissions;
-      } catch {
-        return readLocalSubmissions().map(normalizeSubmission);
-      }
+      const rows = await fetchRows(`${config.supabaseTable}?select=*&order=submitted_at.desc`, {
+        method: 'GET',
+      });
+      return rows.map(fromRow);
     },
 
     async save(submission, currentSubmissions) {
       const nextSubmissions = [normalizeSubmission(submission), ...currentSubmissions.map(normalizeSubmission)];
 
       if (!isConfigured()) {
-        writeLocalSubmissions(nextSubmissions);
-        return nextSubmissions;
+        throw new Error('Supabase is not configured');
       }
 
       try {
         await fetchRows(config.supabaseTable, {
           method: 'POST',
           headers: { Prefer: 'return=minimal' },
-          body: JSON.stringify(toRow(submission)),
+          body: JSON.stringify(toCurrentRow(submission)),
         });
-      } catch {
-        // fall back to local cache below
-      }
-
-      writeLocalSubmissions(nextSubmissions);
-      return nextSubmissions;
-    },
-
-    async updateReview(submissionId, reviewStatus, reviewedBy, currentSubmissions) {
-      const reviewedAt = new Date().toISOString();
-      const nextSubmissions = currentSubmissions.map((submission) =>
-        submission.id === submissionId
-          ? { ...submission, reviewStatus, reviewedAt, reviewedBy }
-          : submission,
-      );
-
-      if (!isConfigured()) {
-        writeLocalSubmissions(nextSubmissions);
-        return nextSubmissions;
-      }
-
-      try {
-        await fetchRows(
-          `${config.supabaseTable}?id=eq.${encodeURIComponent(submissionId)}`,
-          {
-            method: 'PATCH',
+      } catch (error) {
+        try {
+          await fetchRows(config.supabaseTable, {
+            method: 'POST',
             headers: { Prefer: 'return=minimal' },
-            body: JSON.stringify({
-              review_status: reviewStatus,
-              reviewed_at: reviewedAt,
-              reviewed_by: reviewedBy,
-            }),
-          },
-        );
-      } catch {
-        // fall back to local cache below
+            body: JSON.stringify(toLegacyRow(submission)),
+          });
+        } catch (legacyError) {
+          throw legacyError instanceof Error ? legacyError : error;
+        }
       }
 
-      writeLocalSubmissions(nextSubmissions);
       return nextSubmissions;
     },
   };

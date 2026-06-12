@@ -71,12 +71,9 @@ function updateHeroStats() {
   dom.lessonsCount.textContent = String(lessons.length);
   dom.savedCount.textContent = String(state.submissions.length);
 
-  const pending = state.submissions.filter((submission) => submission.reviewStatus === 'unchecked').length;
-  const reviewed = state.submissions.length - pending;
-
-  dom.pendingCount.textContent = String(pending);
-  dom.reviewedCount.textContent = String(reviewed);
-  dom.adminCountText.textContent = `${state.submissions.length} сохраненных экзаменов, поиск, экспорт и ручная проверка.`;
+  dom.pendingCount.textContent = String(state.submissions.length);
+  dom.reviewedCount.textContent = String(state.submissions.length);
+  dom.adminCountText.textContent = `${state.submissions.length} сохраненных экзаменов, поиск и экспорт.`;
   if (dom.submittedNote) {
     dom.submittedNote.classList.toggle('hidden', !state.submissions.some((submission) => submission.id === state.selectedSubmissionId));
   }
@@ -101,7 +98,7 @@ function renderSubmissionList() {
             <button type="button" class="submission-item ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
               <strong>${submission.name}</strong>
               <span>${submission.squad}</span>
-              <small>${submission.reviewStatus === 'passed' ? 'Сдал' : submission.reviewStatus === 'failed' ? 'Не сдал' : 'Ожидает проверки'} · ${formatDate(submission.submittedAt)}</small>
+              <small>${submission.score ?? 0}/${submission.maxScore ?? 0} · ${formatDate(submission.submittedAt)}</small>
             </button>
           `,
         )
@@ -137,7 +134,7 @@ function renderAdminDetail() {
         <span>Выбрана попытка</span>
         <h3>${selected.name}</h3>
       </div>
-      <strong>${selected.reviewStatus === 'passed' ? 'Сдал' : selected.reviewStatus === 'failed' ? 'Не сдал' : 'Не проверено'}</strong>
+      <strong>${selected.score ?? 0}/${selected.maxScore ?? 0}</strong>
     </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
@@ -145,13 +142,13 @@ function renderAdminDetail() {
       <span>${formatDate(selected.submittedAt)}</span>
     </div>
     <div class="breakdown-list">
-      ${selected.responses
+      ${(selected.breakdown ?? selected.responses ?? [])
         .map(
           (response) => `
             <article class="breakdown-item">
               <div>
-                <strong>${response.title}</strong>
-                <p>${response.prompt}</p>
+                <strong>${response.label ?? response.title ?? response.questionId}</strong>
+                <p>${response.note ?? response.prompt ?? ''}</p>
                 <p><b>Ответ:</b> ${response.answer ? response.answer : 'Нет ответа'}</p>
               </div>
             </article>
@@ -159,26 +156,7 @@ function renderAdminDetail() {
         )
         .join('')}
     </div>
-    <div class="admin-actions" style="margin-top: 16px;">
-      <button class="secondary-button" type="button" data-review="passed">Сдал</button>
-      <button class="secondary-button" type="button" data-review="failed">Не сдал</button>
-      <button class="secondary-button" type="button" data-review="unchecked">Снять отметку</button>
-    </div>
   `;
-
-  dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      state.submissions = await store.updateReview(
-        selected.id,
-        button.dataset.review,
-        state.isAdmin ? 'admin' : 'checker',
-        state.submissions,
-      );
-      renderAdminDetail();
-      renderSubmissionList();
-      updateHeroStats();
-    });
-  });
 }
 
 function renderPracticeSummary() {
@@ -254,14 +232,27 @@ async function submitExam(event) {
     return;
   }
 
-  const responses = examQuestions.map((question) => ({
-    questionId: question.id,
-    title: question.title,
-    prompt: question.prompt,
-    answer: Array.isArray(state.examAnswers[question.id])
-      ? state.examAnswers[question.id].join(', ')
-      : state.examAnswers[question.id],
-  }));
+  const breakdown = examQuestions.map((question) => {
+    const answer = state.examAnswers[question.id];
+    const normalizedAnswer = Array.isArray(answer) ? answer.join(', ') : String(answer ?? '');
+    const hasAnswer = normalizedAnswer.trim().length > 0;
+    return {
+      questionId: question.id,
+      label: question.title,
+      score: hasAnswer ? 1 : 0,
+      maxScore: 1,
+      note: hasAnswer ? 'Ответ сохранен' : 'Нет ответа',
+      answer: normalizedAnswer,
+    };
+  });
+
+  const answers = breakdown.reduce((accumulator, item) => {
+    accumulator[item.questionId] = item.answer;
+    return accumulator;
+  }, {});
+
+  const score = breakdown.reduce((sum, item) => sum + item.score, 0);
+  const maxScore = breakdown.length;
 
   const submission = normalizeSubmissionRecord({
     id: crypto.randomUUID(),
@@ -269,10 +260,10 @@ async function submitExam(event) {
     squad,
     contact: state.examMeta.contact.trim(),
     submittedAt: new Date().toISOString(),
-    responses,
-    reviewStatus: 'unchecked',
-    reviewedAt: null,
-    reviewedBy: null,
+    score,
+    maxScore,
+    answers,
+    breakdown,
   });
 
   state.submissions = await store.save(submission, state.submissions);
@@ -339,16 +330,15 @@ function bindAdminControls() {
 
   if (dom.exportCsv) {
     dom.exportCsv.addEventListener('click', () => {
-      const header = ['id', 'name', 'squad', 'contact', 'submittedAt', 'reviewStatus', 'reviewedAt', 'reviewedBy'];
+      const header = ['id', 'name', 'squad', 'contact', 'submittedAt', 'score', 'maxScore'];
       const rows = state.submissions.map((submission) => [
         submission.id,
         submission.name,
         submission.squad,
         submission.contact,
         submission.submittedAt,
-        submission.reviewStatus,
-        submission.reviewedAt ?? '',
-        submission.reviewedBy ?? '',
+        submission.score ?? '',
+        submission.maxScore ?? '',
       ]);
       const csv = [header, ...rows]
         .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(','))
