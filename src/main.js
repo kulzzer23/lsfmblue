@@ -196,14 +196,14 @@ function renderAdminDetail() {
       <span>${formatDate(selected.submittedAt)}</span>
     </div>
     <div class="breakdown-list">
-      ${selected.responses
+      ${(selected.breakdown ?? [])
         .map(
-          (response) => `
+          (item) => `
             <article class="breakdown-item">
               <div>
-                <strong>${response.title}</strong>
-                <p>${response.prompt}</p>
-                <p><b>Ответ:</b> ${response.answer ? response.answer : 'Нет ответа'}</p>
+                <strong>${item.title}</strong>
+                <p>${item.prompt}</p>
+                <p><b>Ответ:</b> ${item.answer ? item.answer : 'Нет ответа'}</p>
               </div>
             </article>
           `,
@@ -305,7 +305,14 @@ async function submitExam(event) {
     return;
   }
 
-  const responses = examQuestions.map((question) => ({
+  const answers = examQuestions.reduce((accumulator, question) => {
+    accumulator[question.id] = Array.isArray(state.examAnswers[question.id])
+      ? [...state.examAnswers[question.id]]
+      : state.examAnswers[question.id];
+    return accumulator;
+  }, {});
+
+  const breakdown = examQuestions.map((question) => ({
     questionId: question.id,
     title: question.title,
     prompt: question.prompt,
@@ -320,7 +327,8 @@ async function submitExam(event) {
     squad,
     contact: state.examMeta.contact.trim(),
     submittedAt: new Date().toISOString(),
-    responses,
+    answers,
+    breakdown,
     reviewStatus: 'unchecked',
     reviewedAt: null,
     reviewedBy: null,

@@ -14,10 +14,19 @@ function writeLocalSubmissions(submissions) {
 }
 
 function normalizeSubmission(submission) {
+  const legacyAnswers = Array.isArray(submission.responses)
+    ? submission.responses.reduce((accumulator, response) => {
+        accumulator[response.questionId] = response.answer;
+        return accumulator;
+      }, {})
+    : null;
+
   return {
     reviewStatus: 'unchecked',
     reviewedAt: null,
     reviewedBy: null,
+    answers: submission.answers ?? legacyAnswers ?? {},
+    breakdown: submission.breakdown ?? submission.responses ?? [],
     ...submission,
   };
 }
@@ -29,7 +38,8 @@ function fromRow(row) {
     squad: row.squad,
     contact: row.contact,
     submittedAt: row.submitted_at,
-    responses: row.responses ?? [],
+    answers: row.answers ?? {},
+    breakdown: row.breakdown ?? [],
     reviewStatus: row.review_status ?? 'unchecked',
     reviewedAt: row.reviewed_at ?? null,
     reviewedBy: row.reviewed_by ?? null,
@@ -43,7 +53,8 @@ function toRow(submission) {
     squad: submission.squad,
     contact: submission.contact,
     submitted_at: submission.submittedAt,
-    responses: submission.responses,
+    answers: submission.answers ?? {},
+    breakdown: submission.breakdown ?? [],
     review_status: submission.reviewStatus,
     reviewed_at: submission.reviewedAt,
     reviewed_by: submission.reviewedBy,
