@@ -113,16 +113,78 @@ button {
   transform: translateY(-2px);
 }
 
-/* --- ЧТОБЫ КАЖДОЕ ПРАВИЛО БЫЛО С НОВОЙ СТРОКИ --- */
-.subsection-text-rules p {
-  margin: 0 0 10px 0 !important;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #d5def2;
+/* --- ИЕРАРХИЯ ТЕКСТА ПРАВИЛ --- */
+.subsection-text-rules {
+  display: flex;
+  flex-direction: column;
 }
 
-.subsection-text-rules p:last-child {
-  margin-bottom: 0 !important;
+.rule-lvl-1 {
+  margin: 32px 0 12px !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 8px;
+}
+.rule-lvl-1:first-child { margin-top: 0 !important; }
+
+.rule-lvl-2 {
+  margin: 12px 0 12px 16px !important;
+  color: #eaf0ff;
+  font-weight: 500;
+}
+
+.rule-lvl-3 {
+  margin: 8px 0 8px 36px !important;
+  color: #97a7c6;
+  font-size: 0.95rem;
+}
+
+.rule-default {
+  margin: 8px 0 8px 16px !important;
+  color: #d5def2;
+  line-height: 1.6;
+}
+
+/* --- ОФОРМЛЕНИЕ ПРИМЕРОВ И СТАТУСОВ --- */
+.rule-status {
+  margin: 20px 0 8px 16px !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-status.success { color: #3dcb9a; }
+.rule-status.error { color: #ff5e5e; }
+.rule-status.info { color: #89cbff; }
+
+.rule-example {
+  margin: 4px 0 6px 16px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 12px 12px 0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.9rem;
+  color: #a3b6db;
+  width: fit-content;
+}
+
+/* Спец-блок для Примечаний */
+.rule-note {
+  margin: 16px 0 16px 16px;
+  padding: 14px 18px;
+  background: rgba(255, 187, 0, 0.08);
+  border: 1px solid rgba(255, 187, 0, 0.15);
+  border-radius: 14px;
+  color: #ffda75;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .subsection-card {
@@ -771,4 +833,41 @@ label {
   .learning-reader {
     grid-template-columns: minmax(360px, 500px) minmax(0, 1fr);
   }
+}
+
+
+/* --- СТИЛЬ ДЛЯ КОНТЕЙНЕРА КНОПОК --- */
+.pill-nav {
+  display: flex;
+  flex-wrap: wrap; /* Кнопки будут переноситься на новую строку, если не влезают */
+  gap: 10px; /* Отступ между кнопками */
+  margin-top: 12px;
+}
+
+/* --- СТИЛЬ САМИХ КНОПОК-ПИЛЮЛЬ --- */
+.nav-pill {
+  display: inline-block;
+  background: rgba(127, 227, 255, 0.08);
+  color: #89cbff;
+  border: 1px solid rgba(127, 227, 255, 0.15);
+  padding: 10px 18px;
+  border-radius: 99px; /* Делает края круглыми */
+  text-decoration: none; /* Убираем нижнее подчеркивание */
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* --- АНИМАЦИЯ ПРИ НАВЕДЕНИИ --- */
+.nav-pill:hover {
+  background: rgba(127, 227, 255, 0.2);
+  color: #fff;
+  border-color: rgba(127, 227, 255, 0.4);
+  transform: translateY(-2px); /* Кнопка слегка приподнимается */
+  box-shadow: 0 4px 12px rgba(127, 227, 255, 0.1); /* Легкое свечение */
+}
+
+/* Убираем старые стили ссылок в боковом меню, чтобы они не конфликтовали */
+.learning-toc nav a {
+  all: unset; /* Сбрасываем старый стиль */
 }
