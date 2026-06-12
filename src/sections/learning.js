@@ -21,11 +21,6 @@ export function renderLearningSection(container, learningContent) {
       </aside>
 
       <div class="learning-content">
-        <article class="learning-intro">
-          <h3>${escapeHtml(learningContent.title)}</h3>
-          <p>${escapeHtml(learningContent.intro)}</p>
-        </article>
-
         ${sections
           .map(
             (section, index) => `

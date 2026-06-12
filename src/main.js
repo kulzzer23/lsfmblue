@@ -69,6 +69,18 @@ function getReviewStatusLabel(status) {
   return 'Не проверено';
 }
 
+function getReviewStatusClass(status) {
+  if (status === 'passed') {
+    return 'status-passed';
+  }
+
+  if (status === 'failed') {
+    return 'status-failed';
+  }
+
+  return 'status-unchecked';
+}
+
 function getFilteredSubmissions() {
   const query = normalize(dom.adminSearch?.value ?? '');
   const filter = state.adminStatusFilter;
@@ -116,7 +128,7 @@ function renderSubmissionList() {
     ? filtered
         .map(
           (submission) => `
-            <button type="button" class="submission-item ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
+            <button type="button" class="submission-item ${getReviewStatusClass(submission.reviewStatus)} ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
               <strong>${submission.name}</strong>
               <span>${submission.squad}</span>
               <small>${getReviewStatusLabel(submission.reviewStatus)} · ${submission.score ?? 0}/${submission.maxScore ?? 0} · ${formatDate(submission.submittedAt)}</small>
@@ -156,7 +168,7 @@ function renderAdminDetail() {
         <span>Выбрана попытка</span>
         <h3>${selected.name}</h3>
       </div>
-      <strong>${selected.score ?? 0}/${selected.maxScore ?? 0}</strong>
+      <strong class="status-pill ${getReviewStatusClass(selected.reviewStatus)}">${getReviewStatusLabel(selected.reviewStatus)}</strong>
     </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
