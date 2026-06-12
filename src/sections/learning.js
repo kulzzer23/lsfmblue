@@ -34,6 +34,18 @@ export function renderLearningSection(container, learningContent) {
                 <ul>
                   ${section.bullets.map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}
                 </ul>
+                <div class="learning-subsections">
+                  ${(section.subsections ?? [])
+                    .map(
+                      (subsection) => `
+                        <article class="subsection-card">
+                          <h4>${escapeHtml(subsection.title)}</h4>
+                          <p>${escapeHtml(subsection.text)}</p>
+                        </article>
+                      `,
+                    )
+                    .join('')}
+                </div>
               </article>
             `,
           )
