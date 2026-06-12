@@ -53,14 +53,9 @@ export function renderLearningSection(container, learningContent) {
                 
                 ${(section.paragraphs || []).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
                 
-                <ul>
-                  ${(section.bullets || []).map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}
-                </ul>
-
                 ${hasSubsections ? `
                   <div class="subsection-nav">
                     <span>Главы в этом разделе:</span>
-                    
                     <nav class="pill-nav">
                       ${section.subsections.map((sub, subIndex) => `
                         <a href="#learning-${escapeHtml(section.id)}-sub-${subIndex}" class="nav-pill">
