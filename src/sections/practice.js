@@ -86,7 +86,30 @@ export function renderPracticeSection({ formEl, resultEl, questions, state, onAn
 export function renderPracticeResult(resultEl, result) {
   if (!result) {
     resultEl.classList.add('hidden');
-    resultEl.innerHTML = '';
+    // Внутри renderPracticeResult в sections/practice.js
+resultEl.innerHTML = `
+  <div class="detail-header">
+    <h3>Результат: ${result.score}/${result.maxQuestions}</h3>
+  </div>
+  <div class="breakdown-list">
+    ${result.details.map(item => `
+      <article class="breakdown-item">
+        <div>
+          <strong>${escapeHtml(item.title)}</strong>
+          <p style="color: #ccc; font-size: 0.9em;">Ваш ответ: <b>${escapeHtml(item.userAnswer)}</b></p>
+          <p>Правильно: ${escapeHtml(item.correctAnswer)}</p>
+          <details>
+             <summary>Разбор</summary>
+             <p>${escapeHtml(item.note)}</p>
+          </details>
+        </div>
+        <span class="${item.score === 1 ? 'status-passed' : 'status-failed'}">
+            ${item.score}/${item.maxScore}
+        </span>
+      </article>
+    `).join('')}
+  </div>
+`;
     return;
   }
 

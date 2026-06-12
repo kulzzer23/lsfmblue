@@ -271,12 +271,16 @@ async function submitPractice(event) {
   event.preventDefault();
 
   const details = practiceQuestions.map((question) => {
-    const result = scorePracticeQuestion(question, state.practiceAnswers[question.id]);
+    const userAnswer = state.practiceAnswers[question.id]; // Получаем ответ
+    const result = scorePracticeQuestion(question, userAnswer);
+    
     return {
       title: question.title,
       score: result.score,
       maxScore: 1,
       note: result.note,
+      // Преобразуем массив ответов (multi) в строку для отображения
+      userAnswer: Array.isArray(userAnswer) ? userAnswer.join(', ') : (userAnswer || '—'),
       correctAnswer:
         question.kind === 'multi'
           ? Array.isArray(question.correctAnswer)
