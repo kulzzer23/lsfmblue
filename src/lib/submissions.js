@@ -62,7 +62,7 @@ function createHeaders() {
   };
 }
 
-async function fetchRows(path, init) {
+async function fetchJson(path, init) {
   const response = await fetch(`${config.supabaseUrl}/rest/v1/${path}`, {
     ...init,
     headers: {
@@ -75,11 +75,23 @@ async function fetchRows(path, init) {
     throw new Error(`Supabase request failed with status ${response.status}`);
   }
 
-  if (response.status === 204) {
-    return [];
+  return response.json();
+}
+
+async function fetchNoContent(path, init) {
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      ...createHeaders(),
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Supabase request failed with status ${response.status}`);
   }
 
-  return response.json();
+  return response;
 }
 
 export function createSubmissionStore() {
@@ -90,7 +102,7 @@ export function createSubmissionStore() {
       }
 
       try {
-        const rows = await fetchRows(
+        const rows = await fetchJson(
           `${config.supabaseTable}?select=*&order=submitted_at.desc`,
           { method: 'GET' },
         );
@@ -111,7 +123,7 @@ export function createSubmissionStore() {
       }
 
       try {
-        await fetchRows(config.supabaseTable, {
+        await fetchNoContent(config.supabaseTable, {
           method: 'POST',
           headers: { Prefer: 'return=minimal' },
           body: JSON.stringify(toRow(submission)),
@@ -138,7 +150,7 @@ export function createSubmissionStore() {
       }
 
       try {
-        await fetchRows(
+        await fetchNoContent(
           `${config.supabaseTable}?id=eq.${encodeURIComponent(submissionId)}`,
           {
             method: 'PATCH',
