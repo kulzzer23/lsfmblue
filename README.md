@@ -46,3 +46,36 @@ npm run build
 3. Дать мне ссылку на репозиторий, если хочешь, чтобы я дальше довел структуру под твой реальный GitHub-формат.
 
 Если хочешь, я могу следующим сообщением еще подготовить вариант под обычный GitHub Pages без Actions, чтобы ты просто открыл `index.html` из ветки `main`.
+
+## База данных
+
+Сайт уже умеет сохранять экзамены в Supabase, а если ключи не указаны, он откатывается на локальное хранилище.
+
+Чтобы включить реальную базу, мне нужны только два значения:
+
+1. `SUPABASE_URL`
+2. `SUPABASE_ANON_KEY`
+
+Что нужно сделать в Supabase:
+
+1. Создать новый проект.
+2. Создать таблицу `submissions` с колонками:
+
+```sql
+create table if not exists public.submissions (
+	id text primary key,
+	name text not null,
+	squad text not null,
+	contact text,
+	submitted_at timestamptz not null,
+	score integer not null,
+	max_score integer not null,
+	answers jsonb not null,
+	breakdown jsonb not null
+);
+```
+
+3. Разрешить `select` и `insert` для anon-ключа через RLS policy или временно отключить RLS на этапе теста.
+4. Подставить URL и anon key в [index.html](index.html).
+
+Если хочешь, я могу следующим сообщением сразу вставить твои значения в проект, как только ты пришлешь их сюда.

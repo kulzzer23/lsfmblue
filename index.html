@@ -657,9 +657,17 @@
     </div>
 
     <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
       const ADMIN_CODE = 'pro-2026';
       const STORAGE_KEY = 'lsfm-pro-exam-submissions';
       const ADMIN_SESSION_KEY = 'lsfm-pro-admin-session';
+      const SUPABASE_URL = 'REPLACE_WITH_SUPABASE_URL';
+      const SUPABASE_ANON_KEY = 'REPLACE_WITH_SUPABASE_ANON_KEY';
+      const SUPABASE_TABLE = 'submissions';
+      const hasSupabase =
+        SUPABASE_URL !== 'REPLACE_WITH_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'REPLACE_WITH_SUPABASE_ANON_KEY';
+      const supabase = hasSupabase ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
       const lessons = [
         {
@@ -817,6 +825,64 @@
         }
       }
 
+      async function loadSubmissionsFromDatabase() {
+        if (!supabase) {
+          return loadSubmissions();
+        }
+
+        const { data, error } = await supabase
+          .from(SUPABASE_TABLE)
+          .select('*')
+          .order('submitted_at', { ascending: false });
+
+        if (error) {
+          console.error('Failed to load submissions from database', error);
+          return loadSubmissions();
+        }
+
+        return (data ?? []).map((row) => ({
+          id: row.id,
+          name: row.name,
+          squad: row.squad,
+          contact: row.contact,
+          submittedAt: row.submitted_at,
+          score: row.score,
+          maxScore: row.max_score,
+          answers: row.answers,
+          breakdown: row.breakdown,
+        }));
+      }
+
+      async function saveSubmission(submission) {
+        if (!supabase) {
+          const nextSubmissions = [submission, ...submissions];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSubmissions));
+          return nextSubmissions;
+        }
+
+        const payload = {
+          id: submission.id,
+          name: submission.name,
+          squad: submission.squad,
+          contact: submission.contact,
+          submitted_at: submission.submittedAt,
+          score: submission.score,
+          max_score: submission.maxScore,
+          answers: submission.answers,
+          breakdown: submission.breakdown,
+        };
+
+        const { error } = await supabase.from(SUPABASE_TABLE).insert(payload);
+        if (error) {
+          console.error('Failed to save submission to database', error);
+          const nextSubmissions = [submission, ...submissions];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSubmissions));
+          return nextSubmissions;
+        }
+
+        return [submission, ...submissions];
+      }
+
       function normalize(text) {
         return String(text).trim().toLowerCase();
       }
@@ -863,6 +929,58 @@
         adminCountText.textContent = `${submissions.length} сохраненных попыток, поиск, экспорт и детальный разбор.`;
         submittedNote.classList.toggle('hidden', !submissions.some((submission) => submission.id === selectedSubmissionId));
         return maxScore;
+      }
+
+      function updateSubmissionViews() {
+        const filtered = filterSubmissions();
+        submissionList.innerHTML = filtered.length
+          ? filtered.map((submission) => `
+              <button type="button" class="submission-item ${selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
+                <strong>${submission.name}</strong>
+                <span>${submission.squad}</span>
+                <small>${submission.score}/${submission.maxScore} · ${formatDate(submission.submittedAt)}</small>
+              </button>
+            `).join('')
+          : '<div class="empty-state">Пока нет сохраненных попыток.</div>';
+
+        const selected = filtered.find((item) => item.id === selectedSubmissionId) ?? filtered[0] ?? null;
+        if (!selected) {
+          adminDetail.innerHTML = '<div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>';
+          return;
+        }
+
+        adminDetail.innerHTML = `
+          <div class="detail-header">
+            <div>
+              <span>Выбрана попытка</span>
+              <h3>${selected.name}</h3>
+            </div>
+            <strong>${selected.score}/${selected.maxScore}</strong>
+          </div>
+          <div class="detail-meta">
+            <span>${selected.squad}</span>
+            <span>${selected.contact || 'Нет контакта'}</span>
+            <span>${formatDate(selected.submittedAt)}</span>
+          </div>
+          <div class="breakdown-list">
+            ${selected.breakdown.map((item) => `
+              <article class="breakdown-item">
+                <div>
+                  <strong>${item.label}</strong>
+                  <p>${item.note}</p>
+                </div>
+                <span>${item.score}/${item.maxScore}</span>
+              </article>
+            `).join('')}
+          </div>
+        `;
+
+        submissionList.querySelectorAll('[data-id]').forEach((button) => {
+          button.addEventListener('click', () => {
+            selectedSubmissionId = button.dataset.id;
+            updateSubmissionViews();
+          });
+        });
       }
 
       function renderLearning() {
@@ -1050,55 +1168,7 @@
           return;
         }
 
-        const filtered = filterSubmissions();
-        submissionList.innerHTML = filtered.length
-          ? filtered.map((submission) => `
-              <button type="button" class="submission-item ${selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
-                <strong>${submission.name}</strong>
-                <span>${submission.squad}</span>
-                <small>${submission.score}/${submission.maxScore} · ${formatDate(submission.submittedAt)}</small>
-              </button>
-            `).join('')
-          : '<div class="empty-state">Пока нет сохраненных попыток.</div>';
-
-        const selected = filtered.find((item) => item.id === selectedSubmissionId) ?? filtered[0] ?? null;
-        if (!selected) {
-          adminDetail.innerHTML = '<div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>';
-          return;
-        }
-
-        adminDetail.innerHTML = `
-          <div class="detail-header">
-            <div>
-              <span>Выбрана попытка</span>
-              <h3>${selected.name}</h3>
-            </div>
-            <strong>${selected.score}/${selected.maxScore}</strong>
-          </div>
-          <div class="detail-meta">
-            <span>${selected.squad}</span>
-            <span>${selected.contact || 'Нет контакта'}</span>
-            <span>${formatDate(selected.submittedAt)}</span>
-          </div>
-          <div class="breakdown-list">
-            ${selected.breakdown.map((item) => `
-              <article class="breakdown-item">
-                <div>
-                  <strong>${item.label}</strong>
-                  <p>${item.note}</p>
-                </div>
-                <span>${item.score}/${item.maxScore}</span>
-              </article>
-            `).join('')}
-          </div>
-        `;
-
-        submissionList.querySelectorAll('[data-id]').forEach((button) => {
-          button.addEventListener('click', () => {
-            selectedSubmissionId = button.dataset.id;
-            renderAdmin();
-          });
-        });
+        updateSubmissionViews();
       }
 
       function setSection(section) {
@@ -1175,18 +1245,19 @@
           breakdown,
         };
 
-        submissions = [submission, ...submissions];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
-        selectedSubmissionId = submission.id;
-        examAnswers = createBlankAnswers();
-        examForm.dataset.name = '';
-        examForm.dataset.squad = '';
-        examForm.dataset.contact = '';
-        updateStats();
-        renderExam();
-        renderAdmin();
-        submittedNote.classList.remove('hidden');
-        setTimeout(() => submittedNote.classList.add('hidden'), 5000);
+        saveSubmission(submission).then((nextSubmissions) => {
+          submissions = nextSubmissions;
+          selectedSubmissionId = submission.id;
+          examAnswers = createBlankAnswers();
+          examForm.dataset.name = '';
+          examForm.dataset.squad = '';
+          examForm.dataset.contact = '';
+          updateStats();
+          renderExam();
+          renderAdmin();
+          submittedNote.classList.remove('hidden');
+          setTimeout(() => submittedNote.classList.add('hidden'), 5000);
+        });
       }
 
       function bindSectionTabs() {
@@ -1226,7 +1297,11 @@
       bindAdminControls();
       practiceForm.addEventListener('submit', submitPractice);
       examForm.addEventListener('submit', submitExam);
-      renderAdmin();
+      loadSubmissionsFromDatabase().then((loaded) => {
+        submissions = loaded;
+        updateStats();
+        renderAdmin();
+      });
     </script>
   </body>
 </html>
