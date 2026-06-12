@@ -631,7 +631,7 @@
       </main>
 
       <section id="admin-section" class="card admin-card hidden">
-          <div class="admin-topbar">
+        <div class="admin-topbar">
           <div>
             <div class="section-title">
               <span>Админ-панель</span>
@@ -640,22 +640,24 @@
             <p id="admin-count-text">0 сохраненных экзаменов, поиск, экспорт и ручная проверка.</p>
           </div>
           <div class="admin-actions">
-            <script type="module" src="./src/main.js"></script>
-      renderLearning();
-      renderPractice();
-      renderExam();
-      updateStats();
-      renderPracticeResult(null);
-      setSection(activeSection);
-      bindSectionTabs();
-      bindAdminControls();
-      practiceForm.addEventListener('submit', submitPractice);
-      examForm.addEventListener('submit', submitExam);
-      loadSubmissionsFromDatabase().then((loaded) => {
-        submissions = loaded;
-        updateStats();
-        renderAdmin();
-      });
-    </script>
+            <button id="export-csv" class="secondary-button" type="button">CSV</button>
+            <button id="export-json" class="secondary-button" type="button">JSON</button>
+          </div>
+        </div>
+
+        <div class="admin-grid">
+          <div class="admin-list">
+            <input id="admin-search" class="text-input" placeholder="Поиск по имени, отряду или ID" />
+            <div id="submission-list" class="submission-list"></div>
+          </div>
+
+          <div id="admin-detail" class="admin-detail">
+            <div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>
