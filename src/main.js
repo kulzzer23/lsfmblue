@@ -50,11 +50,34 @@ const state = {
   isAdmin: sessionStorage.getItem(config.adminSessionKey) === 'true',
   submissions: [],
   selectedSubmissionId: null,
+  adminStatusFilter: 'all',
   practiceAnswers: createBlankAnswers(practiceQuestions),
   practiceResult: null,
   examAnswers: createBlankAnswers(examQuestions),
   examMeta: { name: '', squad: '', contact: '' },
 };
+
+function getReviewStatusLabel(status) {
+  if (status === 'passed') {
+    return 'Сдал';
+  }
+
+  if (status === 'failed') {
+    return 'Не сдал';
+  }
+
+  return 'Не проверено';
+}
+
+function getFilteredSubmissions() {
+  const query = normalize(dom.adminSearch?.value ?? '');
+  const filter = state.adminStatusFilter;
+
+  return [...state.submissions]
+    .filter((submission) => !filter || filter === 'all' || submission.reviewStatus === filter)
+    .filter((submission) => !query || [submission.name, submission.squad, submission.contact, submission.id].some((value) => normalize(value).includes(query)))
+    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+}
 
 function setSection(section) {
   state.activeSection = section;
@@ -71,9 +94,12 @@ function updateHeroStats() {
   dom.lessonsCount.textContent = String(lessons.length);
   dom.savedCount.textContent = String(state.submissions.length);
 
-  dom.pendingCount.textContent = String(state.submissions.length);
-  dom.reviewedCount.textContent = String(state.submissions.length);
-  dom.adminCountText.textContent = `${state.submissions.length} сохраненных экзаменов, поиск и экспорт.`;
+  const pending = state.submissions.filter((submission) => submission.reviewStatus === 'unchecked').length;
+  const reviewed = state.submissions.length - pending;
+
+  dom.pendingCount.textContent = String(pending);
+  dom.reviewedCount.textContent = String(reviewed);
+  dom.adminCountText.textContent = `${state.submissions.length} сохраненных экзаменов, поиск, фильтр и ручная проверка.`;
   if (dom.submittedNote) {
     dom.submittedNote.classList.toggle('hidden', !state.submissions.some((submission) => submission.id === state.selectedSubmissionId));
   }
@@ -84,12 +110,7 @@ function renderSubmissionList() {
     return;
   }
 
-  const query = normalize(dom.adminSearch?.value ?? '');
-  const filtered = [...state.submissions]
-    .filter((submission) =>
-      !query || [submission.name, submission.squad, submission.contact, submission.id].some((value) => normalize(value).includes(query)),
-    )
-    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
+  const filtered = getFilteredSubmissions();
 
   dom.submissionList.innerHTML = filtered.length
     ? filtered
@@ -98,7 +119,7 @@ function renderSubmissionList() {
             <button type="button" class="submission-item ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
               <strong>${submission.name}</strong>
               <span>${submission.squad}</span>
-              <small>${submission.score ?? 0}/${submission.maxScore ?? 0} · ${formatDate(submission.submittedAt)}</small>
+              <small>${getReviewStatusLabel(submission.reviewStatus)} · ${submission.score ?? 0}/${submission.maxScore ?? 0} · ${formatDate(submission.submittedAt)}</small>
             </button>
           `,
         )
@@ -119,7 +140,8 @@ function renderAdminDetail() {
     return;
   }
 
-  const selected = state.submissions.find((submission) => submission.id === state.selectedSubmissionId) ?? state.submissions[0] ?? null;
+  const filtered = getFilteredSubmissions();
+  const selected = filtered.find((submission) => submission.id === state.selectedSubmissionId) ?? filtered[0] ?? null;
 
   if (!selected) {
     dom.adminDetail.innerHTML = '<div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>';
@@ -140,6 +162,7 @@ function renderAdminDetail() {
       <span>${selected.squad}</span>
       <span>${selected.contact || 'Нет контакта'}</span>
       <span>${formatDate(selected.submittedAt)}</span>
+      <span>${getReviewStatusLabel(selected.reviewStatus)}</span>
     </div>
     <div class="breakdown-list">
       ${(selected.breakdown ?? selected.responses ?? [])
@@ -156,7 +179,26 @@ function renderAdminDetail() {
         )
         .join('')}
     </div>
+    <div class="admin-actions admin-review-actions">
+      <button class="secondary-button" type="button" data-review="passed">Сдал</button>
+      <button class="secondary-button" type="button" data-review="failed">Не сдал</button>
+      <button class="secondary-button" type="button" data-review="unchecked">Не проверено</button>
+    </div>
   `;
+
+  dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      state.submissions = await store.updateReview(
+        selected.id,
+        button.dataset.review,
+        state.isAdmin ? 'admin' : 'checker',
+        state.submissions,
+      );
+      renderSubmissionList();
+      renderAdminDetail();
+      updateHeroStats();
+    });
+  });
 }
 
 function renderPracticeSummary() {
@@ -316,6 +358,14 @@ function bindAdminControls() {
     });
   }
 
+  if (dom.adminStatusFilter) {
+    dom.adminStatusFilter.addEventListener('change', () => {
+      state.adminStatusFilter = dom.adminStatusFilter.value;
+      renderSubmissionList();
+      renderAdminDetail();
+    });
+  }
+
   if (dom.exportJson) {
     dom.exportJson.addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(state.submissions, null, 2)], { type: 'application/json' });
@@ -367,6 +417,7 @@ async function init() {
     submissionList: document.getElementById('submission-list'),
     adminDetail: document.getElementById('admin-detail'),
     adminSearch: document.getElementById('admin-search'),
+    adminStatusFilter: document.getElementById('admin-status-filter'),
     adminCodeInput: document.getElementById('admin-code'),
     adminStatusOff: document.getElementById('admin-status-off'),
     adminStatusOn: document.getElementById('admin-status-on'),

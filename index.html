@@ -640,6 +640,12 @@
             <p id="admin-count-text">0 сохраненных экзаменов, поиск, экспорт и ручная проверка.</p>
           </div>
           <div class="admin-actions">
+            <select id="admin-status-filter" class="text-input admin-filter">
+              <option value="all">Все статусы</option>
+              <option value="unchecked">Не проверено</option>
+              <option value="passed">Сдал</option>
+              <option value="failed">Не сдал</option>
+            </select>
             <button id="export-csv" class="secondary-button" type="button">CSV</button>
             <button id="export-json" class="secondary-button" type="button">JSON</button>
           </div>

@@ -441,6 +441,27 @@ label {
   flex-wrap: wrap;
 }
 
+.admin-review-actions {
+  margin-top: 16px;
+}
+
+.admin-filter {
+  min-width: 180px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dbe6fb;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .submission-list {
   display: grid;
   gap: 10px;

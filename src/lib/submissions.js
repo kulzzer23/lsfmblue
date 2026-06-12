@@ -45,12 +45,15 @@ function normalizeSubmission(submission) {
   const maxScore = typeof submission.maxScore === 'number' ? submission.maxScore : responses.length;
 
   return {
+    ...submission,
     score,
     maxScore,
     answers,
     breakdown,
     responses,
-    ...submission,
+    reviewStatus: submission.reviewStatus ?? 'unchecked',
+    reviewedAt: submission.reviewedAt ?? null,
+    reviewedBy: submission.reviewedBy ?? null,
   };
 }
 
@@ -146,6 +149,29 @@ export function createSubmissionStore() {
         method: 'POST',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify(toRow(submission)),
+      });
+
+      return nextSubmissions;
+    },
+
+    async updateReview(submissionId, reviewStatus, reviewedBy, currentSubmissions) {
+      const reviewedAt = new Date().toISOString();
+      const nextSubmissions = currentSubmissions.map((submission) =>
+        submission.id === submissionId ? { ...submission, reviewStatus, reviewedAt, reviewedBy } : submission,
+      );
+
+      if (!isConfigured()) {
+        throw new Error('Supabase is not configured');
+      }
+
+      await fetchRows(`${config.supabaseTable}?id=eq.${encodeURIComponent(submissionId)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          review_status: reviewStatus,
+          reviewed_at: reviewedAt,
+          reviewed_by: reviewedBy,
+        }),
       });
 
       return nextSubmissions;
