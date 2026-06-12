@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
+// Твой конфиг
+const config = {
+  adminCode: 'pro-2026',
+  adminSessionKey: 'lsfm-pro-admin-session',
+  storageKey: 'lsfm-pro-exam-submissions',
+  supabaseUrl: 'https://eijjetlaiourgzkzsqpx.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpampldGxhaW91cmd6a3pzcXB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzI1NTksImV4cCI6MjA5Njg0ODU1OX0.WkjbDWWOm9EJkBzIyJS-CWRV8bxGffrkR0-SmoycWPM',
+  supabaseTable: 'submissions',
+};
+
+// Инициализируем Supabase прямо здесь
+const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
 type QuestionKind = 'single' | 'multi' | 'text';
 
 type Question = {
@@ -221,10 +234,24 @@ function App() {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    setSubmissions(loadSubmissions());
-    setIsAdmin(window.sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true');
-  }, []);
+useEffect(() => {
+  // Асинхронно тянем все ответы из базы Supabase
+  async function fetchSubmissions() {
+    const { data, error } = await supabase
+      .from(config.supabaseTable)
+      .select('*')
+      .order('submittedAt', { ascending: false }); // Свежие ответы будут сверху
+
+    if (error) {
+      console.error('Ошибка загрузки из Supabase:', error.message);
+    } else if (data) {
+      setSubmissions(data as Submission[]);
+    }
+  }
+
+  fetchSubmissions();
+  setIsAdmin(window.sessionStorage.getItem(config.adminSessionKey) === 'true');
+}, []);
 
   useEffect(() => {
     if (submittedId) {
@@ -305,46 +332,57 @@ function App() {
     setPracticeResult({ score, maxScore: totals.maxScore, details });
   }
 
-  function submitExam(event: FormEvent) {
-    event.preventDefault();
-    if (!name.trim() || !squad.trim()) {
-      return;
-    }
-
-    const breakdown = questions.map((question) => {
-      const result = scoreQuestion(question, answers[question.id]);
-      return {
-        questionId: question.id,
-        label: question.title,
-        score: result.score,
-        maxScore: question.points,
-        note: result.note,
-      };
-    });
-
-    const score = breakdown.reduce((sum, item) => sum + item.score, 0);
-    const submission: Submission = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      squad: squad.trim(),
-      contact: contact.trim(),
-      submittedAt: new Date().toISOString(),
-      score,
-      maxScore: totals.maxScore,
-      answers,
-      breakdown,
-    };
-
-    const nextSubmissions = [submission, ...submissions];
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSubmissions));
-    setSubmissions(nextSubmissions);
-    setSubmittedId(submission.id);
-    setSelectedSubmissionId(submission.id);
-    setAnswers(blankAnswers);
-    setName('');
-    setSquad('');
-    setContact('');
+ async function submitExam(event: FormEvent) {
+  event.preventDefault();
+  if (!name.trim() || !squad.trim()) {
+    return;
   }
+
+  const breakdown = questions.map((question) => {
+    const result = scoreQuestion(question, answers[question.id]);
+    return {
+      questionId: question.id,
+      label: question.title,
+      score: result.score,
+      maxScore: question.points,
+      note: result.note,
+    };
+  });
+
+  const score = breakdown.reduce((sum, item) => sum + item.score, 0);
+  
+  const submission: Submission = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    squad: squad.trim(),
+    contact: contact.trim(),
+    submittedAt: new Date().toISOString(),
+    score,
+    maxScore: totals.maxScore,
+    answers,
+    breakdown,
+  };
+
+  // --- ВМЕСТО LOCALSTORAGE ОТПРАВЛЯЕМ В ОБЛАКО ---
+  const { error } = await supabase
+    .from(config.supabaseTable)
+    .insert([submission]);
+
+  if (error) {
+    console.error('Ошибка отправки в Supabase:', error.message);
+    alert('Не удалось сохранить ответы в базу данных. Сообщите админу!');
+    return; // Останавливаем выполнение, форму не чистим, чтобы данные не пропали
+  }
+
+  // Если всё ок — обновляем локальный стейт, чтобы админ сразу увидел строку
+  setSubmissions((current) => [submission, ...current]);
+  setSubmittedId(submission.id);
+  setSelectedSubmissionId(submission.id);
+  setAnswers(blankAnswers);
+  setName('');
+  setSquad('');
+  setContact('');
+}
 
   function loginAsAdmin() {
     if (normalize(adminCode) === normalize(ADMIN_CODE)) {
