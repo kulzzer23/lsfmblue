@@ -116,7 +116,12 @@ button {
 .subsection-card {
   scroll-margin-top: 24px; 
 }
-
+.subsection-card p {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  white-space: pre-wrap; /* Это заставит браузер видеть переносы строк */
+}
 
 .section-tabs {
   display: flex;
