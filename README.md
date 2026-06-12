@@ -74,4 +74,29 @@ create table if not exists public.submissions (
 3. Разрешить `select`, `insert` и `update` для anon-ключа через RLS policy или временно отключить RLS на этапе теста.
 4. Подставить URL и anon key в [src/config.js](src/config.js).
 
+Если статусы `Сдал` / `Не сдал` не сохраняются, значит у таблицы включен RLS, но не создана политика `update` для anon. Тогда добавь такие политики:
+
+```sql
+alter table public.submissions enable row level security;
+
+create policy "anon can read submissions"
+on public.submissions
+for select
+to anon
+using (true);
+
+create policy "anon can insert submissions"
+on public.submissions
+for insert
+to anon
+with check (true);
+
+create policy "anon can update submissions"
+on public.submissions
+for update
+to anon
+using (true)
+with check (true);
+```
+
 Если хочешь, я могу ещё добавить отдельную кнопку для ручной синхронизации или выгрузки из Supabase в CSV.

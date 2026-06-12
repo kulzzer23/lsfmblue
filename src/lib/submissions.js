@@ -114,7 +114,8 @@ async function fetchRows(path, init) {
   });
 
   if (!response.ok) {
-    throw new Error(`Supabase request failed with status ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(errorText || `Supabase request failed with status ${response.status}`);
   }
 
   if (response.status === 204) {
@@ -159,19 +160,16 @@ export function createSubmissionStore() {
       const nextSubmissions = currentSubmissions.map((submission) =>
         submission.id === submissionId ? { ...submission, reviewStatus, reviewedAt, reviewedBy } : submission,
       );
+      const updatedSubmission = nextSubmissions.find((submission) => submission.id === submissionId);
 
       if (!isConfigured()) {
         throw new Error('Supabase is not configured');
       }
 
-      await fetchRows(`${config.supabaseTable}?id=eq.${encodeURIComponent(submissionId)}`, {
-        method: 'PATCH',
-        headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({
-          review_status: reviewStatus,
-          reviewed_at: reviewedAt,
-          reviewed_by: reviewedBy,
-        }),
+      await fetchRows(`${config.supabaseTable}?on_conflict=id`, {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(toRow(updatedSubmission ?? { id: submissionId, reviewStatus, reviewedAt, reviewedBy })),
       });
 
       return nextSubmissions;

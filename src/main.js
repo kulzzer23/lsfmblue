@@ -200,15 +200,23 @@ function renderAdminDetail() {
 
   dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
     button.addEventListener('click', async () => {
-      state.submissions = await store.updateReview(
-        selected.id,
-        button.dataset.review,
-        state.isAdmin ? 'admin' : 'checker',
-        state.submissions,
-      );
-      renderSubmissionList();
-      renderAdminDetail();
-      updateHeroStats();
+      try {
+        state.submissions = await store.updateReview(
+          selected.id,
+          button.dataset.review,
+          state.isAdmin ? 'admin' : 'checker',
+          state.submissions,
+        );
+        renderSubmissionList();
+        renderAdminDetail();
+        updateHeroStats();
+      } catch (error) {
+        window.alert(
+          error instanceof Error
+            ? `Не удалось сохранить статус: ${error.message}`
+            : 'Не удалось сохранить статус в Supabase.',
+        );
+      }
     });
   });
 }
