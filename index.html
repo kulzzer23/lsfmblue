@@ -617,30 +617,676 @@
           </div>
           <div class="score-grid">
             <div>
-              <span>Ожидают проверки</span>
-              <strong id="pending-count">0</strong>
+              <span>Средний балл</span>
+              <strong id="avg-score">0</strong>
             </div>
             <div>
-              <span>Проверено</span>
-              <strong id="reviewed-count">0</strong>
+              <span>Лучший результат</span>
+              <strong id="best-score">0</strong>
             </div>
           </div>
-          <div id="submitted-note" class="notice success hidden">Экзамен сохранен для ручной проверки админом.</div>
+          <div id="submitted-note" class="notice success hidden">Попытка принята. Можно сразу открыть админ-панель и посмотреть ее в списке.</div>
           <div class="score-list" id="score-list"></div>
         </section>
       </main>
 
       <section id="admin-section" class="card admin-card hidden">
-          <div class="admin-topbar">
+        <div class="admin-topbar">
           <div>
             <div class="section-title">
               <span>Админ-панель</span>
               <strong>Ответы и аналитика</strong>
             </div>
-            <p id="admin-count-text">0 сохраненных экзаменов, поиск, экспорт и ручная проверка.</p>
+            <p id="admin-count-text">0 сохраненных попыток, поиск, экспорт и детальный разбор.</p>
           </div>
           <div class="admin-actions">
-            <script type="module" src="./src/main.js"></script>
+            <button id="export-csv" class="secondary-button" type="button">CSV</button>
+            <button id="export-json" class="secondary-button" type="button">JSON</button>
+          </div>
+        </div>
+
+        <div class="admin-grid">
+          <div class="admin-list">
+            <input id="admin-search" class="text-input" placeholder="Поиск по имени, отряду или ID" />
+            <div class="submission-list" id="submission-list"></div>
+          </div>
+
+          <div class="admin-detail" id="admin-detail"></div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+      const ADMIN_CODE = 'pro-2026';
+      const STORAGE_KEY = 'lsfm-pro-exam-submissions';
+      const ADMIN_SESSION_KEY = 'lsfm-pro-admin-session';
+      const SUPABASE_URL = 'https://eijjetlaiourgzkzsqpx.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpampldGxhaW91cmd6a3pzcXB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzI1NTksImV4cCI6MjA5Njg0ODU1OX0.WkjbDWWOm9EJkBzIyJS-CWRV8bxGffrkR0-SmoycWPM';
+      const SUPABASE_TABLE = 'submissions';
+      const hasSupabase =
+        SUPABASE_URL !== 'REPLACE_WITH_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'REPLACE_WITH_SUPABASE_ANON_KEY';
+      const supabase = hasSupabase ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+      const lessons = [
+        {
+          title: 'Правила',
+          summary: 'Что делать на проверке, чтобы ответ выглядел уверенно и не разваливался на фактах.',
+          points: [
+            'Сначала читай вопрос целиком и ищи ключевую задачу.',
+            'Не спорь с регламентом, а опирайся на него.',
+            'Краткий ответ без воды обычно сильнее длинной импровизации.',
+          ],
+        },
+        {
+          title: 'Устав',
+          summary: 'База дисциплины: единый порядок действий, одинаковые критерии и предсказуемая проверка.',
+          points: [
+            'Регламент нужен, чтобы у всех были одинаковые условия.',
+            'Факты важнее эмоций и домыслов.',
+            'Если сомневаешься, сначала фиксируй, потом уточняй.',
+          ],
+        },
+        {
+          title: 'ПРО',
+          summary: 'Как отвечать на вопросы по ПРО: коротко, по смыслу и с опорой на проверяемые детали.',
+          points: [
+            'Покажи, что понимаешь порядок проверки.',
+            'Укажи, какие доказательства считаешь важными.',
+            'Поясняй логику ответа, а не просто повторяй слова из конспекта.',
+          ],
+        },
+      ];
+
+      const questions = [
+        {
+          id: 'q1',
+          kind: 'single',
+          title: 'Стартовая проверка',
+          prompt: 'Что правильнее сделать первым шагом, если ты заметил нарушение ПРО?',
+          options: [
+            'Сразу спорить публично и повышать градус',
+            'Зафиксировать факт и передать старшему по регламенту',
+            'Игнорировать и надеяться, что само пройдет',
+            'Удалить сообщение и не оставлять следов',
+          ],
+          correctAnswer: 'Зафиксировать факт и передать старшему по регламенту',
+          points: 2,
+          explanation: 'Правильный алгоритм: фиксация, передача и работа по процедуре, а не эмоции.',
+        },
+        {
+          id: 'q2',
+          kind: 'multi',
+          title: 'Содержимое отчета',
+          prompt: 'Какие элементы должны быть в нормальном отчете о нарушении? Выбери все подходящие.',
+          options: [
+            'Время и контекст события',
+            'Скрин или ссылка на доказательство',
+            'Личные догадки без фактов',
+            'Короткое описание того, что произошло',
+          ],
+          correctAnswer: ['Время и контекст события', 'Скрин или ссылка на доказательство', 'Короткое описание того, что произошло'],
+          points: 3,
+          explanation: 'Отчет должен быть фактическим: время, контекст, доказательства и краткая суть.',
+        },
+        {
+          id: 'q3',
+          kind: 'single',
+          title: 'Приоритет',
+          prompt: 'Что важнее в стрессовой ситуации?',
+          options: ['Эффектность ответа', 'Точность и соблюдение процесса', 'Скорость любой ценой', 'Спор ради победы'],
+          correctAnswer: 'Точность и соблюдение процесса',
+          points: 2,
+          explanation: 'Для экзамена и модерации важны корректность и процесс, а не внешний шум.',
+        },
+        {
+          id: 'q4',
+          kind: 'text',
+          title: 'Короткий ответ',
+          prompt: 'Кратко опиши, почему доказательства важнее эмоций в проверке ПРО.',
+          keywords: ['доказ', 'факт', 'провер'],
+          points: 4,
+          explanation: 'Свободный ответ проверяется по ключевым идеям: факт, доказательства, проверяемость.',
+        },
+        {
+          id: 'q5',
+          kind: 'single',
+          title: 'Дисциплина',
+          prompt: 'Какой подход считается сильным в команде?',
+          options: ['Сделать вид, что ничего не было', 'Решать по памяти без чек-листа', 'Следовать единому регламенту', 'Менять правила на ходу'],
+          correctAnswer: 'Следовать единому регламенту',
+          points: 2,
+          explanation: 'Единый регламент снижает хаос и делает проверку одинаковой для всех.',
+        },
+        {
+          id: 'q6',
+          kind: 'multi',
+          title: 'Красные флаги',
+          prompt: 'Что обычно указывает на слабый ответ? Выбери все подходящие.',
+          options: ['Нет конкретики', 'Есть факты и примеры', 'Много эмоций и мало смысла', 'Ответ легко повторяет регламент'],
+          correctAnswer: ['Нет конкретики', 'Много эмоций и мало смысла'],
+          points: 3,
+          explanation: 'Слабый ответ обычно расплывчатый, эмоциональный и без проверяемых деталей.',
+        },
+        {
+          id: 'q7',
+          kind: 'text',
+          title: 'Финал',
+          prompt: 'Сформулируй одно правило, которое помогает не провалить проверку.',
+          keywords: ['правил', 'регламент', 'факт'],
+          points: 4,
+          explanation: 'Лучше всего заходит ответ с опорой на регламент и фактическую аргументацию.',
+        },
+      ];
+
+      const learningGrid = document.getElementById('learning-grid');
+      const practiceForm = document.getElementById('practice-form');
+      const practiceResult = document.getElementById('practice-result');
+      const examForm = document.getElementById('exam-form');
+      const scoreList = document.getElementById('score-list');
+      const submissionList = document.getElementById('submission-list');
+      const adminDetail = document.getElementById('admin-detail');
+      const adminSection = document.getElementById('admin-section');
+      const learnSection = document.getElementById('learn-section');
+      const practiceSection = document.getElementById('practice-section');
+      const examSection = document.getElementById('exam-section');
+      const savedCount = document.getElementById('saved-count');
+      const avgScore = document.getElementById('avg-score');
+      const bestScore = document.getElementById('best-score');
+      const submittedNote = document.getElementById('submitted-note');
+      const adminCountText = document.getElementById('admin-count-text');
+      const adminCodeInput = document.getElementById('admin-code');
+      const adminStatusOff = document.getElementById('admin-status-off');
+      const adminStatusOn = document.getElementById('admin-status-on');
+      const adminSearch = document.getElementById('admin-search');
+
+      let activeSection = 'learn';
+      let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+      let submissions = loadSubmissions();
+      let practiceAnswers = createBlankAnswers();
+      let examAnswers = createBlankAnswers();
+      let practiceScore = null;
+      let selectedSubmissionId = submissions[0]?.id ?? null;
+
+      function createBlankAnswers() {
+        return questions.reduce((accumulator, question) => {
+          accumulator[question.id] = question.kind === 'multi' ? [] : '';
+          return accumulator;
+        }, {});
+      }
+
+      function loadSubmissions() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      async function loadSubmissionsFromDatabase() {
+        if (!supabase) {
+          return loadSubmissions();
+        }
+
+        const { data, error } = await supabase
+          .from(SUPABASE_TABLE)
+          .select('*')
+          .order('submitted_at', { ascending: false });
+
+        if (error) {
+          console.error('Failed to load submissions from database', error);
+          return loadSubmissions();
+        }
+
+        return (data ?? []).map((row) => ({
+          id: row.id,
+          name: row.name,
+          squad: row.squad,
+          contact: row.contact,
+          submittedAt: row.submitted_at,
+          score: row.score,
+          maxScore: row.max_score,
+          answers: row.answers,
+          breakdown: row.breakdown,
+        }));
+      }
+
+      async function saveSubmission(submission) {
+        if (!supabase) {
+          const nextSubmissions = [submission, ...submissions];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSubmissions));
+          return nextSubmissions;
+        }
+
+        const payload = {
+          id: submission.id,
+          name: submission.name,
+          squad: submission.squad,
+          contact: submission.contact,
+          submitted_at: submission.submittedAt,
+          score: submission.score,
+          max_score: submission.maxScore,
+          answers: submission.answers,
+          breakdown: submission.breakdown,
+        };
+
+        const { error } = await supabase.from(SUPABASE_TABLE).insert(payload);
+        if (error) {
+          console.error('Failed to save submission to database', error);
+          const nextSubmissions = [submission, ...submissions];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSubmissions));
+          return nextSubmissions;
+        }
+
+        return [submission, ...submissions];
+      }
+
+      function normalize(text) {
+        return String(text).trim().toLowerCase();
+      }
+
+      function scoreQuestion(question, answer) {
+        if (question.kind === 'single') {
+          const isCorrect = normalize(answer) === normalize(question.correctAnswer ?? '');
+          return { score: isCorrect ? question.points : 0, note: isCorrect ? 'Верно' : 'Неверно' };
+        }
+
+        if (question.kind === 'multi') {
+          const correct = [...(question.correctAnswer ?? [])].map(normalize).sort();
+          const selected = [...(Array.isArray(answer) ? answer : [answer])].map(normalize).filter(Boolean).sort();
+          const isCorrect = correct.length === selected.length && correct.every((item, index) => item === selected[index]);
+          return { score: isCorrect ? question.points : Math.max(0, question.points - 1), note: isCorrect ? 'Все пункты найдены' : 'Частичный или неверный ответ' };
+        }
+
+        const text = normalize(answer);
+        const hits = (question.keywords ?? []).filter((keyword) => text.includes(normalize(keyword)));
+        const score = Math.round((hits.length / Math.max(1, question.keywords?.length ?? 1)) * question.points);
+        return { score, note: hits.length > 0 ? `Найдено ключевых идей: ${hits.length}` : 'Нужны факты и ключевые слова' };
+      }
+
+      function formatDate(value) {
+        return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+      }
+
+      function getMaxScore() {
+        return questions.reduce((sum, question) => sum + question.points, 0);
+      }
+
+      function updateStats() {
+        const maxScore = getMaxScore();
+        const average = submissions.length
+          ? Math.round(submissions.reduce((sum, submission) => sum + submission.score, 0) / submissions.length)
+          : 0;
+        const best = submissions.length ? Math.max(...submissions.map((submission) => submission.score)) : 0;
+
+        savedCount.textContent = String(submissions.length);
+        avgScore.textContent = String(average);
+        bestScore.textContent = String(best);
+        document.getElementById('questions-count').textContent = String(questions.length);
+        document.getElementById('lessons-count').textContent = String(lessons.length);
+        adminCountText.textContent = `${submissions.length} сохраненных попыток, поиск, экспорт и детальный разбор.`;
+        submittedNote.classList.toggle('hidden', !submissions.some((submission) => submission.id === selectedSubmissionId));
+        return maxScore;
+      }
+
+      function updateSubmissionViews() {
+        const filtered = filterSubmissions();
+        submissionList.innerHTML = filtered.length
+          ? filtered.map((submission) => `
+              <button type="button" class="submission-item ${selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
+                <strong>${submission.name}</strong>
+                <span>${submission.squad}</span>
+                <small>${submission.score}/${submission.maxScore} · ${formatDate(submission.submittedAt)}</small>
+              </button>
+            `).join('')
+          : '<div class="empty-state">Пока нет сохраненных попыток.</div>';
+
+        const selected = filtered.find((item) => item.id === selectedSubmissionId) ?? filtered[0] ?? null;
+        if (!selected) {
+          adminDetail.innerHTML = '<div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>';
+          return;
+        }
+
+        adminDetail.innerHTML = `
+          <div class="detail-header">
+            <div>
+              <span>Выбрана попытка</span>
+              <h3>${selected.name}</h3>
+            </div>
+            <strong>${selected.score}/${selected.maxScore}</strong>
+          </div>
+          <div class="detail-meta">
+            <span>${selected.squad}</span>
+            <span>${selected.contact || 'Нет контакта'}</span>
+            <span>${formatDate(selected.submittedAt)}</span>
+          </div>
+          <div class="breakdown-list">
+            ${selected.breakdown.map((item) => `
+              <article class="breakdown-item">
+                <div>
+                  <strong>${item.label}</strong>
+                  <p>${item.note}</p>
+                </div>
+                <span>${item.score}/${item.maxScore}</span>
+              </article>
+            `).join('')}
+          </div>
+        `;
+
+        submissionList.querySelectorAll('[data-id]').forEach((button) => {
+          button.addEventListener('click', () => {
+            selectedSubmissionId = button.dataset.id;
+            updateSubmissionViews();
+          });
+        });
+      }
+
+      function renderLearning() {
+        learningGrid.innerHTML = lessons
+          .map(
+            (lesson) => `
+              <article class="lesson-card">
+                <h3>${lesson.title}</h3>
+                <p>${lesson.summary}</p>
+                <ul>${lesson.points.map((point) => `<li>${point}</li>`).join('')}</ul>
+              </article>
+            `,
+          )
+          .join('');
+      }
+
+      function renderQuestion(question, prefix, answerMap, onChange) {
+        const name = `${prefix}-${question.id}`;
+        const answer = answerMap[question.id];
+        const options = question.options ?? [];
+
+        const optionsMarkup = question.kind === 'single'
+          ? `<div class="options">${options.map((option) => `
+                <label class="option-row">
+                  <input type="radio" name="${name}" ${normalize(answer) === normalize(option) ? 'checked' : ''} />
+                  <span>${option}</span>
+                </label>
+              `).join('')}</div>`
+          : question.kind === 'multi'
+            ? `<div class="options">${options.map((option) => `
+                <label class="option-row">
+                  <input type="checkbox" ${Array.isArray(answer) && answer.includes(option) ? 'checked' : ''} />
+                  <span>${option}</span>
+                </label>
+              `).join('')}</div>`
+            : `<textarea class="text-area" rows="4" placeholder="Коротко, по фактам"></textarea>`;
+
+        const article = document.createElement('article');
+        article.className = 'question-card';
+        article.innerHTML = `
+          <div class="question-meta">
+            <span>${prefix === 'practice' ? 'Тест' : 'Вопрос'} ${questions.indexOf(question) + 1}</span>
+            <strong>${question.points} балл${question.points === 1 ? '' : question.points < 5 ? 'а' : 'ов'}</strong>
+          </div>
+          <h3>${question.title}</h3>
+          <p>${question.prompt}</p>
+          ${optionsMarkup}
+          <details class="question-hint">
+            <summary>${prefix === 'practice' ? 'Подсказка' : 'Как оценивается'}</summary>
+            <p>${question.explanation}</p>
+          </details>
+        `;
+
+        if (question.kind === 'single') {
+          article.querySelectorAll('input[type="radio"]').forEach((input, index) => {
+            input.addEventListener('change', () => onChange(question.id, options[index]));
+          });
+        }
+
+        if (question.kind === 'multi') {
+          article.querySelectorAll('input[type="checkbox"]').forEach((input, index) => {
+            input.addEventListener('change', () => onChange(question.id, options[index]));
+          });
+        }
+
+        if (question.kind === 'text') {
+          const textarea = article.querySelector('textarea');
+          textarea.value = String(answer ?? '');
+          textarea.addEventListener('input', () => onChange(question.id, textarea.value));
+        }
+
+        return article;
+      }
+
+      function renderPractice() {
+        practiceForm.innerHTML = '';
+        questions.forEach((question) => {
+          practiceForm.appendChild(renderQuestion(question, 'practice', practiceAnswers, (questionId, value) => {
+            if (question.kind === 'multi') {
+              const current = Array.isArray(practiceAnswers[questionId]) ? [...practiceAnswers[questionId]] : [];
+              if (current.includes(value)) {
+                practiceAnswers[questionId] = current.filter((item) => item !== value);
+              } else {
+                current.push(value);
+                practiceAnswers[questionId] = current;
+              }
+            } else {
+              practiceAnswers[questionId] = value;
+            }
+            renderPractice();
+          }));
+        });
+      }
+
+      function renderExam() {
+        examForm.innerHTML = `
+          <div class="grid-3">
+            <label>
+              Имя
+              <input id="exam-name" class="text-input" placeholder="Например, Никита" />
+            </label>
+            <label>
+              Отряд / группа
+              <input id="exam-squad" class="text-input" placeholder="ЛСФМ-1" />
+            </label>
+            <label>
+              Контакт
+              <input id="exam-contact" class="text-input" placeholder="Telegram или ник" />
+            </label>
+          </div>
+        `;
+
+        questions.forEach((question) => {
+          examForm.appendChild(renderQuestion(question, 'exam', examAnswers, (questionId, value) => {
+            if (question.kind === 'multi') {
+              const current = Array.isArray(examAnswers[questionId]) ? [...examAnswers[questionId]] : [];
+              if (current.includes(value)) {
+                examAnswers[questionId] = current.filter((item) => item !== value);
+              } else {
+                current.push(value);
+                examAnswers[questionId] = current;
+              }
+            } else {
+              examAnswers[questionId] = value;
+            }
+            renderExam();
+          }));
+        });
+
+        const footer = document.createElement('div');
+        footer.className = 'form-footer';
+        footer.innerHTML = `
+          <button class="primary-button" type="submit">Сдать экзамен</button>
+          <p>Попытка сохраняется локально в этом браузере. Для общей базы подключи Supabase или Firebase.</p>
+        `;
+        examForm.appendChild(footer);
+
+        document.getElementById('exam-name').value = examForm.dataset.name ?? '';
+        document.getElementById('exam-squad').value = examForm.dataset.squad ?? '';
+        document.getElementById('exam-contact').value = examForm.dataset.contact ?? '';
+      }
+
+      function renderPracticeResult(result) {
+        if (!result) {
+          practiceResult.classList.add('hidden');
+          practiceResult.innerHTML = '';
+          return;
+        }
+
+        practiceResult.classList.remove('hidden');
+        practiceResult.innerHTML = `
+          <div class="detail-header">
+            <div>
+              <span>Результат практики</span>
+              <h3>${result.score}/${result.maxScore}</h3>
+            </div>
+          </div>
+          <div class="breakdown-list">
+            ${result.details.map((item) => `
+              <article class="breakdown-item">
+                <div>
+                  <strong>${item.title}</strong>
+                  <p>${item.note}</p>
+                </div>
+                <span>${item.score}/${item.maxScore}</span>
+              </article>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      function filterSubmissions() {
+        const query = normalize(adminSearch.value);
+        return [...submissions]
+          .filter((submission) => !query || [submission.name, submission.squad, submission.contact, submission.id].some((value) => normalize(value).includes(query)))
+          .sort((left, right) => right.score - left.score || right.submittedAt.localeCompare(left.submittedAt));
+      }
+
+      function renderAdmin() {
+        adminStatusOff.classList.toggle('hidden', isAdmin);
+        adminStatusOn.classList.toggle('hidden', !isAdmin);
+        adminSection.classList.toggle('hidden', !isAdmin);
+
+        if (!isAdmin) {
+          return;
+        }
+
+        updateSubmissionViews();
+      }
+
+      function setSection(section) {
+        activeSection = section;
+        learnSection.classList.toggle('hidden', section !== 'learn');
+        practiceSection.classList.toggle('hidden', section !== 'practice');
+        examSection.classList.toggle('hidden', section !== 'exam');
+        document.querySelectorAll('.tab-button').forEach((button) => {
+          button.classList.toggle('active', button.dataset.section === section);
+        });
+      }
+
+      function exportJson() {
+        const blob = new Blob([JSON.stringify(submissions, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'lsfm-pro-exam-submissions.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function exportCsv() {
+        const header = ['id', 'name', 'squad', 'contact', 'submittedAt', 'score', 'maxScore'];
+        const rows = submissions.map((submission) => [submission.id, submission.name, submission.squad, submission.contact, submission.submittedAt, submission.score, submission.maxScore]);
+        const csv = [header, ...rows]
+          .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+          .join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'lsfm-pro-exam-submissions.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function submitPractice(event) {
+        event.preventDefault();
+        const details = questions.map((question) => {
+          const result = scoreQuestion(question, practiceAnswers[question.id]);
+          return { title: question.title, score: result.score, maxScore: question.points, note: result.note };
+        });
+        const score = details.reduce((sum, item) => sum + item.score, 0);
+        practiceScore = { score, maxScore: getMaxScore(), details };
+        renderPracticeResult(practiceScore);
+      }
+
+      function submitExam(event) {
+        event.preventDefault();
+        const name = document.getElementById('exam-name').value.trim();
+        const squad = document.getElementById('exam-squad').value.trim();
+        const contact = document.getElementById('exam-contact').value.trim();
+
+        if (!name || !squad) {
+          return;
+        }
+
+        const breakdown = questions.map((question) => {
+          const result = scoreQuestion(question, examAnswers[question.id]);
+          return { questionId: question.id, label: question.title, score: result.score, maxScore: question.points, note: result.note };
+        });
+
+        const score = breakdown.reduce((sum, item) => sum + item.score, 0);
+        const submission = {
+          id: crypto.randomUUID(),
+          name,
+          squad,
+          contact,
+          submittedAt: new Date().toISOString(),
+          score,
+          maxScore: getMaxScore(),
+          answers: examAnswers,
+          breakdown,
+        };
+
+        saveSubmission(submission).then((nextSubmissions) => {
+          submissions = nextSubmissions;
+          selectedSubmissionId = submission.id;
+          examAnswers = createBlankAnswers();
+          examForm.dataset.name = '';
+          examForm.dataset.squad = '';
+          examForm.dataset.contact = '';
+          updateStats();
+          renderExam();
+          renderAdmin();
+          submittedNote.classList.remove('hidden');
+          setTimeout(() => submittedNote.classList.add('hidden'), 5000);
+        });
+      }
+
+      function bindSectionTabs() {
+        document.querySelectorAll('.tab-button').forEach((button) => {
+          button.addEventListener('click', () => setSection(button.dataset.section));
+        });
+      }
+
+      function bindAdminControls() {
+        document.getElementById('admin-login').addEventListener('click', () => {
+          if (normalize(adminCodeInput.value) === normalize(ADMIN_CODE)) {
+            sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+            isAdmin = true;
+            adminCodeInput.value = '';
+            renderAdmin();
+          }
+        });
+
+        document.getElementById('admin-logout').addEventListener('click', () => {
+          sessionStorage.removeItem(ADMIN_SESSION_KEY);
+          isAdmin = false;
+          renderAdmin();
+        });
+
+        adminSearch.addEventListener('input', renderAdmin);
+        document.getElementById('export-json').addEventListener('click', exportJson);
+        document.getElementById('export-csv').addEventListener('click', exportCsv);
+      }
+
       renderLearning();
       renderPractice();
       renderExam();
