@@ -14,19 +14,10 @@ function writeLocalSubmissions(submissions) {
 }
 
 function normalizeSubmission(submission) {
-  const legacyAnswers = Array.isArray(submission.responses)
-    ? submission.responses.reduce((accumulator, response) => {
-        accumulator[response.questionId] = response.answer;
-        return accumulator;
-      }, {})
-    : null;
-
   return {
     reviewStatus: 'unchecked',
     reviewedAt: null,
     reviewedBy: null,
-    answers: submission.answers ?? legacyAnswers ?? {},
-    breakdown: submission.breakdown ?? submission.responses ?? [],
     ...submission,
   };
 }
@@ -38,8 +29,7 @@ function fromRow(row) {
     squad: row.squad,
     contact: row.contact,
     submittedAt: row.submitted_at,
-    answers: row.answers ?? {},
-    breakdown: row.breakdown ?? [],
+    responses: row.responses ?? [],
     reviewStatus: row.review_status ?? 'unchecked',
     reviewedAt: row.reviewed_at ?? null,
     reviewedBy: row.reviewed_by ?? null,
@@ -53,8 +43,7 @@ function toRow(submission) {
     squad: submission.squad,
     contact: submission.contact,
     submitted_at: submission.submittedAt,
-    answers: submission.answers ?? {},
-    breakdown: submission.breakdown ?? [],
+    responses: submission.responses,
     review_status: submission.reviewStatus,
     reviewed_at: submission.reviewedAt,
     reviewed_by: submission.reviewedBy,
@@ -73,7 +62,7 @@ function createHeaders() {
   };
 }
 
-async function fetchJson(path, init) {
+async function fetchRows(path, init) {
   const response = await fetch(`${config.supabaseUrl}/rest/v1/${path}`, {
     ...init,
     headers: {
@@ -84,25 +73,13 @@ async function fetchJson(path, init) {
 
   if (!response.ok) {
     throw new Error(`Supabase request failed with status ${response.status}`);
+  }
+
+  if (response.status === 204) {
+    return [];
   }
 
   return response.json();
-}
-
-async function fetchNoContent(path, init) {
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      ...createHeaders(),
-      ...(init?.headers ?? {}),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Supabase request failed with status ${response.status}`);
-  }
-
-  return response;
 }
 
 export function createSubmissionStore() {
@@ -113,7 +90,7 @@ export function createSubmissionStore() {
       }
 
       try {
-        const rows = await fetchJson(
+        const rows = await fetchRows(
           `${config.supabaseTable}?select=*&order=submitted_at.desc`,
           { method: 'GET' },
         );
@@ -134,7 +111,7 @@ export function createSubmissionStore() {
       }
 
       try {
-        await fetchNoContent(config.supabaseTable, {
+        await fetchRows(config.supabaseTable, {
           method: 'POST',
           headers: { Prefer: 'return=minimal' },
           body: JSON.stringify(toRow(submission)),
@@ -161,7 +138,7 @@ export function createSubmissionStore() {
       }
 
       try {
-        await fetchNoContent(
+        await fetchRows(
           `${config.supabaseTable}?id=eq.${encodeURIComponent(submissionId)}`,
           {
             method: 'PATCH',
