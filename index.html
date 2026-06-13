@@ -905,6 +905,20 @@
     padding: 16px !important;
   }
 }
+.hero-animation {
+  width: 280px; /* Настрой размер под свой блок */
+  height: auto;
+  pointer-events: none; /* Чтобы видео не перехватывало клики мышкой */
+  
+  /* Это уберет любые артефакты по краям */
+  object-fit: contain; 
+  
+  /* Эффект свечения, чтобы анимация "связалась" с интерфейсом */
+  filter: drop-shadow(0 0 20px rgba(127, 227, 255, 0.2));
+  
+  /* Если вдруг фон просвечивает не идеально, можно добавить легкое смешивание */
+  mix-blend-mode: plus-lighter; 
+}
     </style>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   </head>
