@@ -154,6 +154,7 @@
   100% { left: 200%; }
 }
 
+
       .hero {
         display: grid;
         grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
@@ -269,6 +270,9 @@
         color: #85f0c7;
         border-color: rgba(61, 203, 154, 0.28);
       }
+
+
+
 
       .layout {
         display: grid;
@@ -838,16 +842,6 @@
   /* Главная фишка от громоздкости: длинный текст обрезается с троеточием */
   white-space: nowrap !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  width: 100% !important; 
-}
-
-/* Эффект наведения (Кнопка слегка выдвигается влево, навстречу мышке) */
-.floating-glass-menu button:hover {
-  background: rgba(127, 227, 255, 0.1) !important;
-  color: #fff !important;
-  transform: translateX(-4px) !important; 
-}
 
 /* Активная кнопка (где мы сейчас находимся) */
 .floating-glass-menu button.active {

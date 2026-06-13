@@ -1,5 +1,8 @@
 import { escapeHtml } from '../lib/dom.js';
 
+// Храним состояние: начата ли практика
+let isPracticeStarted = false;
+
 // Добавили параметр itemResult — сюда прилетит результат после проверки
 function createQuestionMarkup(question, index, currentAnswer, itemResult) {
   const options = question.options ?? [];
@@ -66,20 +69,39 @@ function createQuestionMarkup(question, index, currentAnswer, itemResult) {
     <article class="question-card" data-question-id="${escapeHtml(question.id)}">
       <div class="question-meta">
         <span>Тест ${index + 1}</span>
-       
       </div>
       <h3>${escapeHtml(question.title)}</h3>
       <p>${escapeHtml(question.prompt)}</p>
       ${optionsMarkup}
       ${feedbackMarkup}
-      ${!isSubmitted ? `
-      ` : ''}
     </article>
   `;
 }
-// <strong>${escapeHtml(question.kind)}</strong>
-// Добавили result в параметры
+
 export function renderPracticeSection({ formEl, resultEl, questions, state, onAnswerChange, onSubmit, result }) {
+  
+  // --- ЭКРАН ПРЕДУПРЕЖДЕНИЯ ---
+  if (!isPracticeStarted && !result) {
+    formEl.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; background: rgba(7, 13, 28, 0.5); border-radius: 16px; border: 1px solid rgba(127, 227, 255, 0.2);">
+        <h2 style="margin-bottom: 15px; color: #fff;">ПРАКТИЧЕСКИЙ ТЕСТ</h2>
+        <p style="margin-bottom: 25px; color: #97a7c6; max-width: 550px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 1.05rem;">
+          <b style="color: #fa2a05;">Внимание</b> Данный раздел предназначен исключительно для самостоятельной тренировки и самопроверки знаний ПРО. <br><br>
+          Учтите, что за прохождение этого теста <b style="color: #ffda75;">повышение выдано не будет</b>, а результаты не идут в официальный отчёт организации. Вы должны это полностью понимать.
+        </p>
+        <button id="btn-start-practice" class="primary-button" type="button" style="font-size: 1.1rem; padding: 12px 30px;">Начать практику</button>
+      </div>
+    `;
+
+    formEl.querySelector('#btn-start-practice').addEventListener('click', () => {
+      isPracticeStarted = true; 
+      // Перерисовываем форму, теперь с вопросами
+      renderPracticeSection({ formEl, resultEl, questions, state, onAnswerChange, onSubmit, result });
+    });
+    return; // Останавливаем выполнение, чтобы не рисовать вопросы
+  }
+
+  // --- САМ ТЕСТ ---
   formEl.innerHTML = `
     ${questions.map((question, index) => {
       // Ищем результат конкретно для этого вопроса
@@ -119,7 +141,8 @@ export function renderPracticeSection({ formEl, resultEl, questions, state, onAn
   } else {
     // Кнопка рестарта
     document.getElementById('retry-practice')?.addEventListener('click', () => {
-      window.location.reload(); // Простой способ сбросить стейт для практики
+      isPracticeStarted = false; // Сбрасываем флаг, чтобы снова показать дисклеймер (по желанию)
+      window.location.reload(); 
     });
   }
 }

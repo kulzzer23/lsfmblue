@@ -100,12 +100,34 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
       <div style="text-align: center; padding: 40px 20px; background: rgba(7, 13, 28, 0.5); border-radius: 16px; border: 1px solid rgba(127, 227, 255, 0.2);">
         <h2 style="margin-bottom: 15px; color: #fff;">Готов сдать экзамен?</h2>
         <p style="margin-bottom: 25px; color: #97a7c6; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-          После нажатия кнопки запустится анти-чит система. Сворачивать браузер, переключать вкладки или подглядывать в «Обучение» будет запрещено. Любое из этих действий приведет к аннулированию. Вопросы будут перемешаны.
+          После нажатия кнопки запустится анти-чит система. Сворачивать браузер, переключать вкладки или подглядывать в «Обучение» будет запрещено. Любое из этих действий приведет к аннулированию.
         </p>
+        <div style="background: rgba(255, 71, 87, 0.04); border-left: 4px solid #ff4757; padding: 22px 28px; border-radius: 0 16px 16px 0; margin: 25px auto; font-family: sans-serif; line-height: 1.6; max-width: 600px; text-align: left; box-shadow: inset 0 0 20px rgba(255, 71, 87, 0.02);">
+    
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+      <span style="font-size: 1.6rem; filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.6));">⚠️</span>
+      <h3 style="color: #ff4757; margin: 0; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">Внимание, стажёры!</h3>
+    </div>
+    
+    <p style="color: #cbd5e1; margin: 0; font-size: 1.05rem;">
+      Старший состав будет <b style="color: #fff;">тщательно проверять</b> не только ваше понимание 
+      <span style="color: #7fe3ff; font-weight: 600; border-bottom: 1px dashed rgba(127, 227, 255, 0.5); cursor: default;">ПРО</span>, 
+      <span style="color: #7fe3ff; font-weight: 600; border-bottom: 1px dashed rgba(127, 227, 255, 0.5); cursor: default;">устава</span> и 
+      <span style="color: #7fe3ff; font-weight: 600; border-bottom: 1px dashed rgba(127, 227, 255, 0.5); cursor: default;">ППЭ</span>, 
+      но и практическую <span style="color: #ffda75; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255, 218, 117, 0.5);">правильность редактирования</span> объявлений.
+    </p>
+    
+    <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255, 71, 87, 0.15);">
+      <div style="display: inline-block; background: rgba(255, 71, 87, 0.1); color: #ff6b81; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+        Особый контроль
+      </div>
+      <p style="color: #97a7c6; margin: 0; font-size: 0.95rem;">
+        Критически важно строгое соблюдение <b style="color: #fff;">орфографии</b> и <b style="color: #fff;">пунктуации</b> <i style="color: #64748b;">(правильной расстановки знаков препинания)</i>. За ошибки в тексте объявлений экзамен может быть аннулирован.
+      </p>
+    </div>
+    
+  </div>
         <button id="btn-start-exam" class="primary-button" type="button" style="font-size: 1.1rem; padding: 12px 30px;">Начать экзамен</button>
-        <p style="margin-bottom: 25px; color: #97a7c6; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-          ВОПРОСЫ БУДУТ ПЕРЕМЕШАНЫ!
-        </p>
       </div>
     `;
 
@@ -143,7 +165,7 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     </div>
   `;
 
-  // 2. ДОМ-МАГИЯ: ПЕРЕМЕШИВАЕМ КАРТОЧКИ ВИЗУАЛЬНО
+  /*// 2. ДОМ-МАГИЯ: ПЕРЕМЕШИВАЕМ КАРТОЧКИ ВИЗУАЛЬНО
   const container = formEl.querySelector('#exam-questions-container');
   if (container) {
     const cards = Array.from(container.querySelectorAll('.question-card'));
@@ -159,7 +181,7 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
       container.appendChild(card); // Перемещение элемента
       card.querySelector('.q-number').textContent = `Вопрос ${index + 1}`;
     });
-  }
+  }*/
 
   // --- ПЕРЕХВАТ ОТПРАВКИ ---
   formEl.addEventListener('submit', (event) => {
@@ -168,12 +190,12 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     isExamStarted = false; 
 
     // 3. ДОМ-МАГИЯ: ВОЗВРАЩАЕМ КАК БЫЛО ПЕРЕД ОТПРАВКОЙ!
-    // Твоя система даже не узнает, что вопросы переставлялись местами
+    /*// Твоя система даже не узнает, что вопросы переставлялись местами
     if (container) {
       const currentCards = Array.from(container.querySelectorAll('.question-card'));
       currentCards.sort((a, b) => Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex));
       currentCards.forEach(card => container.appendChild(card));
-    }
+    }*/
 
     onSubmit(event); 
   });

@@ -170,6 +170,11 @@ function renderAdminDetail() {
         </div>
       </div>
     </div>
+    <div class="admin-actions admin-review-actions">
+      <button class="secondary-button" type="button" data-review="passed">Сдал</button>
+      <button class="secondary-button" type="button" data-review="failed">Не сдал</button>
+      <button class="secondary-button" type="button" data-review="unchecked">Не проверено</button>
+    </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
       <span>${selected.contact || 'Нет контакта'}</span>
