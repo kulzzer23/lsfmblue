@@ -1,13 +1,20 @@
 import { config } from './config.js';
 import { learningContent } from './data/learning.js';
 import { practiceQuestions } from './data/practice.js';
-import { examQuestions } from './data/exam.js';
+//import { examQuestions } from './data/exam.js';
 import { renderLearningSection } from './sections/learning.js';
 import { renderPracticeResult, renderPracticeSection } from './sections/practice.js';
 import { renderExamSection } from './sections/exam.js';
 import { createSubmissionStore, normalizeSubmissionRecord } from './lib/submissions.js';
 
+
+// ВОТ ЭТА СТРОКА КРИТИЧЕСКИ ВАЖНА (Без неё будет ошибка createClient is not defined)
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+export let examQuestions = []; 
 const store = createSubmissionStore();
+
+// ... дальше пошел твой код (функции и т.д.)
 
 function createBlankAnswers(questions) {
   return questions.reduce((accumulator, question) => {
@@ -45,39 +52,28 @@ function formatDate(value) {
 
 let dom = {};
 
+// Убрали вызов createBlankAnswers отсюда, так как вопросы еще не загружены
 const state = {
   activeSection: 'learn',
   isAdmin: sessionStorage.getItem(config.adminSessionKey) === 'true',
   submissions: [],
   selectedSubmissionId: null,
   adminStatusFilter: 'all',
-  practiceAnswers: createBlankAnswers(practiceQuestions),
+  practiceAnswers: {}, // Заполним в init()
   practiceResult: null,
-  examAnswers: createBlankAnswers(examQuestions),
+  examAnswers: {}, // Заполним в init()
   examMeta: { name: '', squad: '', contact: '' },
 };
 
 function getReviewStatusLabel(status) {
-  if (status === 'passed') {
-    return 'Сдал';
-  }
-
-  if (status === 'failed') {
-    return 'Не сдал';
-  }
-
+  if (status === 'passed') return 'Сдал';
+  if (status === 'failed') return 'Не сдал';
   return 'Не проверено';
 }
 
 function getReviewStatusClass(status) {
-  if (status === 'passed') {
-    return 'status-passed';
-  }
-
-  if (status === 'failed') {
-    return 'status-failed';
-  }
-
+  if (status === 'passed') return 'status-passed';
+  if (status === 'failed') return 'status-failed';
   return 'status-unchecked';
 }
 
@@ -118,9 +114,7 @@ function updateHeroStats() {
 }
 
 function renderSubmissionList() {
-  if (!dom.submissionList || !dom.adminSearch) {
-    return;
-  }
+  if (!dom.submissionList || !dom.adminSearch) return;
 
   const filtered = getFilteredSubmissions();
 
@@ -148,9 +142,7 @@ function renderSubmissionList() {
 }
 
 function renderAdminDetail() {
-  if (!dom.adminDetail) {
-    return;
-  }
+  if (!dom.adminDetail) return;
 
   const filtered = getFilteredSubmissions();
   const selected = filtered.find((submission) => submission.id === state.selectedSubmissionId) ?? filtered[0] ?? null;
@@ -161,6 +153,9 @@ function renderAdminDetail() {
   }
 
   state.selectedSubmissionId = selected.id;
+  
+  // Определяем массив ответов (поддержка старых и новых форматов)
+  const breakdownArray = selected.breakdown ?? selected.responses ?? [];
 
   dom.adminDetail.innerHTML = `
     <div class="detail-header">
@@ -168,7 +163,12 @@ function renderAdminDetail() {
         <span>Выбрана попытка</span>
         <h3>${selected.name}</h3>
       </div>
-      <strong class="status-pill ${getReviewStatusClass(selected.reviewStatus)}">${getReviewStatusLabel(selected.reviewStatus)}</strong>
+      <div style="text-align: right;">
+        <strong class="status-pill ${getReviewStatusClass(selected.reviewStatus)}" style="margin-bottom: 5px; display: inline-block;">${getReviewStatusLabel(selected.reviewStatus)}</strong>
+        <div style="color: #7fe3ff; font-size: 1.1rem; font-weight: bold; margin-top: 5px;">
+          Баллы: ${selected.score ?? 0} / ${selected.maxScore ?? breakdownArray.length}
+        </div>
+      </div>
     </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
@@ -177,14 +177,11 @@ function renderAdminDetail() {
       <span>${getReviewStatusLabel(selected.reviewStatus)}</span>
     </div>
     <div class="breakdown-list">
-      ${(selected.breakdown ?? selected.responses ?? [])
+      ${breakdownArray
         .map(
-          (response) => {
-            // Безопасный поиск подсказки
+          (response, index) => {
             let hint = '';
             try {
-              // ВАЖНО: Если массив экзамена в этом файле называется не content.exam, 
-              // а например examQuestions, замени его в строке ниже!
               const targetArray = typeof content !== 'undefined' && content.exam ? content.exam : (typeof examQuestions !== 'undefined' ? examQuestions : []);
               const qId = response.questionId || response.id;
               const question = targetArray.find(q => q.id === qId);
@@ -196,17 +193,26 @@ function renderAdminDetail() {
               console.error("Шпаргалка не найдена", e);
             }
 
+            // Проверяем, начислен ли балл (при сдаче экзамена он ставится в 1, если текст не пустой)
+            const isCorrect = response.score > 0;
+
             return `
               <article class="breakdown-item" style="flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;">
                 <div style="width: 100%;">
                   <strong>${response.label ?? response.title ?? response.questionId}</strong>
-                  <p style="margin: 6px 0 0 0;"><b>Ответ:</b> ${response.answer ? response.answer : 'Нет ответа'}</p>
+                  <p style="margin: 6px 0 0 0; font-size: 1rem;"><b>Ответ:</b> ${response.answer ? response.answer : '<span style="color: #ff4757;">Нет ответа</span>'}</p>
                 </div>
                 ${hint ? `
-                  <div style="margin-top: 6px; padding: 12px 16px; background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); border-radius: 12px; font-size: 0.9rem; color: #ffda75; width: 100%;">
+                  <div style="margin-top: 6px; padding: 10px 14px; background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); border-radius: 8px; font-size: 0.9rem; color: #ffda75; width: 100%;">
                     <b style="color: #ffbb00;">Шпаргалка ПРО:</b> ${hint}
                   </div>
                 ` : ''}
+                
+                <label style="display: flex; align-items: center; gap: 10px; margin-top: 8px; cursor: pointer; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; width: 100%; border: 1px solid ${isCorrect ? 'rgba(46, 204, 113, 0.3)' : 'transparent'};">
+                  <input type="checkbox" class="review-answer-cb" data-index="${index}" ${isCorrect ? 'checked' : ''} style="transform: scale(1.3); cursor: pointer;" />
+                  <span style="color: ${isCorrect ? '#2ecc71' : '#97a7c6'}; font-weight: ${isCorrect ? 'bold' : 'normal'};">Ответ верный (1 балл)</span>
+                </label>
+
               </article>
             `;
           }
@@ -219,6 +225,57 @@ function renderAdminDetail() {
       <button class="secondary-button" type="button" data-review="unchecked">Не проверено</button>
     </div>
   `;
+
+  // --- ОБРАБОТЧИК КЛИКА ПО ГАЛОЧКАМ ---
+  dom.adminDetail.querySelectorAll('.review-answer-cb').forEach((checkbox) => {
+    checkbox.addEventListener('change', async (event) => {
+      const index = parseInt(event.target.dataset.index, 10);
+      const isChecked = event.target.checked;
+
+      // 1. Меняем балл за конкретный вопрос (1 если верный, 0 если неверный)
+      breakdownArray[index].score = isChecked ? 1 : 0;
+      
+      // 2. Пересчитываем общий балл за весь экзамен
+      selected.score = breakdownArray.reduce((sum, item) => sum + (item.score || 0), 0);
+
+      try {
+        // 3. Сразу сохраняем обновленный объект в базу
+        state.submissions = await store.save(selected, state.submissions);
+        
+        // 4. Перерисовываем интерфейс (чтобы обновились цифры в шапке и слева в списке)
+        renderSubmissionList();
+        renderAdminDetail();
+      } catch (error) {
+        console.error("Ошибка сохранения балла:", error);
+        alert('Не удалось сохранить баллы в базу!');
+        event.target.checked = !isChecked; // Откатываем галочку обратно в случае ошибки интернета
+      }
+    });
+  });
+
+  // --- ОБРАБОТЧИК КНОПОК СДАЛ/НЕ СДАЛ ---
+  dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        state.submissions = await store.updateReview(
+          selected.id,
+          button.dataset.review,
+          state.isAdmin ? 'admin' : 'checker',
+          state.submissions,
+        );
+        renderSubmissionList();
+        renderAdminDetail();
+        updateHeroStats();
+      } catch (error) {
+        window.alert(
+          error instanceof Error
+            ? `Не удалось сохранить статус: ${error.message}`
+            : 'Не удалось сохранить статус в Supabase.',
+        );
+      }
+    });
+  });
+
 
   dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -248,15 +305,9 @@ function renderPracticeSummary() {
 }
 
 function renderAdminShell() {
-  if (dom.adminStatusOff) {
-    dom.adminStatusOff.classList.toggle('hidden', state.isAdmin);
-  }
-  if (dom.adminStatusOn) {
-    dom.adminStatusOn.classList.toggle('hidden', !state.isAdmin);
-  }
-  if (dom.adminSection) {
-    dom.adminSection.classList.toggle('hidden', !state.isAdmin);
-  }
+  if (dom.adminStatusOff) dom.adminStatusOff.classList.toggle('hidden', state.isAdmin);
+  if (dom.adminStatusOn) dom.adminStatusOn.classList.toggle('hidden', !state.isAdmin);
+  if (dom.adminSection) dom.adminSection.classList.toggle('hidden', !state.isAdmin);
 }
 
 function setPracticeAnswer(questionId, value, kind) {
@@ -270,7 +321,6 @@ function setPracticeAnswer(questionId, value, kind) {
     }
     return;
   }
-
   state.practiceAnswers[questionId] = value;
 }
 
@@ -285,7 +335,6 @@ function setExamAnswer(questionId, value, kind) {
     }
     return;
   }
-
   state.examAnswers[questionId] = value;
 }
 
@@ -297,7 +346,7 @@ async function submitPractice(event) {
     const result = scorePracticeQuestion(question, userAnswer);
     
     return {
-      id: question.id, // <-- ВАЖНО! Без этого инлайн-рендер не найдет вопрос
+      id: question.id,
       title: question.title,
       score: result.score,
       maxScore: 1,
@@ -317,10 +366,8 @@ async function submitPractice(event) {
   const score = details.reduce((sum, item) => sum + item.score, 0);
   state.practiceResult = { score, maxQuestions: practiceQuestions.length, details };
   
-  // 1. Рендерим плашку с общим счетом
   renderPracticeSummary(); 
   
-  // 2. ПЕРЕРЕНДЕРИВАЕМ ФОРМУ, передавая туда result!
   renderPracticeSection({
     formEl: dom.practiceForm,
     resultEl: dom.practiceResult,
@@ -328,10 +375,9 @@ async function submitPractice(event) {
     state: { answers: state.practiceAnswers },
     onAnswerChange: setPracticeAnswer,
     onSubmit: submitPractice,
-    result: state.practiceResult // <-- Передаем результат
+    result: state.practiceResult 
   });
 
-  // 3. Плавно скроллим в самый верх (к результату)
   window.scrollTo({ 
     top: dom.practiceSection.offsetTop - 20, 
     behavior: 'smooth' 
@@ -343,9 +389,7 @@ async function submitExam(event) {
 
   const name = state.examMeta.name.trim();
   const squad = state.examMeta.squad.trim();
-  if (!name || !squad) {
-    return;
-  }
+  if (!name || !squad) return;
 
   const breakdown = examQuestions.map((question) => {
     const answer = state.examAnswers[question.id];
@@ -478,6 +522,36 @@ function bindAdminControls() {
 }
 
 async function init() {
+  // 1. ЗАГРУЖАЕМ ВОПРОСЫ ПЕРЕД ТЕМ, КАК СТРОИТЬ САЙТ
+  try {
+    // Берем точные названия из твоего config.js
+    const url = config.supabaseUrl;
+    const key = config.supabaseAnonKey; 
+    
+    if (!url || !key) {
+      throw new Error("Ключи Supabase не найдены в конфиге!");
+    }
+    
+    // ОБЯЗАТЕЛЬНО пишем const перед supabase!
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase.from('questions').select('*');
+    
+    if (error) throw error;
+    
+    examQuestions = data.sort((a, b) => {
+      const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+      return numA - numB;
+    });
+  } catch (err) {
+    console.error('Ошибка загрузки БД (Экзамен будет пуст):', err.message);
+  }
+
+  // 2. ТЕПЕРЬ ЗАПОЛНЯЕМ СТЕЙТ ПУСТЫМИ ОТВЕТАМИ
+  state.practiceAnswers = createBlankAnswers(practiceQuestions);
+  state.examAnswers = createBlankAnswers(examQuestions);
+
+  // 3. ПРИВЯЗЫВАЕМ DOM И РЕНДЕРИМ
   dom = {
     learnSection: document.getElementById('learn-section'),
     practiceSection: document.getElementById('practice-section'),
@@ -510,35 +584,31 @@ async function init() {
   };
 
   renderLearningSection(dom.learningGrid, learningContent);
-  // Находим кнопки
+  
   const btnTop = document.getElementById('scroll-to-top');
   const btnBottom = document.getElementById('scroll-to-bottom');
-  // Находим кнопку по новому ID и саму секцию админки
   const btnAdminUpast = document.getElementById('admin-upast');
   const adminSection = document.getElementById('admin-section');
 
   if (btnAdminUpast && adminSection) {
     btnAdminUpast.addEventListener('click', () => {
-      // Если админка скрыта, показываем её перед скроллом
       adminSection.classList.remove('hidden');
-      
-      // Плавно едем к ней
       adminSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
-  // Скролл наверх
+
   if (btnTop) {
     btnTop.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
-  // Скролл вниз
   if (btnBottom) {
     btnBottom.addEventListener('click', () => {
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     });
   }
+
   renderPracticeSection({
     formEl: dom.practiceForm,
     resultEl: dom.practiceResult,
@@ -550,7 +620,7 @@ async function init() {
 
   renderExamSection({
     formEl: dom.examForm,
-    questions: examQuestions,
+    questions: examQuestions, // Передаем скачанный массив
     state: { answers: state.examAnswers, meta: state.examMeta },
     onAnswerChange: setExamAnswer,
     onMetaChange: (field, value) => {

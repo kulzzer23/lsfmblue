@@ -140,15 +140,18 @@ export function createSubmissionStore() {
     },
 
     async save(submission, currentSubmissions) {
-      const nextSubmissions = [normalizeSubmission(submission), ...currentSubmissions.map(normalizeSubmission)];
+      const nextSubmissions = [normalizeSubmission(submission), ...currentSubmissions.filter(s => s.id !== submission.id).map(normalizeSubmission)];
 
       if (!isConfigured()) {
         throw new Error('Supabase is not configured');
       }
 
+      // ИСПРАВЛЕНИЕ ЗДЕСЬ: добавляем resolution=merge-duplicates
       await fetchRows(config.supabaseTable, {
         method: 'POST',
-        headers: { Prefer: 'return=minimal' },
+        headers: { 
+          'Prefer': 'resolution=merge-duplicates,return=minimal' 
+        },
         body: JSON.stringify(toRow(submission)),
       });
 
