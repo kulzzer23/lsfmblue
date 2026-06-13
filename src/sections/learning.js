@@ -175,7 +175,6 @@ export function renderLearningSection(container, learningContent) {
    
   
   if (originalToc) {
-    // 1. Ищем или создаем контейнер для плавающего меню
     let floatingMenu = document.getElementById('floating-glass-menu');
     if (!floatingMenu) {
       floatingMenu = document.createElement('div');
@@ -184,22 +183,25 @@ export function renderLearningSection(container, learningContent) {
       document.body.appendChild(floatingMenu);
     }
 
-    // 2. Очищаем меню и клонируем в него кнопки
-    floatingMenu.innerHTML = '';
+    // Добавляем кнопку сворачивания
+    const toggleBtn = document.createElement('button');
+    toggleBtn.innerHTML = '≡'; // Или иконку из SVG
+    toggleBtn.className = 'toggle-btn';
+    toggleBtn.onclick = () => {
+      floatingMenu.classList.toggle('collapsed');
+      toggleBtn.innerHTML = floatingMenu.classList.contains('collapsed') ? '=' : 'Скрыть меню';
+    };
+    floatingMenu.appendChild(toggleBtn);
+
+    // Клонируем кнопки (как раньше)
     const originalButtons = originalToc.querySelectorAll('button');
-    
     originalButtons.forEach(originalBtn => {
       const cloneBtn = originalBtn.cloneNode(true);
-      
-      // При клике на клон, мы программно кликаем на оригинальную кнопку
       cloneBtn.addEventListener('click', () => {
         originalBtn.click();
-        
-        // Перерисовываем активный класс в самой плавающей панели
-        floatingMenu.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        floatingMenu.querySelectorAll('button.active').forEach(b => b.classList.remove('active'));
         cloneBtn.classList.add('active');
       });
-      
       floatingMenu.appendChild(cloneBtn);
     });
 

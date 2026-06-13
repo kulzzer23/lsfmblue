@@ -912,6 +912,35 @@
   object-fit: contain;
   background: transparent !important;
 }
+/* --- СОСТОЯНИЕ СВЕРНУТОЙ ПАНЕЛИ (КРУЖОК) --- */
+.floating-glass-menu.collapsed {
+  width: 48px !important;
+  height: 48px !important;
+  padding: 0 !important;
+  border-radius: 50% !important; /* Круглая форма */
+  overflow: hidden !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background: rgba(7, 13, 28, 0.9) !important;
+}
+
+/* Скрываем кнопки внутри, когда свернуто */
+.floating-glass-menu.collapsed button {
+  display: none !important;
+}
+
+/* Кнопка "развернуть" (появляется только в кружке) */
+.toggle-btn {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: #7fe3ff !important;
+  font-size: 20px !important;
+}
+
+.floating-glass-menu.collapsed .toggle-btn {
+  display: block !important;
+}
     </style>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   </head>

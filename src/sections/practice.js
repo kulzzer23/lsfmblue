@@ -4,7 +4,7 @@ import { escapeHtml } from '../lib/dom.js';
 function createQuestionMarkup(question, index, currentAnswer, itemResult) {
   const options = question.options ?? [];
   const isSubmitted = !!itemResult; // Проверяем, сдан ли тест
-
+  
   const optionsMarkup = question.kind === 'single'
     ? `<div class="options">
         ${options.map(option => {
@@ -66,7 +66,7 @@ function createQuestionMarkup(question, index, currentAnswer, itemResult) {
     <article class="question-card" data-question-id="${escapeHtml(question.id)}">
       <div class="question-meta">
         <span>Тест ${index + 1}</span>
-        <strong>${escapeHtml(question.kind)}</strong>
+       
       </div>
       <h3>${escapeHtml(question.title)}</h3>
       <p>${escapeHtml(question.prompt)}</p>
@@ -77,7 +77,7 @@ function createQuestionMarkup(question, index, currentAnswer, itemResult) {
     </article>
   `;
 }
-
+// <strong>${escapeHtml(question.kind)}</strong>
 // Добавили result в параметры
 export function renderPracticeSection({ formEl, resultEl, questions, state, onAnswerChange, onSubmit, result }) {
   formEl.innerHTML = `

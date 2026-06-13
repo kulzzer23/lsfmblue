@@ -36,14 +36,14 @@ function createQuestionMarkup(question, index, currentAnswer) {
     <article class="question-card" data-question-id="${escapeHtml(question.id)}">
       <div class="question-meta">
         <span>Вопрос ${index + 1}</span>
-        <strong>${escapeHtml(question.kind)}</strong>
+        
       </div>
       <h3>${escapeHtml(question.title)}</h3>
       <p>${escapeHtml(question.prompt)}</p>
       ${optionsMarkup}
     </article>
   `;
-}
+}//<strong>${escapeHtml(question.kind)}</strong>
 
 export function renderExamSection({ formEl, questions, state, onAnswerChange, onMetaChange, onSubmit }) {
   formEl.innerHTML = `
