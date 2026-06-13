@@ -172,7 +172,8 @@ export function renderLearningSection(container, learningContent) {
   // --- ЛОГИКА ПЛАВАЮЩЕЙ ПАНЕЛИ ---
   // Ищем оригинальный блок, где лежат твои кнопки (Замени '.learning-toc', если у тебя другой класс/ID)
   const originalToc = container.querySelector('.learning-toc') || document.querySelector('.learning-toc');
-
+   
+  
   if (originalToc) {
     // 1. Ищем или создаем контейнер для плавающего меню
     let floatingMenu = document.getElementById('floating-glass-menu');

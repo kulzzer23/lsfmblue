@@ -870,7 +870,43 @@
     transform: translateX(0) !important;
   }
 }
+/* --- ЭПИЧНЫЙ БАННЕР ДЛЯ ТЭГА --- */
+.mega-tag-banner {
+  font-size: 1.6rem !important; /* Очень крупный текст */
+  font-weight: 900 !important; /* Максимальная жирность */
+  text-align: center !important;
+  color: #ffffff !important;
+  
+  /* Яркий, но приятный градиентный фон */
+  background: linear-gradient(135deg, rgba(255, 99, 112, 0.15), rgba(255, 177, 123, 0.15)) !important;
+  border: 2px dashed rgba(255, 99, 112, 0.4) !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  margin: 30px 0 !important;
+  
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: 0 10px 30px rgba(255, 99, 112, 0.2) !important;
+}
+
+/* Выделение и подчеркивание для "LS | PRO" */
+.mega-tag-underline {
+  color: #ffb17b !important; /* Оранжево-персиковый цвет */
+  text-decoration: underline !important;
+  text-underline-offset: 8px !important; /* Опускаем линию чуть ниже текста */
+  text-decoration-thickness: 4px !important; /* Делаем линию жирной */
+  text-shadow: 0 0 20px rgba(255, 177, 123, 0.8) !important; /* Неоновое свечение */
+}
+
+/* Чуть уменьшаем размер на мобилках, чтобы не вылезало за края */
+@media (max-width: 640px) {
+  .mega-tag-banner {
+    font-size: 1.2rem !important;
+    padding: 16px !important;
+  }
+}
     </style>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   </head>
   <body>
     <div class="shell">
