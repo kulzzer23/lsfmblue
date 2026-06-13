@@ -513,7 +513,19 @@ async function init() {
   // Находим кнопки
   const btnTop = document.getElementById('scroll-to-top');
   const btnBottom = document.getElementById('scroll-to-bottom');
+  // Находим кнопку по новому ID и саму секцию админки
+  const btnAdminUpast = document.getElementById('admin-upast');
+  const adminSection = document.getElementById('admin-section');
 
+  if (btnAdminUpast && adminSection) {
+    btnAdminUpast.addEventListener('click', () => {
+      // Если админка скрыта, показываем её перед скроллом
+      adminSection.classList.remove('hidden');
+      
+      // Плавно едем к ней
+      adminSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
   // Скролл наверх
   if (btnTop) {
     btnTop.addEventListener('click', () => {

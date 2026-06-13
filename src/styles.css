@@ -977,3 +977,38 @@ label {
     height: 42px;
   }
 }
+
+/* --- КАРТИНКИ И КНОПКИ В БАЗЕ ЗНАНИЙ --- */
+/* --- КАРТИНКИ В БАЗЕ ЗНАНИЙ (С АНИМАЦИЕЙ) --- */
+/* Базовое состояние */
+.learning-image {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(127, 227, 255, 0.15) !important;
+  margin: 20px 0 !important;
+  display: block !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important; 
+}
+
+.learning-image:hover {
+  transform: translateY(-4px) scale(1.02) !important; 
+  box-shadow: 0 12px 30px rgba(127, 227, 255, 0.3) !important; 
+  border-color: rgba(127, 227, 255, 0.6) !important; 
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  margin: 12px 0;
+  width: fit-content;
+  padding: 12px 24px;
+}
+
+.download-btn svg {
+  flex-shrink: 0;
+}

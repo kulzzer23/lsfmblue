@@ -90,19 +90,69 @@
         margin: 0 0 24px;
       }
 
-      .tab-button {
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 999px;
-        padding: 12px 16px;
-        background: rgba(255, 255, 255, 0.04);
-        color: #eaf0ff;
-        font-weight: 700;
-      }
+      /* --- АНИМИРОВАННЫЕ КНОПКИ ГЛАВНОГО МЕНЮ (Обучение, Практика, Экзамен) --- */
+.tab-button {
+  position: relative;
+  overflow: hidden; /* Важно для блика */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px; /* Оставляем форму круглой пилюли */
+  padding: 12px 24px; /* Сделал их чуть шире для солидности */
+  background: rgba(255, 255, 255, 0.04);
+  color: #eaf0ff;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  
+  /* Плавный переход для всех эффектов */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
 
-      .tab-button.active {
-        border-color: rgba(127, 227, 255, 0.45);
-        background: rgba(127, 227, 255, 0.14);
-      }
+/* 1. Эффект при наведении мышки */
+.tab-button:hover {
+  background: rgba(127, 227, 255, 0.1);
+  border-color: rgba(127, 227, 255, 0.5);
+  color: #ffffff;
+  transform: translateY(-3px) !important; /* Кнопка всплывает */
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.4), /* Тень под кнопкой */
+    0 0 12px rgba(127, 227, 255, 0.2) inset, /* Внутреннее свечение */
+    0 0 18px rgba(127, 227, 255, 0.25); /* Внешнее свечение */
+}
+
+/* 2. Эффект "продавливания" при клике */
+.tab-button:active {
+  transform: translateY(1px) scale(0.95) !important;
+  box-shadow: 0 2px 8px rgba(127, 227, 255, 0.15) inset;
+  transition: all 0.1s ease; /* Мгновенный отклик */
+}
+
+/* 3. Стиль для АКТИВНОЙ вкладки (которая открыта сейчас) */
+.tab-button.active {
+  border-color: rgba(86, 179, 255, 0.7);
+  background: rgba(86, 179, 255, 0.15);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(86, 179, 255, 0.25);
+}
+
+/* 4. Бегущий блик света (как на дорогих сайтах) */
+.tab-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: skewX(-25deg);
+}
+
+.tab-button:hover::before {
+  animation: tab-shine 0.6s ease-out;
+}
+
+@keyframes tab-shine {
+  100% { left: 200%; }
+}
 
       .hero {
         display: grid;
@@ -530,6 +580,296 @@
           align-items: flex-start;
         }
       }
+      .learning-image {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(127, 227, 255, 0.15) !important;
+        margin: 20px 0 !important;
+        display: block !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important; 
+      }
+      .learning-image:hover {
+        transform: translateY(-4px) scale(1.02) !important; 
+        box-shadow: 0 12px 30px rgba(127, 227, 255, 0.4) !important; 
+        border-color: rgba(127, 227, 255, 0.8) !important; 
+      }
+      /* --- ПЛАВАЮЩИЕ КНОПКИ СКРОЛЛА --- */
+.scroll-actions {
+  position: fixed !important; /* Отрываем от страницы */
+  bottom: 30px !important;    /* Прибиваем к низу экрана */
+  right: 30px !important;     /* Прибиваем к правому краю */
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  z-index: 9999 !important;   /* Всегда поверх других элементов */
+}
+
+.scroll-btn {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: rgba(7, 13, 28, 0.8) !important;
+  border: 1px solid rgba(127, 227, 255, 0.15) !important;
+  color: #7fe3ff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+}
+
+.scroll-btn:hover {
+  background: rgba(127, 227, 255, 0.15) !important;
+  color: #fff !important;
+  border-color: rgba(127, 227, 255, 0.4) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(127, 227, 255, 0.15) !important;
+}
+
+@media (max-width: 640px) {
+  .scroll-actions {
+    bottom: 20px !important;
+    right: 16px !important;
+  }
+  .scroll-btn {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+/* --- АНИМИРОВАННАЯ ТАБЛИЦА (СЕТКА) --- */
+.learning-table-row {
+  display: flex !important;
+  align-items: stretch !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(127, 227, 255, 0.1) !important;
+  border-radius: 12px !important;
+  margin-bottom: 8px !important;
+  overflow: hidden !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.learning-table-row:hover {
+  transform: translateX(6px) !important; /* Строка плавно выезжает вправо */
+  background: rgba(127, 227, 255, 0.08) !important;
+  border-color: rgba(127, 227, 255, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(127, 227, 255, 0.15) !important;
+}
+
+.table-key {
+  flex: 0 0 140px !important; /* Фиксированная ширина левой колонки */
+  background: rgba(7, 13, 28, 0.4) !important;
+  padding: 14px 16px !important;
+  font-weight: 700 !important;
+  color: #7fe3ff !important;
+  border-right: 1px solid rgba(127, 227, 255, 0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.3s ease !important;
+}
+
+.learning-table-row:hover .table-key {
+  background: rgba(127, 227, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.table-value {
+  flex: 1 !important;
+  padding: 14px 16px !important;
+  color: #dbe6fb !important;
+  line-height: 1.6 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Адаптация под телефоны, чтобы колонка не сплющивалась */
+@media (max-width: 640px) {
+  .learning-table-row {
+    flex-direction: column !important;
+  }
+  .table-key {
+    flex: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(127, 227, 255, 0.1) !important;
+  }
+}
+/* --- ПЛАШКИ ВЕРНО / НЕВЕРНО --- */
+.rule-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin: 16px 0 8px 0 !important;
+}
+
+.rule-badge.success {
+  background: rgba(61, 203, 154, 0.15) !important;
+  color: #85f0c7 !important;
+  border: 1px solid rgba(61, 203, 154, 0.3) !important;
+}
+
+.rule-badge.error {
+  background: rgba(255, 99, 112, 0.15) !important;
+  color: #ff8f99 !important;
+  border: 1px solid rgba(255, 99, 112, 0.3) !important;
+}
+
+.rule-badge.info {
+  background: rgba(127, 227, 255, 0.15) !important;
+  color: #7fe3ff !important;
+  border: 1px solid rgba(127, 227, 255, 0.3) !important;
+}
+
+/* --- БЛОКИ С ПРИМЕРАМИ (ТЭГ | ...) --- */
+.rule-example {
+  padding: 10px 14px !important;
+  margin-bottom: 6px !important;
+  border-radius: 8px !important;
+  font-family: 'Courier New', Courier, monospace !important; /* Делаем шрифт похожим на код */
+  font-size: 0.95rem !important;
+  background: rgba(7, 13, 28, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-left: 3px solid rgba(255, 255, 255, 0.2) !important;
+  transition: transform 0.2s ease !important;
+}
+
+.rule-example:hover {
+  transform: translateX(4px) !important; /* Легкое движение при наведении */
+}
+
+/* Динамические цвета для правильных примеров */
+.rule-example.example-success {
+  /* Плавный зеленый градиент, затухающий вправо */
+  background: linear-gradient(90deg, rgba(61, 203, 154, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important;
+  border-left-color: #3dcb9a !important;
+  border-top: 1px solid rgba(61, 203, 154, 0.1) !important;
+  border-bottom: 1px solid rgba(61, 203, 154, 0.1) !important;
+}
+
+/* Динамические цвета для ошибочных примеров */
+.rule-example.example-error {
+  /* Плавный красный градиент */
+  background: linear-gradient(90deg, rgba(255, 99, 112, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important;
+  border-left-color: #ff6370 !important;
+  border-top: 1px solid rgba(255, 99, 112, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 99, 112, 0.1) !important;
+}
+
+/* Динамические цвета для нейтральных примеров */
+.rule-example.example-info {
+  background: linear-gradient(90deg, rgba(127, 227, 255, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important;
+  border-left-color: #7fe3ff !important;
+  border-top: 1px solid rgba(127, 227, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(127, 227, 255, 0.1) !important;
+}
+/* --- ИНЛАЙН-ПЛАШКА ДЛЯ "ТЭГ | ПРО" --- */
+.tag-pro-badge {
+  display: inline-block !important;
+  background: rgba(255, 99, 112, 0.15) !important;
+  color: #ff8f99 !important;
+  border: 1px solid rgba(255, 99, 112, 0.3) !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  font-family: Inter, sans-serif !important;
+  font-size: 0.85em !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  vertical-align: middle !important;
+  margin: 0 4px !important;
+  box-shadow: 0 0 8px rgba(255, 99, 112, 0.15) !important;
+  white-space: nowrap !important; /* Чтобы плашка не разрывалась на две строки */
+}
+/* --- ПЛАВАЮЩАЯ СТЕКЛЯННАЯ ПАНЕЛЬ (ВЕРТИКАЛЬНАЯ СПРАВА) --- */
+.floating-glass-menu {
+  position: fixed !important;
+  top: 50% !important; /* Центрируем по вертикали */
+  right: 20px !important; /* Прибиваем к правому краю экрана */
+  transform: translateY(-50%) translateX(50px) !important; /* Уводим за правый край, чтобы она выезжала сбоку */
+  
+  display: flex !important;
+  flex-direction: column !important; /* Делаем меню ВЕРТИКАЛЬНЫМ */
+  gap: 6px !important;
+  padding: 12px !important;
+  max-width: 220px !important; /* Жестко ограничиваем ширину, чтобы не была громоздкой */
+  
+  /* Магия стекла */
+  background: rgba(7, 13, 28, 0.55) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(127, 227, 255, 0.15) !important;
+  border-radius: 16px !important; /* Аккуратные скругленные углы вместо "таблетки" */
+  
+  z-index: 9999 !important; /* Поверх всего */
+  
+  /* Скрыта по умолчанию */
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  box-shadow: -4px 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(127, 227, 255, 0.1) !important;
+}
+
+/* Когда скрипт добавляет класс visible, панель плавно выезжает справа */
+.floating-glass-menu.visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(-50%) translateX(0) !important;
+}
+
+/* Кнопки внутри вертикальной панели */
+.floating-glass-menu button {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid transparent !important;
+  color: #97a7c6 !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  font-size: 0.8rem !important; /* Сделали шрифт чуть мельче */
+  font-weight: 600 !important;
+  text-align: left !important; /* Текст слева */
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  
+  /* Главная фишка от громоздкости: длинный текст обрезается с троеточием */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 100% !important; 
+}
+
+/* Эффект наведения (Кнопка слегка выдвигается влево, навстречу мышке) */
+.floating-glass-menu button:hover {
+  background: rgba(127, 227, 255, 0.1) !important;
+  color: #fff !important;
+  transform: translateX(-4px) !important; 
+}
+
+/* Активная кнопка (где мы сейчас находимся) */
+.floating-glass-menu button.active {
+  background: rgba(86, 179, 255, 0.15) !important;
+  border-color: rgba(86, 179, 255, 0.4) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(86, 179, 255, 0.15) !important;
+}
+
+/* На мобилках прижимаем ее в правый нижний угол, чтобы не мешала читать текст */
+@media (max-width: 768px) {
+  .floating-glass-menu {
+    top: auto !important;
+    bottom: 90px !important; /* Висит над твоими круглыми кнопками скролла */
+    right: 16px !important;
+    transform: translateX(50px) !important;
+    max-width: 180px !important;
+  }
+  .floating-glass-menu.visible {
+    transform: translateX(0) !important;
+  }
+}
     </style>
   </head>
   <body>
@@ -573,6 +913,7 @@
             <div class="panel-badge success">Админ активен</div>
             <h2>Панель доступа открыта</h2>
             <p>Можно смотреть ответы, сортировать попытки и экспортировать данные.</p>
+            <button id="admin-upast" class="secondary-button" type="button">Cпуститься к админ панели</button>
             <button id="admin-logout" class="secondary-button" type="button">Выйти</button>
           </div>
         </aside>
@@ -625,7 +966,7 @@
               <strong id="reviewed-count">0</strong>
             </div>
           </div>
-          <div id="submitted-note" class="notice success hidden">Экзамен сохранен для ручной проверки админом.</div>
+          <div id="submitted-note" class="notice success hidden">Экзамен сохраняется для ручной проверки админом по нажатии на кнопку и правильном введении ника и организации.</div>
           <div class="score-list" id="score-list"></div>
         </section>
       </main>
