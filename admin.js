@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { config } from './src/config.js';
 
-// --- СТИЛИ ДЛЯ АДМИНКИ (ВКЛЮЧАЯ КНОПКИ УПРАВЛЕНИЯ) ---
+// --- СТИЛИ ДЛЯ АДМИНКИ (СВЕТЛАЯ ТЕМА + DRAG & DROP МОДАЛКА) ---
 const style = document.createElement('style');
 style.textContent = `
   .question-editor { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); font-family: sans-serif; }
@@ -43,6 +43,17 @@ style.textContent = `
   .save-btn.is-new { background: #f59e0b; }
   .save-btn.is-new:hover { background: #d97706; }
   
+  /* --- СТИЛИ ДЛЯ DRAG & DROP МОДАЛКИ --- */
+  .reorder-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
+  .reorder-overlay.active { opacity: 1; pointer-events: auto; }
+  .reorder-modal { background: #fff; width: 90%; max-width: 650px; max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: sans-serif; }
+  .reorder-header { padding: 18px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+  .reorder-list { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .reorder-item { padding: 12px 15px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; align-items: center; gap: 15px; cursor: grab; transition: transform 0.1s; user-select: none; }
+  .reorder-item:active { cursor: grabbing; border-color: #8b5cf6; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2); transform: scale(1.01); z-index: 10; }
+  .drag-handle { color: #94a3b8; font-size: 1.4rem; cursor: grab; line-height: 1; display: flex; align-items: center; }
+  .reorder-footer { padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; }
+  
   @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 `;
 document.head.appendChild(style);
@@ -55,6 +66,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const listContainer = document.getElementById('admin-questions-list');
 const addBtn = document.getElementById('add-new-btn');
 
+// ВНЕДРЯЕМ КНОПКУ РЕЖИМА СОРТИРОВКИ
+const reorderBtn = document.createElement('button');
+reorderBtn.className = 'save-btn';
+reorderBtn.style.cssText = 'margin: 0 0 0 10px; background: #8b5cf6; width: auto; display: inline-block; padding: 12px 20px;';
+reorderBtn.innerHTML = '📋 Быстрая сортировка';
+reorderBtn.onclick = openReorderModal;
+addBtn.parentNode.insertBefore(reorderBtn, addBtn.nextSibling);
+
 // Глобальный массив всех вопросов в памяти
 let currentQuestions = [];
 
@@ -63,11 +82,10 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-// ДОБАВЛЯЕМ ПРЕДУПРЕЖДЕНИЕ О ПЕРЕМЕЩЕНИИ
 const warningBanner = document.createElement('div');
 warningBanner.innerHTML = `
   <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-size: 0.95rem; color: #78350f;">
-    <strong>⚠️ Важно:</strong> При удалении или перемещении вопросов все ID (e1, e2...) пересчитываются заново. <u>Обязательно сохраните текущие изменения в карточках</u> перед тем, как двигать списки!
+    <strong>⚠️ Важно:</strong> При удалении или перемещении вопросов все ID (e1, e2...) пересчитываются заново. <u>Сохраняйте изменения в открытых карточках</u> перед тем, как двигать списки.
   </div>
 `;
 listContainer.parentElement.insertBefore(warningBanner, listContainer);
@@ -99,17 +117,13 @@ function renderQuestionsList() {
 
 // --- ЛОГИКА ПЕРЕИНДЕКСАЦИИ (ДВИЖЕНИЕ И УДАЛЕНИЕ) ---
 async function syncDatabaseAndRender(newArray, loadingText) {
-  // Показываем экран загрузки
   const loader = document.createElement('div');
   loader.innerHTML = `<h2 style="color: white; font-family: sans-serif;">${loadingText} Перестраиваем базу...</h2>`;
   loader.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center;';
   document.body.appendChild(loader);
 
   try {
-    // 1. Переназначаем ID строго по порядку
     const finalArray = newArray.map((q, i) => ({ ...q, id: `e${i + 1}` }));
-
-    // 2. Получаем старые ID и удаляем ВСЕ старые вопросы
     const { data: oldData } = await supabase.from('questions').select('id');
     const oldIds = oldData.map(q => q.id);
     
@@ -117,12 +131,10 @@ async function syncDatabaseAndRender(newArray, loadingText) {
       await supabase.from('questions').delete().in('id', oldIds);
     }
 
-    // 3. Заливаем массив с правильными ID обратно
     if (finalArray.length > 0) {
       await supabase.from('questions').insert(finalArray);
     }
 
-    // 4. Обновляем локальный массив и перерисовываем
     currentQuestions = finalArray;
     renderQuestionsList();
   } catch (err) {
@@ -135,24 +147,130 @@ async function syncDatabaseAndRender(newArray, loadingText) {
 async function handleMove(index, direction) {
   const targetIndex = index + direction;
   if (targetIndex < 0 || targetIndex >= currentQuestions.length) return;
-
   const newArray = [...currentQuestions];
-  const temp = newArray[index];
-  newArray[index] = newArray[targetIndex];
-  newArray[targetIndex] = temp;
-
+  [newArray[index], newArray[targetIndex]] = [newArray[targetIndex], newArray[index]];
   await syncDatabaseAndRender(newArray, 'Сдвигаем вопрос 🔄');
 }
 
 async function handleDelete(index) {
   if (!confirm('Вы уверены, что хотите удалить этот вопрос? Все последующие вопросы сдвинутся вверх и изменят свой ID.')) return;
-
   const newArray = [...currentQuestions];
   newArray.splice(index, 1);
-
   await syncDatabaseAndRender(newArray, 'Удаляем вопрос 🗑️');
 }
 
+// ============================================================================
+// МОДАЛЬНОЕ ОКНО БЫСТРОЙ СОРТИРОВКИ (DRAG & DROP)
+// ============================================================================
+function openReorderModal() {
+  if (currentQuestions.length === 0) return alert('Нет вопросов для сортировки!');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'reorder-overlay';
+
+  const listItemsHtml = currentQuestions.map((q, i) => `
+    <div class="reorder-item" draggable="true" data-index="${i}">
+      <span class="drag-handle">☰</span>
+      <div style="flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+        <strong style="color:#3b82f6;">${q.id}</strong>: 
+        <span style="color:#334155;">${escapeHtml(q.title || q.prompt)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  overlay.innerHTML = `
+    <div class="reorder-modal">
+      <div class="reorder-header">
+        <h3 style="margin:0; color:#0f172a;">Перетащите вопросы, чтобы изменить порядок</h3>
+        <button class="icon-btn close-modal" style="border:none; background:none;">✖</button>
+      </div>
+      <div class="reorder-list" id="reorder-list-container">
+        ${listItemsHtml}
+      </div>
+      <div class="reorder-footer">
+        <button class="icon-btn cancel-btn" style="padding: 8px 15px;">Отмена</button>
+        <button class="save-btn save-order-btn" style="margin:0; width:auto; padding: 8px 20px; background: #8b5cf6;">Сохранить новый порядок</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  setTimeout(() => overlay.classList.add('active'), 10);
+
+  const closeModal = () => {
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 300);
+  };
+  
+  overlay.querySelector('.close-modal').onclick = closeModal;
+  overlay.querySelector('.cancel-btn').onclick = closeModal;
+
+  // ЛОГИКА DRAG & DROP
+  const listContainerEl = overlay.querySelector('#reorder-list-container');
+  let draggedItem = null;
+
+  const items = overlay.querySelectorAll('.reorder-item');
+  items.forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+      draggedItem = this;
+      setTimeout(() => this.style.opacity = '0.4', 0);
+    });
+
+    item.addEventListener('dragend', function() {
+      draggedItem = null;
+      this.style.opacity = '1';
+      items.forEach(i => { i.style.borderTop = ''; i.style.borderBottom = ''; });
+    });
+
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (this !== draggedItem) {
+        const rect = this.getBoundingClientRect();
+        const offset = e.clientY - rect.top;
+        if (offset < rect.height / 2) {
+          this.style.borderTop = '3px solid #8b5cf6';
+          this.style.borderBottom = '';
+        } else {
+          this.style.borderBottom = '3px solid #8b5cf6';
+          this.style.borderTop = '';
+        }
+      }
+    });
+
+    item.addEventListener('dragleave', function() {
+      this.style.borderTop = '';
+      this.style.borderBottom = '';
+    });
+
+    item.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderTop = '';
+      this.style.borderBottom = '';
+      if (this !== draggedItem) {
+        const rect = this.getBoundingClientRect();
+        const offset = e.clientY - rect.top;
+        if (offset < rect.height / 2) {
+          listContainerEl.insertBefore(draggedItem, this);
+        } else {
+          listContainerEl.insertBefore(draggedItem, this.nextSibling);
+        }
+      }
+    });
+  });
+
+  // СОХРАНЕНИЕ НОВОГО ПОРЯДКА
+  overlay.querySelector('.save-order-btn').onclick = () => {
+    const newDOMItems = listContainerEl.querySelectorAll('.reorder-item');
+    const newArray = [];
+    newDOMItems.forEach(item => {
+      const originalIndex = parseInt(item.dataset.index, 10);
+      newArray.push(currentQuestions[originalIndex]);
+    });
+    
+    closeModal();
+    syncDatabaseAndRender(newArray, 'Массовая сортировка...');
+  };
+}
 
 // ============================================================================
 // ГЛАВНЫЙ ВИЗУАЛЬНЫЙ КОНСТРУКТОР ВОПРОСА (GUI)
@@ -176,7 +294,6 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
     state.correctAnswer = state.correctAnswer ? [state.correctAnswer] : [];
   }
 
-  // ШАПКА КАРТОЧКИ (С КНОПКАМИ УПРАВЛЕНИЯ)
   const headerHtml = isNew 
     ? '<h3 style="color: #0f172a; margin-top: 0;">✨ Создание нового вопроса</h3>' 
     : `
@@ -190,6 +307,25 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
       </div>
     `;
 
+  const positionOptions = Array.from({ length: currentQuestions.length + 1 }, (_, i) => 
+    `<option value="${i}" ${i === 0 ? 'selected' : ''}>Вставить на позицию ${i + 1} ${i === 0 ? '(Самым первым)' : i === currentQuestions.length ? '(В самый конец)' : ''}</option>`
+  ).join('');
+
+  const idOrPositionHtml = isNew 
+    ? `
+      <div class="editor-row">
+        <label style="color: #8b5cf6;">Позиция в списке (куда вставить вопрос):</label>
+        <select class="q-position custom-select" style="border-color: #8b5cf6;">
+          ${positionOptions}
+        </select>
+      </div>
+      `
+    : `
+      <div class="editor-row" style="display: none;">
+        <input type="text" class="q-id" value="${escapeHtml(state.id)}" disabled>
+      </div>
+      `;
+
   const btnClass = isNew ? 'save-btn is-new' : 'save-btn';
   const btnText = isNew ? 'Добавить в базу' : 'Сохранить изменения в карточке';
   
@@ -197,10 +333,7 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
   const selMulti = state.kind === 'multi' ? 'selected' : '';
   const selText = state.kind === 'text' ? 'selected' : '';
 
-  qDiv.innerHTML = headerHtml + `
-    <div class="editor-row" style="display: none;">
-      <input type="text" class="q-id" value="${escapeHtml(state.id)}" disabled>
-    </div>
+  qDiv.innerHTML = headerHtml + idOrPositionHtml + `
     <div class="editor-row">
       <label>Тип вопроса (kind):</label>
       <select class="q-kind custom-select">
@@ -229,7 +362,6 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
     </button>
   `;
 
-  // ПРИВЯЗКА КНОПОК ПЕРЕМЕЩЕНИЯ
   if (!isNew) {
     qDiv.querySelector('.move-up')?.addEventListener('click', () => handleMove(index, -1));
     qDiv.querySelector('.move-down')?.addEventListener('click', () => handleMove(index, 1));
@@ -343,12 +475,11 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
 
   renderGUI(); 
 
-  // --- СОХРАНЕНИЕ КОНКРЕТНОЙ КАРТОЧКИ ---
   qDiv.querySelector('.save-btn').addEventListener('click', async (e) => {
     const btn = e.target;
     btn.textContent = isNew ? 'Отправка...' : 'Сохраняю...';
     
-    state.id = qDiv.querySelector('.q-id').value.trim();
+    if (!isNew) state.id = qDiv.querySelector('.q-id').value.trim();
     state.title = qDiv.querySelector('.q-title').value.trim();
     state.prompt = qDiv.querySelector('.q-prompt').value.trim();
     state.reviewHint = qDiv.querySelector('.q-review').value.trim();
@@ -363,28 +494,24 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
       correctAnswer: state.correctAnswer
     };
 
-    let error;
     if (isNew) {
-      const res = await supabase.from('questions').insert([payload]);
-      error = res.error;
-    } else {
-      const res = await supabase.from('questions').update(payload).eq('id', state.id);
-      error = res.error;
-    }
-
-    if (error) {
-      alert('Ошибка: ' + error.message);
-      btn.textContent = isNew ? 'Добавить в базу' : 'Сохранить изменения в карточке';
-    } else {
-      btn.textContent = '✅ Успешно!';
-      btn.style.background = '#10b981'; 
+      const insertIndex = parseInt(qDiv.querySelector('.q-position').value, 10);
+      const newArray = [...currentQuestions];
+      newArray.splice(insertIndex, 0, payload);
       
-      if (isNew) {
-        qDiv.querySelector('.q-id').disabled = true;
-        qDiv.style.border = '1px solid #e2e8f0'; 
-        setTimeout(() => fetchQuestions(), 1000);
+      qDiv.remove();
+      await syncDatabaseAndRender(newArray, 'Добавляем и сдвигаем 🪄');
+      
+    } else {
+      const { error } = await supabase.from('questions').update(payload).eq('id', state.id);
+
+      if (error) {
+        alert('Ошибка: ' + error.message);
+        btn.textContent = 'Сохранить изменения в карточке';
       } else {
-        // Обновляем в локальном массиве
+        btn.textContent = '✅ Успешно!';
+        btn.style.background = '#10b981'; 
+        
         currentQuestions[index] = payload;
         setTimeout(() => { btn.textContent = 'Сохранить изменения в карточке'; btn.style.background = '#3b82f6'; }, 2000);
       }
@@ -394,14 +521,12 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
   return qDiv;
 }
 
-// ДОБАВЛЕНИЕ НОВОГО ВОПРОСА
 addBtn.addEventListener('click', () => {
   const newEditor = createEditorComponent({ kind: 'text' }, true);
   listContainer.prepend(newEditor);
   window.scrollTo({ top: newEditor.offsetTop - 50, behavior: 'smooth' });
 });
 
-// --- АВТОРИЗАЦИЯ ---
 const overlay = document.getElementById('admin-auth-overlay');
 const passwordInput = document.getElementById('admin-password-input');
 const authBtn = document.getElementById('admin-auth-btn');
