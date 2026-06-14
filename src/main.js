@@ -596,6 +596,7 @@ async function init() {
   const btnTop = document.getElementById('scroll-to-top');
   const btnBottom = document.getElementById('scroll-to-bottom');
   const btnAdminUpast = document.getElementById('admin-upast');
+  const btnAdminEnter = document.getElementById('admin-enter');
   const adminSection = document.getElementById('admin-section');
 
   if (btnAdminUpast && adminSection) {
@@ -604,7 +605,12 @@ async function init() {
       adminSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
-
+  if (btnAdminEnter) {
+  btnAdminEnter.addEventListener('click', () => {
+    // Открываем админку в новой вкладке
+    window.open('https://kulzzer23.github.io/lsfmblue/admin.html', '_blank');
+  });
+}
   if (btnTop) {
     btnTop.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
