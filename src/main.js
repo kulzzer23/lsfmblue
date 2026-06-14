@@ -221,26 +221,44 @@ function renderAdminDetail() {
             let correctAnswersText = '';
             
             // Вытягиваем оригинальный вопрос из загруженной БД
-            try {
-              const targetArray = typeof examQuestions !== 'undefined' ? examQuestions : [];
-              const qId = response.questionId || response.id;
-              const question = targetArray.find(q => q.id === qId);
+           // --- ВСТАВЬ ЭТО СЮДА ---
+            // 1. ПРОВЕРЯЕМ СНАПШОТ (Для новых экзаменов, чтобы ответы не съезжали при ред. базы)
+            if (response.snapshotKind) {
+              if (response.snapshotHint) hint = response.snapshotHint;
               
-              if (question) {
-                if (question.reviewHint) hint = question.reviewHint;
-                
-                // Формируем текст правильного ответа для вывода админу
-                if (question.kind === 'single') {
-                  correctAnswersText = question.correctAnswer;
-                } else if (question.kind === 'multi') {
-                  correctAnswersText = Array.isArray(question.correctAnswer) ? question.correctAnswer.join(', ') : question.correctAnswer;
-                } else if (question.kind === 'text' && question.keywords && question.keywords.length > 0) {
-                  correctAnswersText = 'Ключевые слова: ' + question.keywords.join(', ');
-                }
+              if (response.snapshotKind === 'single') {
+                correctAnswersText = response.snapshotCorrect;
+              } else if (response.snapshotKind === 'multi') {
+                correctAnswersText = Array.isArray(response.snapshotCorrect) ? response.snapshotCorrect.join(', ') : response.snapshotCorrect;
+              } else if (response.snapshotKind === 'text' && response.snapshotCorrect) {
+                correctAnswersText = 'Эталон / Ключевые слова: ' + response.snapshotCorrect;
               }
-            } catch (e) {
-              console.error("Данные вопроса не найдены", e);
+            } 
+            // 2. ФОЛБЭК ПО ID (Для старых экзаменов, которые сдавали до внедрения снапшотов)
+            else {
+              try {
+                const targetArray = typeof examQuestions !== 'undefined' ? examQuestions : [];
+                const qId = response.questionId || response.id;
+                const question = targetArray.find(q => q.id === qId);
+                
+                if (question) {
+                  if (question.reviewHint) hint = question.reviewHint;
+                  
+                  if (question.kind === 'single') {
+                    correctAnswersText = question.correctAnswer;
+                  } else if (question.kind === 'multi') {
+                    correctAnswersText = Array.isArray(question.correctAnswer) ? question.correctAnswer.join(', ') : question.correctAnswer;
+                  } else if (question.kind === 'text' && question.keywords && question.keywords.length > 0) {
+                    correctAnswersText = 'Ключевые слова: ' + question.keywords.join(', ');
+                  } else if (question.kind === 'text' && question.correctAnswer) {
+                    correctAnswersText = 'Ключевые слова: ' + question.correctAnswer;
+                  }
+                }
+              } catch (e) {
+                console.error("Данные вопроса не найдены", e);
+              }
             }
+            // --- КОНЕЦ ВСТАВКИ ---
 
             const isCorrect = response.score > 0;
 
@@ -441,6 +459,8 @@ async function submitExam(event) {
       }
     }
 
+    // ... логика подсчета баллов (score, note) ...
+
     return {
       questionId: question.id,
       label: question.title,
@@ -448,6 +468,12 @@ async function submitExam(event) {
       maxScore: 1,
       note: note,
       answer: normalizedAnswer,
+      
+      // --- НАШ НОВЫЙ ФИКС: СНАПШОТЫ ---
+      // Намертво сохраняем правильный ответ и подсказку прямо в файл стажера
+      snapshotCorrect: question.correctAnswer,
+      snapshotHint: question.reviewHint,
+      snapshotKind: question.kind
     };
   });
 
