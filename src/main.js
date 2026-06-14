@@ -121,13 +121,30 @@ function renderSubmissionList() {
   dom.submissionList.innerHTML = filtered.length
     ? filtered
         .map(
-          (submission) => `
-            <button type="button" class="submission-item ${getReviewStatusClass(submission.reviewStatus)} ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
-              <strong>${submission.name}</strong>
-              <span>${submission.squad}</span>
-              <small>${getReviewStatusLabel(submission.reviewStatus)} · ${submission.score ?? 0}/${submission.maxScore ?? 0} · ${formatDate(submission.submittedAt)}</small>
-            </button>
-          `,
+          (submission) => {
+            // --- ОПРЕДЕЛЯЕМ ЦВЕТА ДЛЯ ЛЕВОЙ ПАНЕЛИ ---
+            const isPassed = submission.reviewStatus === 'passed';
+            const isFailed = submission.reviewStatus === 'failed';
+            
+            let statusStyle = 'color: #94a3b8; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2);'; // Не проверено
+            if (isPassed) statusStyle = 'color: #2ecc71; background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.2);'; // Сдал
+            if (isFailed) statusStyle = 'color: #ff4757; background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.2);'; // Не сдал
+
+            return `
+              <button type="button" class="submission-item ${getReviewStatusClass(submission.reviewStatus)} ${state.selectedSubmissionId === submission.id ? 'active' : ''}" data-id="${submission.id}">
+                <strong style="font-size: 1rem; color: #fff;">${submission.name}</strong>
+                <span style="color: #97a7c6; font-size: 0.85rem; margin-top: 2px; display: block;">${submission.squad}</span>
+                
+                <div style="margin-top: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: #64748b;">
+                  <span style="padding: 2px 6px; border-radius: 4px; font-weight: bold; ${statusStyle}">
+                    ${getReviewStatusLabel(submission.reviewStatus)}
+                  </span>
+                  <span style="color: #7fe3ff; font-weight: bold;">${submission.score ?? 0}/${submission.maxScore ?? 0}</span>
+                  <span>${formatDate(submission.submittedAt)}</span>
+                </div>
+              </button>
+            `;
+          }
         )
         .join('')
     : '<div class="empty-state">Пока нет сохраненных попыток.</div>';
@@ -154,6 +171,28 @@ function renderAdminDetail() {
   state.selectedSubmissionId = selected.id;
   const breakdownArray = selected.breakdown ?? selected.responses ?? [];
 
+  // --- НАЧАЛО ЗАМЕНЫ ---
+  // Определяем текущий статус, чтобы подсветить активную кнопку
+  const isPassed = selected.reviewStatus === 'passed';
+  const isFailed = selected.reviewStatus === 'failed';
+  const isUnchecked = selected.reviewStatus === 'unchecked' || !selected.reviewStatus;
+
+  // Генерируем стили для кнопок
+  const btnPassedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isPassed ? 'background: #2ecc71; color: #000; border: 1px solid #2ecc71; box-shadow: 0 0 12px rgba(46,204,113,0.4);' : 'background: rgba(46,204,113,0.05); color: #2ecc71; border: 1px solid rgba(46,204,113,0.4);'}`;
+  
+  const btnFailedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isFailed ? 'background: #ff4757; color: #fff; border: 1px solid #ff4757; box-shadow: 0 0 12px rgba(255,71,87,0.4);' : 'background: rgba(255,71,87,0.05); color: #ff4757; border: 1px solid rgba(255,71,87,0.4);'}`;
+  
+  const btnUncheckedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isUnchecked ? 'background: #94a3b8; color: #000; border: 1px solid #94a3b8;' : 'background: rgba(148,163,184,0.05); color: #94a3b8; border: 1px solid rgba(148,163,184,0.4);'}`;
+
+  // Блок с кнопками (вынесли в переменную, так как он у тебя дублируется сверху и снизу)
+  const reviewButtonsHtml = `
+    <div class="admin-actions admin-review-actions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+      <button type="button" data-review="passed" style="${btnPassedStyle}">✅ Сдал</button>
+      <button type="button" data-review="failed" style="${btnFailedStyle}">❌ Не сдал</button>
+      <button type="button" data-review="unchecked" style="${btnUncheckedStyle}">⏳ Не проверено</button>
+    </div>
+  `;
+
   dom.adminDetail.innerHTML = `
     <div class="detail-header">
       <div>
@@ -166,6 +205,7 @@ function renderAdminDetail() {
           Баллы: ${selected.score ?? 0} / ${selected.maxScore ?? breakdownArray.length}
         </div>
       </div>
+      ${reviewButtonsHtml}
     </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
@@ -233,12 +273,10 @@ function renderAdminDetail() {
         )
         .join('')}
     </div>
-    <div class="admin-actions admin-review-actions">
-      <button class="secondary-button" type="button" data-review="passed">Сдал</button>
-      <button class="secondary-button" type="button" data-review="failed">Не сдал</button>
-      <button class="secondary-button" type="button" data-review="unchecked">Не проверено</button>
-    </div>
+    
+    ${reviewButtonsHtml}
   `;
+  // --- КОНЕЦ ЗАМЕНЫ ---
 
   dom.adminDetail.querySelectorAll('.review-answer-cb').forEach((checkbox) => {
     checkbox.addEventListener('change', async (event) => {
