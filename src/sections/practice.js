@@ -82,34 +82,55 @@ export function renderPracticeSection({ formEl, resultEl, questions, state, onAn
   
   // --- ЭКРАН ПРЕДУПРЕЖДЕНИЯ ---
   if (!isPracticeStarted && !result) {
-    formEl.innerHTML = `
-      <div style="text-align: center; padding: 40px 20px; background: rgba(7, 13, 28, 0.5); border-radius: 16px; border: 1px solid rgba(127, 227, 255, 0.2);">
-        <h2 style="margin-bottom: 15px; color: #fff;">ПРАКТИЧЕСКИЙ ТЕСТ</h2>
-        <div style="text-align: center; padding: 40px 20px; background: rgba(7, 13, 28, 0.5); border-radius: 16px; border: 1px solid rgba(127, 227, 255, 0.1);">
+   formEl.innerHTML = `
+      <style>
+        .prac-wrap {
+          text-align: center; padding: 40px 20px; background: rgba(7, 13, 28, 0.5); border-radius: 16px; border: 1px solid rgba(127, 227, 255, 0.1);
+        }
+        .prac-inner {
+          background: rgba(127, 227, 255, 0.04); border-left: 4px solid #7fe3ff; padding: 25px 30px; border-radius: 0 16px 16px 0; margin: 0 auto 30px; text-align: left; max-width: 600px; box-shadow: inset 0 0 20px rgba(127, 227, 255, 0.02);
+        }
+        .prac-alert {
+          background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); padding: 16px; border-radius: 12px;
+        }
+        .prac-btn {
+          font-size: 1.1rem; padding: 12px 40px; box-shadow: 0 4px 15px rgba(127, 227, 255, 0.2); transition: all 0.3s ease;
+        }
         
-        <div style="background: rgba(127, 227, 255, 0.04); border-left: 4px solid #7fe3ff; padding: 25px 30px; border-radius: 0 16px 16px 0; margin: 0 auto 30px; text-align: left; max-width: 600px; box-shadow: inset 0 0 20px rgba(127, 227, 255, 0.02);">
-          
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-            <span style="font-size: 1.6rem; filter: drop-shadow(0 0 8px rgba(127, 227, 255, 0.6));">🎯</span>
+        /* МАГИЯ АДАПТИВНОСТИ ДЛЯ МОБИЛОК */
+        @media (max-width: 600px) {
+          .prac-wrap { padding: 20px 10px; }
+          .prac-inner { padding: 15px 12px; margin-bottom: 20px; border-left-width: 3px; }
+          .prac-alert { padding: 12px; }
+          .prac-btn { width: 100%; padding: 12px 20px; font-size: 1rem; }
+          .prac-inner h2 { font-size: 1.1rem !important; }
+          .prac-inner p { font-size: 0.95rem !important; line-height: 1.4 !important; }
+        }
+      </style>
+
+      <div class="prac-wrap">
+        <div class="prac-inner">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <span style="font-size: 1.5rem; filter: drop-shadow(0 0 8px rgba(127, 227, 255, 0.6));">🎯</span>
             <h2 style="color: #7fe3ff; margin: 0; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">Режим тренировки</h2>
           </div>
 
-          <p style="color: #cbd5e1; margin: 0 0 20px 0; font-size: 1.05rem; line-height: 1.6;">
+          <p style="color: #cbd5e1; margin: 0 0 15px 0; font-size: 1.05rem; line-height: 1.6;">
             Данный раздел создан <b style="color: #fff;">исключительно</b> для самостоятельной подготовки и самопроверки ваших знаний 
             <span style="color: #ffda75; font-weight: 600; border-bottom: 1px dashed rgba(255, 218, 117, 0.5); cursor: default;">ПРО</span> перед настоящим экзаменом.
           </p>
 
-          <div style="background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); padding: 16px; border-radius: 12px;">
-            <div style="display: inline-block; background: rgba(255, 187, 0, 0.15); color: #ffda75; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+          <div class="prac-alert">
+            <div style="display: inline-block; background: rgba(255, 187, 0, 0.15); color: #ffda75; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
               Важно понимать
             </div>
             <p style="color: #97a7c6; margin: 0; font-size: 0.95rem; line-height: 1.5;">
-              Успешное прохождение этого теста <b style="color: #ff4757;">не даёт права на повышение</b>. Результаты остаются только на вашем экране и <b style="color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,0.3);">не идут в официальный отчёт</b> старшему составу.
+              Успешное прохождение этого теста <b style="color: #ff4757;">не даёт права на повышение</b>. Результаты остаются только на вашем экране и <b style="color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,0.3);">не идут в официальный отчёт</b>.
             </p>
           </div>
-
         </div>
-        <button id="btn-start-practice" class="primary-button" type="button" style="font-size: 1.1rem; padding: 12px 30px;">Начать практику</button>
+
+        <button id="btn-start-practice" class="primary-button prac-btn" type="button">Начать практику</button>
       </div>
     `;
 
