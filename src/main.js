@@ -140,7 +140,6 @@ function renderSubmissionList() {
     });
   });
 }
-
 function renderAdminDetail() {
   if (!dom.adminDetail) return;
 
@@ -153,8 +152,6 @@ function renderAdminDetail() {
   }
 
   state.selectedSubmissionId = selected.id;
-  
-  // Определяем массив ответов (поддержка старых и новых форматов)
   const breakdownArray = selected.breakdown ?? selected.responses ?? [];
 
   dom.adminDetail.innerHTML = `
@@ -170,11 +167,6 @@ function renderAdminDetail() {
         </div>
       </div>
     </div>
-    <div class="admin-actions admin-review-actions">
-      <button class="secondary-button" type="button" data-review="passed">Сдал</button>
-      <button class="secondary-button" type="button" data-review="failed">Не сдал</button>
-      <button class="secondary-button" type="button" data-review="unchecked">Не проверено</button>
-    </div>
     <div class="detail-meta">
       <span>${selected.squad}</span>
       <span>${selected.contact || 'Нет контакта'}</span>
@@ -186,26 +178,42 @@ function renderAdminDetail() {
         .map(
           (response, index) => {
             let hint = '';
+            let correctAnswersText = '';
+            
+            // Вытягиваем оригинальный вопрос из загруженной БД
             try {
-              const targetArray = typeof content !== 'undefined' && content.exam ? content.exam : (typeof examQuestions !== 'undefined' ? examQuestions : []);
+              const targetArray = typeof examQuestions !== 'undefined' ? examQuestions : [];
               const qId = response.questionId || response.id;
               const question = targetArray.find(q => q.id === qId);
               
-              if (question && question.reviewHint) {
-                hint = question.reviewHint;
+              if (question) {
+                if (question.reviewHint) hint = question.reviewHint;
+                
+                // Формируем текст правильного ответа для вывода админу
+                if (question.kind === 'single') {
+                  correctAnswersText = question.correctAnswer;
+                } else if (question.kind === 'multi') {
+                  correctAnswersText = Array.isArray(question.correctAnswer) ? question.correctAnswer.join(', ') : question.correctAnswer;
+                } else if (question.kind === 'text' && question.keywords && question.keywords.length > 0) {
+                  correctAnswersText = 'Ключевые слова: ' + question.keywords.join(', ');
+                }
               }
             } catch (e) {
-              console.error("Шпаргалка не найдена", e);
+              console.error("Данные вопроса не найдены", e);
             }
 
-            // Проверяем, начислен ли балл (при сдаче экзамена он ставится в 1, если текст не пустой)
             const isCorrect = response.score > 0;
 
             return `
               <article class="breakdown-item" style="flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;">
                 <div style="width: 100%;">
                   <strong>${response.label ?? response.title ?? response.questionId}</strong>
-                  <p style="margin: 6px 0 0 0; font-size: 1rem;"><b>Ответ:</b> ${response.answer ? response.answer : '<span style="color: #ff4757;">Нет ответа</span>'}</p>
+                  <p style="margin: 6px 0 0 0; font-size: 1rem;"><b>Ответ стажёра:</b> ${response.answer ? response.answer : '<span style="color: #ff4757;">Нет ответа</span>'}</p>
+                  
+                  ${correctAnswersText ? `
+                    <p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #7fe3ff;"><b>Правильный ответ:</b> ${correctAnswersText}</p>
+                  ` : ''}
+                  
                 </div>
                 ${hint ? `
                   <div style="margin-top: 6px; padding: 10px 14px; background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); border-radius: 8px; font-size: 0.9rem; color: #ffda75; width: 100%;">
@@ -216,6 +224,7 @@ function renderAdminDetail() {
                 <label style="display: flex; align-items: center; gap: 10px; margin-top: 8px; cursor: pointer; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; width: 100%; border: 1px solid ${isCorrect ? 'rgba(46, 204, 113, 0.3)' : 'transparent'};">
                   <input type="checkbox" class="review-answer-cb" data-index="${index}" ${isCorrect ? 'checked' : ''} style="transform: scale(1.3); cursor: pointer;" />
                   <span style="color: ${isCorrect ? '#2ecc71' : '#97a7c6'}; font-weight: ${isCorrect ? 'bold' : 'normal'};">Ответ верный (1 балл)</span>
+                  <span style="color: #64748b; font-size: 0.8rem; margin-left: auto;">${response.note || ''}</span>
                 </label>
 
               </article>
@@ -231,56 +240,25 @@ function renderAdminDetail() {
     </div>
   `;
 
-  // --- ОБРАБОТЧИК КЛИКА ПО ГАЛОЧКАМ ---
   dom.adminDetail.querySelectorAll('.review-answer-cb').forEach((checkbox) => {
     checkbox.addEventListener('change', async (event) => {
       const index = parseInt(event.target.dataset.index, 10);
       const isChecked = event.target.checked;
 
-      // 1. Меняем балл за конкретный вопрос (1 если верный, 0 если неверный)
       breakdownArray[index].score = isChecked ? 1 : 0;
-      
-      // 2. Пересчитываем общий балл за весь экзамен
       selected.score = breakdownArray.reduce((sum, item) => sum + (item.score || 0), 0);
 
       try {
-        // 3. Сразу сохраняем обновленный объект в базу
         state.submissions = await store.save(selected, state.submissions);
-        
-        // 4. Перерисовываем интерфейс (чтобы обновились цифры в шапке и слева в списке)
         renderSubmissionList();
         renderAdminDetail();
       } catch (error) {
         console.error("Ошибка сохранения балла:", error);
         alert('Не удалось сохранить баллы в базу!');
-        event.target.checked = !isChecked; // Откатываем галочку обратно в случае ошибки интернета
+        event.target.checked = !isChecked; 
       }
     });
   });
-
-  // --- ОБРАБОТЧИК КНОПОК СДАЛ/НЕ СДАЛ ---
-  dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      try {
-        state.submissions = await store.updateReview(
-          selected.id,
-          button.dataset.review,
-          state.isAdmin ? 'admin' : 'checker',
-          state.submissions,
-        );
-        renderSubmissionList();
-        renderAdminDetail();
-        updateHeroStats();
-      } catch (error) {
-        window.alert(
-          error instanceof Error
-            ? `Не удалось сохранить статус: ${error.message}`
-            : 'Не удалось сохранить статус в Supabase.',
-        );
-      }
-    });
-  });
-
 
   dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -304,7 +282,6 @@ function renderAdminDetail() {
     });
   });
 }
-
 function renderPracticeSummary() {
   renderPracticeResult(dom.practiceResult, state.practiceResult);
 }
@@ -400,12 +377,38 @@ async function submitExam(event) {
     const answer = state.examAnswers[question.id];
     const normalizedAnswer = Array.isArray(answer) ? answer.join(', ') : String(answer ?? '');
     const hasAnswer = normalizedAnswer.trim().length > 0;
+    
+    // --- НОВАЯ СИСТЕМА ОЦЕНКИ ---
+    let score = 0;
+    let note = 'Нет ответа';
+
+    if (hasAnswer) {
+      if (question.kind === 'single') {
+        // Сверяем строку
+        const isCorrect = normalize(answer) === normalize(question.correctAnswer ?? '');
+        score = isCorrect ? 1 : 0;
+        note = isCorrect ? 'Авто-проверка: Верно' : 'Авто-проверка: Ошибка';
+      } else if (question.kind === 'multi') {
+        // Сверяем массивы
+        const correct = [...(question.correctAnswer ?? [])].map(normalize).sort();
+        const selected = [...(Array.isArray(answer) ? answer : [answer])].map(normalize).filter(Boolean).sort();
+        const isCorrect = correct.length > 0 && correct.length === selected.length && correct.every((item, index) => item === selected[index]);
+        score = isCorrect ? 1 : 0;
+        note = isCorrect ? 'Авто-проверка: Верно' : 'Авто-проверка: Ошибка';
+      } else {
+        // Текстовые вопросы автоматом получают 0 баллов! 
+        // Проверяющий обязан прочитать глазами и сам поставить галочку.
+        score = 0; 
+        note = 'Ожидает ручной проверки';
+      }
+    }
+
     return {
       questionId: question.id,
       label: question.title,
-      score: hasAnswer ? 1 : 0,
+      score: score, 
       maxScore: 1,
-      note: hasAnswer ? 'Ответ сохранен' : 'Нет ответа',
+      note: note,
       answer: normalizedAnswer,
     };
   });
