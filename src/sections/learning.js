@@ -183,20 +183,38 @@ export function renderLearningSection(container, learningContent) {
       document.body.appendChild(floatingMenu);
     }
 
-    // Добавляем кнопку сворачивания
+  floatingMenu.innerHTML = '';
+    
+    // 1. ЖЕСТКО ВЕШАЕМ СВОЙ КЛАСС НА КОНТЕЙНЕР
+    floatingMenu.classList.add('lsfm-float-box');
+
+    if (!document.getElementById('floating-menu-styles')) {
+      const style = document.createElement('style');
+      style.id = 'floating-menu-styles';
+      style.textContent = `
+        /* Теперь стили обращаются именно к нашему классу */
+        .lsfm-float-box.collapsed .nav-link-btn { display: none !important; }
+        .lsfm-float-box.collapsed .toggle-btn { display: block !important; width: 100%; margin-bottom: 0; }
+        .lsfm-float-box.collapsed { padding: 10px !important; min-width: 150px; }
+      `;
+      document.head.appendChild(style);
+    }
+
     const toggleBtn = document.createElement('button');
-    toggleBtn.innerHTML = '≡'; // Или иконку из SVG
     toggleBtn.className = 'toggle-btn';
+    toggleBtn.innerHTML = floatingMenu.classList.contains('collapsed') ? '≡ Раскрыть' : '✖ Скрыть';
+    
     toggleBtn.onclick = () => {
       floatingMenu.classList.toggle('collapsed');
-      toggleBtn.innerHTML = floatingMenu.classList.contains('collapsed') ? '=' : 'Скрыть меню';
+      toggleBtn.innerHTML = floatingMenu.classList.contains('collapsed') ? '≡ Раскрыть' : '✖ Скрыть';
     };
     floatingMenu.appendChild(toggleBtn);
 
-    // Клонируем кнопки (как раньше)
     const originalButtons = originalToc.querySelectorAll('button');
     originalButtons.forEach(originalBtn => {
       const cloneBtn = originalBtn.cloneNode(true);
+      cloneBtn.classList.add('nav-link-btn'); // Класс для кнопок навигации
+      
       cloneBtn.addEventListener('click', () => {
         originalBtn.click();
         floatingMenu.querySelectorAll('button.active').forEach(b => b.classList.remove('active'));
@@ -205,15 +223,13 @@ export function renderLearningSection(container, learningContent) {
       floatingMenu.appendChild(cloneBtn);
     });
 
-    // 3. Радар скролла: показываем панель только когда оригинал исчез
-    window.addEventListener('scroll', () => {
+    window.onscroll = () => {
       const rect = originalToc.getBoundingClientRect();
-      // Если нижний край оригинального блока ушел вверх за пределы экрана (< 0)
       if (rect.bottom < 0) {
         floatingMenu.classList.add('visible');
       } else {
         floatingMenu.classList.remove('visible');
       }
-    });
+    };
   }
 }

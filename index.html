@@ -935,6 +935,23 @@
 .floating-glass-menu.collapsed .toggle-btn {
   display: block !important;
 }
+/* Когда меню свернуто, прячем все кнопки навигации... */
+.floating-menu.collapsed .nav-link-btn {
+  display: none !important; 
+}
+
+/* ...но оставляем саму кнопку-переключатель видимой! */
+.floating-menu.collapsed .toggle-btn {
+  display: block;
+  width: 100%;
+}
+
+/* Опционально: делаем саму менюшку компактной в свернутом виде */
+.floating-menu.collapsed {
+  width: auto;
+  min-width: 120px;
+  padding: 10px;
+}
     </style>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   </head>

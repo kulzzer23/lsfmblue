@@ -498,6 +498,86 @@ async function submitExam(event) {
   });
 
   state.submissions = await store.save(submission, state.submissions);
+  // --- ОТПРАВКА В DISCORD (С ПОЛНЫМИ ОТВЕТАМИ) ---
+  // --- ОТПРАВКА В DISCORD (УМНАЯ РАЗБИВКА НА НЕСКОЛЬКО СООБЩЕНИЙ) ---
+  const discordWebhookUrl = 'ТВОЙ_СКОПИРОВАННЫЙ_URL_ВЕБХУКА'; // <--- Твоя ссылка
+
+  if (discordWebhookUrl) {
+    // 1. Формируем блоки текста для каждого вопроса по отдельности
+    const answerBlocks = breakdown.map((item, i) => {
+      const statusIcon = item.score > 0 ? '✅' : (item.note.includes('Ожидает ручной') ? '⏳' : '❌');
+      let text = `**${i + 1}. ${item.label}**\n👤 Ответ: \`${item.answer || 'Нет ответа'}\``;
+      
+      if (item.score === 0) {
+        text += `\n*${statusIcon} ${item.note}*`;
+      } else {
+        text += `\n*${statusIcon} Верно (+1 балл)*`;
+      }
+      return text;
+    });
+
+    // 2. Группируем блоки в "чанки" (куски), чтобы не превысить лимит в 4000 символов
+    const chunks = [];
+    let currentChunk = "";
+    
+    for (const block of answerBlocks) {
+      if (currentChunk.length + block.length > 3500) {
+        chunks.push(currentChunk);
+        currentChunk = block;
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + block;
+      }
+    }
+    if (currentChunk) chunks.push(currentChunk); // Добавляем последний остаток
+
+    // 3. Отправляем каждый кусок отдельным сообщением по очереди
+    // Выносим в отдельную функцию, чтобы не тормозить закрытие экзамена для стажёра
+    const sendToDiscord = async () => {
+      for (let i = 0; i < chunks.length; i++) {
+        const isFirst = i === 0;
+        const isLast = i === chunks.length - 1;
+        
+        const embed = {
+          color: 3447003,
+          description: chunks[i]
+        };
+
+        // В первое сообщение добавляем шапку с именем и баллами
+        if (isFirst) {
+          embed.title = `📝 Экзамен сдан: ${submission.name}`;
+          embed.fields = [
+            { name: "Организация", value: submission.squad || "Не указано", inline: true },
+            { name: "Связь", value: submission.contact || "Не указано", inline: true },
+            { name: "Предварительные баллы", value: `${submission.score} из ${submission.maxScore}`, inline: false }
+          ];
+        } else {
+          embed.title = `📝 Продолжение ответов: ${submission.name} (Часть ${i + 1})`;
+        }
+
+        // В последнее сообщение добавляем футер с датой
+        if (isLast) {
+          embed.footer = { text: "LSFM Academy System" };
+          embed.timestamp = new Date().toISOString();
+        }
+
+        try {
+          await fetch(discordWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [embed] })
+          });
+          
+          // Небольшая пауза (0.5 сек) между отправками, чтобы Дискорд не заблокировал нас за спам
+          await new Promise(res => setTimeout(res, 500)); 
+        } catch (err) {
+          console.error("Ошибка отправки части в Discord:", err);
+        }
+      }
+    };
+
+    sendToDiscord();
+  }
+  // ------------------------------------------------
   state.selectedSubmissionId = submission.id;
   state.examAnswers = createBlankAnswers(examQuestions);
   state.examMeta = { name: '', squad: '', contact: '' };
