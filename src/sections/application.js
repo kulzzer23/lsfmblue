@@ -71,20 +71,7 @@ export function renderApplicationSection(containerElement, supabase) {
       .stamp-final.visible { opacity: 0.9; }
 
       /* === АДАПТАЦИЯ ДЛЯ МОБИЛЬНИКОВ И ПЛАНШЕТОВ === */
-      @media (max-width: 850px) {
-        .laptop-perspective { margin: 0; }
-        /* Отключаем 3D-крышку на мобилках, делаем просто скроллящийся планшет */
-        .laptop-lid { transform: none !important; min-height: 100vh; height: auto; border-width: 6px; border-bottom-width: 15px; }
-        .btn-open-laptop { display: none !important; } /* Сразу показываем ОС на мобилке */
-        .os-bios { display: none !important; }
-        .os-workspace { display: flex !important; }
-        
-        .os-windows-container { flex-direction: column; position: static; padding: 10px; gap: 10px; overflow-y: auto; pointer-events: auto; }
-        .os-window { flex: none; min-height: 450px; opacity: 1; transform: none; animation: none; }
-        #window-doc { max-width: 100% !important; }
-        .document-paper { padding: 15px; }
-        .doc-body { font-size: 0.85rem; line-height: 1.4; }
-      }
+      
 
       .blink { animation: blinker 1s linear infinite; }
       @keyframes blinker { 50% { opacity: 0; } }
