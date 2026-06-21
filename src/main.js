@@ -361,8 +361,10 @@ async function fetchImgurAlbumImages(albumUrl, containerId) {
 }
 
 // Рендер деталей заявления (с новой анимацией и кнопкой)
+// Полностью заменяем функцию renderAdminAppDetail в файле main.js
 async function renderAdminAppDetail() {
   if (!dom.adminDetail) return;
+  
   const selected = state.applications.find(app => app.id === state.selectedAppId);
 
   if (!selected) {
@@ -371,57 +373,74 @@ async function renderAdminAppDetail() {
   }
 
   const linkedExam = state.submissions.find(sub => sub.id === selected.exam_id);
-  const statusColor = selected.status === 'approved' ? '#10b981' : (selected.status === 'rejected' ? '#ef4444' : '#f59e0b');
-  const statusText = selected.status === 'approved' ? 'ОДОБРЕНО' : (selected.status === 'rejected' ? 'ОТКЛОНЕНО' : 'ОЖИДАЕТ ПРОВЕРКИ');
-  const finalAlbumUrl = selected.album_url || selected.passport_url;
+  const finalAlbumUrl = selected.album_url || selected.passport_url || selected.licenses_url;
+
+  // Генерируем подпись из имени
+  const n = selected.applicant_name || 'АНОНИМ';
+  const parts = n.split('_');
+  const signature = parts.length > 1 ? `${parts[0][0]}. ${parts[1]}` : n;
+
+  // Статус экзамена
+  const examText = linkedExam ? `ДА (${linkedExam.score}/${linkedExam.maxScore})` : `НЕ НАЙДЕН`;
+  const examColor = linkedExam ? '#10b981' : '#ef4444';
+
+  // Печать вердикта (появляется, если статус уже изменен)
+  let stampHtml = '';
+  if (selected.status === 'approved') {
+    stampHtml = `<div style="position: absolute; bottom: 30px; right: 30px; border: 4px solid #10b981; color: #10b981; font-family: 'PT Sans', sans-serif; font-size: 1.8rem; font-weight: 900; padding: 10px 20px; transform: rotate(-10deg); border-radius: 8px; opacity: 0.8; pointer-events: none; box-shadow: inset 0 0 10px rgba(16,185,129,0.2);">ОДОБРЕНО</div>`;
+  } else if (selected.status === 'rejected') {
+    stampHtml = `<div style="position: absolute; bottom: 30px; right: 30px; border: 4px solid #ef4444; color: #ef4444; font-family: 'PT Sans', sans-serif; font-size: 1.8rem; font-weight: 900; padding: 10px 20px; transform: rotate(-10deg); border-radius: 8px; opacity: 0.8; pointer-events: none; box-shadow: inset 0 0 10px rgba(239,68,68,0.2);">ОТКЛОНЕНО</div>`;
+  }
 
   dom.adminDetail.innerHTML = `
-    <div class="detail-header" style="animation: fadeInUp 0.4s ease forwards;">
+    <style>
+      .admin-doc-paper { background: #fdfdfd; color: #1e293b; padding: 40px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; display: flex; flex-direction: column; overflow: hidden; margin-top: 15px; }
+      .admin-doc-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 12rem; font-weight: 900; color: rgba(0,0,0,0.03); pointer-events: none; font-family: Arial, sans-serif; }
+      .admin-doc-header { text-align: right; font-family: 'Times New Roman', serif; font-size: 1.05rem; margin-bottom: 25px; line-height: 1.5; }
+      .admin-doc-title { text-align: center; font-family: 'Times New Roman', serif; font-size: 1.6rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 25px; }
+      .admin-doc-body { font-family: 'Times New Roman', serif; font-size: 1.15rem; line-height: 1.8; text-align: justify; flex: 1; margin-bottom: 40px; }
+      .admin-doc-field { font-weight: bold; color: #2563eb; border-bottom: 1px dashed #2563eb; padding: 0 4px; text-decoration: none; transition: 0.2s; }
+      .admin-doc-field:hover { background: rgba(37,99,235,0.1); }
+      .admin-doc-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #cbd5e1; padding-top: 15px; font-family: 'Times New Roman', serif; font-size: 1.05rem; }
+      .admin-doc-sign { font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #0f172a; transform: rotate(-5deg); display: inline-block; }
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
       <div>
-        <span style="letter-spacing: 1px; color:#94a3b8; font-size:0.75rem; text-transform:uppercase;">Электронное заявление [3 ранг]</span>
-        <h3 style="margin: 5px 0 0 0; font-size: 1.4rem; color: #fff;">${selected.applicant_name}</h3>
+        <span style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Личное дело кандидата</span>
+        <h2 style="margin: 0; color: #fff; font-size: 1.4rem;">${n}</h2>
       </div>
-      <div style="text-align: right;">
-        <strong style="color: ${statusColor}; border: 1px solid ${statusColor}; padding: 4px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; background: rgba(255,255,255,0.02); display: inline-block; box-shadow: 0 0 10px ${statusColor}40;">${statusText}</strong>
-        <div style="color: #64748b; font-size: 0.8rem; margin-top: 8px;">Подано: ${formatDate(selected.created_at)}</div>
-      </div>
+      ${linkedExam ? `<button id="view-linked-exam" class="secondary-button" style="margin: 0; border-color: #3b82f6; color: #3b82f6; padding: 8px 16px;">👀 Открыть тест ПРО</button>` : ''}
     </div>
 
-    <!-- КНОПКА ПРЯМОГО ПЕРЕХОДА НА IMGUR АЛЬБОМ -->
-    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 16px; margin-top: 20px; animation: fadeInUp 0.4s ease forwards 0.1s; opacity:0;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div style="color: #94a3b8; font-size: 0.95rem;">Пакет документов кандидата (/pass, /lic):</div>
-        <a href="${finalAlbumUrl}" target="_blank" class="primary-button" style="text-decoration: none; padding: 10px 20px; font-size: 0.95rem; background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); color: #fff; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); border-radius: 10px; font-weight: bold; transition: all 0.2s;">
-          📁 Открыть альбом ↗
-        </a>
+    <!-- КРАСИВЫЙ БЛАНК ДОКУМЕНТА В АДМИНКЕ -->
+    <div class="admin-doc-paper">
+      <div class="admin-doc-watermark">LSFM</div>
+      <div class="admin-doc-header">
+        Директору радиоцентра г. Los Santos Leonardo Jemison<br>
+        От гражданина: <span class="admin-doc-field" style="color: #0f172a; border-color: #0f172a;">${n}</span>
       </div>
-      <div id="admin-album-preview-box" style="color: #64748b; font-size: 0.95rem; padding: 10px 0;"></div>
-    </div>
-
-    <!-- СТАТИСТИКА ОНЛАЙН-ТЕСТА -->
-    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-top: 20px; animation: fadeInUp 0.4s ease forwards 0.2s; opacity:0;">
-      <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">Результаты экзамена ПРО</h4>
-      ${linkedExam ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-          <div>
-            <div style="color: #7fe3ff; font-size: 1.2rem; font-weight: bold;">Баллы: ${linkedExam.score} / ${linkedExam.maxScore}</div>
-            <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">Статус проверки: ${getReviewStatusLabel(linkedExam.reviewStatus)}</div>
-          </div>
-          <button id="view-linked-exam" class="secondary-button" style="margin: 0; width: auto; padding: 10px 18px; border-radius: 10px; border-color: rgba(127, 227, 255, 0.2); color: #7fe3ff;">
-            👀 Открыть тест кандидата
-          </button>
-        </div>
-      ` : `<div style="color: #ef4444; margin-top: 10px; font-size: 0.95rem;">❌ Привязанный экзамен не найден в общей базе данных.</div>`}
+      <div class="admin-doc-title">ЗАЯВЛЕНИЕ</div>
+      <div class="admin-doc-body">
+        Прошу принять меня на работу в радиоцентр г. Los Santos на должность радиотехника с испытательным сроком один месяц (( 1 день )). 
+        К заявлению прикладываю копии паспорта и лицензий (( /pass, /lic + /c 60 )): 
+        <a href="${finalAlbumUrl}" target="_blank" class="admin-doc-field">ОТКРЫТЬ ДОКУМЕНТЫ ↗</a>.<br><br>
+        Так же подтверждаю, что успешно прошёл квалификационный онлайн-тест ПРО: <span class="admin-doc-field" style="color: ${examColor}; border-color: ${examColor};">${examText}</span>.
+      </div>
+      <div class="admin-doc-footer">
+        <div>Дата: <strong>${new Date(selected.created_at).toLocaleDateString('ru-RU')}</strong></div>
+        <div>Подпись: <span class="admin-doc-sign">${signature}</span></div>
+      </div>
+      
+      ${stampHtml}
     </div>
 
     <!-- КНОПКИ ВЕРДИКТА -->
-    <div style="display: flex; gap: 12px; margin-top: 24px; animation: fadeInUp 0.4s ease forwards 0.3s; opacity:0;">
-      <button class="save-btn app-status-btn" data-status="approved" style="background: #10b981; flex: 1; padding: 14px; font-size: 1rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(16,185,129,0.2);">✅ Одобрить</button>
-      <button class="save-btn app-status-btn" data-status="rejected" style="background: #ef4444; flex: 1; padding: 14px; font-size: 1rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(239,68,68,0.2);">❌ Отклонить</button>
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <button class="save-btn app-status-btn" data-status="approved" style="background: #10b981; flex: 1; padding: 14px; font-size: 1rem; border-radius: 8px; font-weight: bold; color: #000; border: none; box-shadow: 0 4px 15px rgba(16,185,129,0.2); cursor: pointer;">✅ Одобрить</button>
+      <button class="save-btn app-status-btn" data-status="rejected" style="background: #ef4444; flex: 1; padding: 14px; font-size: 1rem; border-radius: 8px; font-weight: bold; color: #fff; border: none; box-shadow: 0 4px 15px rgba(239,68,68,0.2); cursor: pointer;">❌ Отклонить</button>
     </div>
   `;
-
-  if (finalAlbumUrl) fetchImgurAlbumImages(finalAlbumUrl, 'admin-album-preview-box');
 
   const viewExamBtn = dom.adminDetail.querySelector('#view-linked-exam');
   if (viewExamBtn && linkedExam) {
@@ -441,7 +460,8 @@ async function renderAdminAppDetail() {
         selected.status = newStatus;
         renderAdminListSwitcher();
       } else {
-        alert('Ошибка: ' + error.message);
+        alert('Ошибка изменения статуса: ' + error.message);
+        btn.textContent = newStatus === 'approved' ? '✅ Одобрить' : '❌ Отклонить';
       }
     });
   });

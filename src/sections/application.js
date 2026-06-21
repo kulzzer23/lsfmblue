@@ -3,157 +3,89 @@ export function renderApplicationSection(containerElement, supabase) {
     const style = document.createElement('style');
     style.id = 'app-laptop-os-styles';
     style.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=PT+Sans:wght@400;700&family=Times+New+Roman&display=swap');
+     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=PT+Sans:wght@400;700&family=Times+New+Roman&display=swap');
 
       /* === 3D НОУТБУК === */
-      .laptop-perspective {
-        perspective: 1500px;
-        max-width: 1300px;
-        margin: 40px auto;
-        position: relative;
-        z-index: 10;
-      }
+      .laptop-perspective { perspective: 1500px; max-width: 1300px; margin: 20px auto; position: relative; z-index: 10; }
       .laptop-lid {
-        width: 100%;
-        height: 75vh;
-        min-height: 600px;
-        background: #020617;
-        border: 12px solid #0f172a;
-        border-bottom: 25px solid #0f172a;
-        border-radius: 16px 16px 0 0;
+        width: 100%; height: 82vh; min-height: 550px; background: #020617;
+        border: 12px solid #0f172a; border-bottom: 25px solid #0f172a; border-radius: 16px 16px 0 0;
         box-shadow: 0 -10px 20px rgba(0,0,0,0.5), inset 0 0 15px #000;
-        position: relative;
-        transform-origin: bottom center;
-        transform: rotateX(-90deg); /* Закрытая крышка */
-        transition: transform 1.8s cubic-bezier(0.25, 1, 0.2, 1);
-        transform-style: preserve-3d;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        position: relative; transform-origin: bottom center; transform: rotateX(-90deg);
+        transition: transform 1.8s cubic-bezier(0.25, 1, 0.2, 1); transform-style: preserve-3d;
+        display: flex; flex-direction: column; overflow: hidden;
       }
-      .laptop-lid.open {
-        transform: rotateX(0deg);
-      }
-      .laptop-base {
-        width: 104%;
-        height: 40px;
-        background: linear-gradient(to bottom, #1e293b, #0f172a);
-        margin-left: -2%;
-        border-radius: 0 0 20px 20px;
-        box-shadow: 0 30px 50px rgba(0,0,0,0.8);
-        position: relative;
-        z-index: 11;
-      }
-      .laptop-camera {
-        position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-        width: 8px; height: 8px; background: #000; border-radius: 50%;
-        box-shadow: inset 0 0 3px rgba(255,255,255,0.4);
-      }
+      .laptop-lid.open { transform: rotateX(0deg); }
+      .laptop-base { width: 104%; height: 40px; background: linear-gradient(to bottom, #1e293b, #0f172a); margin-left: -2%; border-radius: 0 0 20px 20px; box-shadow: 0 30px 50px rgba(0,0,0,0.8); position: relative; z-index: 11; }
+      .laptop-camera { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: #000; border-radius: 50%; box-shadow: inset 0 0 3px rgba(255,255,255,0.4); }
 
-      /* Кнопка "Начать работу" (лежит на крышке снаружи) */
-      .btn-open-laptop {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        background: rgba(15, 23, 42, 0.9); border: 2px solid #3b82f6; color: #3b82f6;
-        padding: 20px 40px; font-family: 'PT Sans', sans-serif; font-size: 1.2rem; font-weight: bold;
-        text-transform: uppercase; cursor: pointer; border-radius: 8px;
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: 0.3s; z-index: 100;
-      }
+      .btn-open-laptop { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.9); border: 2px solid #3b82f6; color: #3b82f6; padding: 20px 40px; font-family: 'PT Sans', sans-serif; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 8px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: 0.3s; z-index: 100; }
       .btn-open-laptop:hover { background: #3b82f6; color: #fff; box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
 
-      /* === LSFM OS (Оболочка) === */
-      .os-screen {
-        flex: 1; position: relative; background: #000; overflow: hidden;
-      }
-      .os-bios {
-        position: absolute; inset: 0; background: #000; color: #10b981;
-        font-family: 'Share Tech Mono', monospace; padding: 30px; font-size: 1.1rem; line-height: 1.6;
-        display: none; z-index: 50; text-align: left;
-      }
+      /* === LSFM OS === */
+      .os-screen { flex: 1; position: relative; background: #000; overflow: hidden; }
+      .os-bios { position: absolute; inset: 0; background: #000; color: #10b981; font-family: 'Share Tech Mono', monospace; padding: 30px; font-size: 1.1rem; line-height: 1.6; display: none; z-index: 50; text-align: left; }
+      .os-workspace { position: absolute; inset: 0; display: none; flex-direction: column; background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'), radial-gradient(circle at center, #1e293b 0%, #020617 100%); z-index: 40; }
+      .os-desktop { flex: 1; padding: 15px; position: relative; }
       
-      .os-workspace {
-        position: absolute; inset: 0; display: none; flex-direction: column;
-        background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'), radial-gradient(circle at center, #1e293b 0%, #020617 100%);
-        z-index: 40;
-      }
-
-      /* Рабочий стол и иконки */
-      .os-desktop { flex: 1; padding: 20px; position: relative; }
-      .os-icon {
-        width: 80px; text-align: center; color: #f8fafc; font-family: 'PT Sans', sans-serif;
-        font-size: 0.85rem; margin-bottom: 20px; cursor: pointer; transition: 0.2s;
-      }
-      .os-icon:hover { background: rgba(255,255,255,0.1); border-radius: 8px; }
-      .os-icon-img { font-size: 2.5rem; margin-bottom: 5px; display: block; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
-
-      /* Панель задач (Трей) */
-      .os-taskbar {
-        height: 45px; background: rgba(15, 23, 42, 0.95); border-top: 1px solid #334155;
-        display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
-        backdrop-filter: blur(10px); box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-      }
-      .os-start-btn {
-        background: #3b82f6; color: #fff; border: none; border-radius: 4px;
-        padding: 5px 15px; font-family: 'PT Sans', sans-serif; font-weight: bold; cursor: pointer;
-        display: flex; align-items: center; gap: 8px;
-      }
-      .os-tray { display: flex; align-items: center; gap: 15px; color: #cbd5e1; font-family: 'PT Sans', sans-serif; font-size: 0.9rem; }
-      .os-clock { font-family: 'Share Tech Mono', monospace; font-size: 1rem; color: #fff; }
+      .os-taskbar { height: 40px; background: rgba(15, 23, 42, 0.95); border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+      .os-start-btn { background: #3b82f6; color: #fff; border: none; border-radius: 4px; padding: 4px 12px; font-family: 'PT Sans', sans-serif; font-weight: bold; font-size: 0.85rem; }
+      .os-tray { display: flex; gap: 15px; color: #cbd5e1; font-size: 0.85rem; }
 
       /* === ОКНА ПРОГРАММ === */
-      .os-windows-container {
-        position: absolute; inset: 20px; display: flex; gap: 20px; pointer-events: none;
-      }
-      .os-window {
-        flex: 1; background: rgba(15, 23, 42, 0.9); border: 1px solid #475569; border-radius: 8px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column;
-        pointer-events: auto; opacity: 0; transform: translateY(20px);
-        backdrop-filter: blur(15px); overflow: hidden;
-      }
-      .window-animate { animation: windowPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      .os-windows-container { position: absolute; inset: 15px; display: flex; gap: 15px; pointer-events: none; }
+      .os-window { flex: 1; background: rgba(15, 23, 42, 0.9); border: 1px solid #475569; border-radius: 8px; display: flex; flex-direction: column; pointer-events: auto; opacity: 0; transform: translateY(20px); overflow: hidden; }
+      .window-animate { animation: windowPop 0.4s ease forwards; }
       @keyframes windowPop { to { opacity: 1; transform: translateY(0); } }
 
-      .os-window-header {
-        background: linear-gradient(180deg, #334155, #1e293b); padding: 8px 15px;
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 1px solid #0f172a;
-      }
-      .os-window-title { color: #f8fafc; font-family: 'PT Sans', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
-      .os-window-controls span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ef4444; margin-left: 6px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+      .os-window-header { background: linear-gradient(180deg, #334155, #1e293b); padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #0f172a; }
+      .os-window-title { color: #f8fafc; font-family: 'PT Sans', sans-serif; font-size: 0.85rem; }
+      .os-window-controls span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; margin-left: 5px; }
       .os-window-controls span:nth-child(2) { background: #f59e0b; }
       .os-window-controls span:nth-child(3) { background: #10b981; }
-      .os-window-body { flex: 1; padding: 25px; overflow-y: auto; }
-
-      /* Интерфейс левого окна (Форма) */
-      .app-label { color: #94a3b8; font-family: 'PT Sans', sans-serif; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 1px; }
-      .app-input { width: 100%; background: rgba(0,0,0,0.4) !important; border: 1px solid #3b82f6 !important; color: #fff !important; font-family: 'PT Sans', sans-serif; font-size: 1rem; padding: 12px 15px !important; margin-bottom: 20px; border-radius: 6px !important; outline: none; transition: 0.3s; }
-      .app-input:focus { background: rgba(59,130,246,0.1) !important; box-shadow: 0 0 15px rgba(59,130,246,0.3) !important; }
       
-      .db-scan-box { border: 1px dashed #475569; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 15px; min-height: 100px; color: #64748b; font-family: 'Share Tech Mono', monospace; text-align: center; margin-bottom: 25px; }
-      .db-item { background: rgba(255,255,255,0.03); border: 1px solid #334155; padding: 12px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; text-align: left; }
-      .db-item:hover { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
-      .db-item.selected { border-color: #10b981; background: rgba(16,185,129,0.15); box-shadow: 0 0 15px rgba(16,185,129,0.2); }
+      /* УБРАЛИ СКРОЛЛ, УЖАЛИ ПАДДИНГИ */
+      .os-window-body { flex: 1; padding: 15px; display: flex; flex-direction: column; overflow: hidden; }
 
-      .btn-submit { width: 100%; background: #3b82f6; color: #fff; border: none; padding: 15px; border-radius: 6px; font-family: 'PT Sans', sans-serif; font-size: 1.1rem; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(59,130,246,0.4); }
-      .btn-submit:disabled { background: #334155; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
-      .btn-submit:not(:disabled):hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59,130,246,0.6); }
+      /* ЛЕВОЕ ОКНО (ФОРМА) */
+      .app-label { color: #94a3b8; font-family: 'PT Sans', sans-serif; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; display: block; }
+      .app-input { width: 100%; background: rgba(0,0,0,0.4) !important; border: 1px solid #3b82f6 !important; color: #fff !important; padding: 10px !important; margin-bottom: 12px; border-radius: 4px !important; font-size: 0.9rem; outline: none; }
+      
+      .db-scan-box { flex: 1; border: 1px dashed #475569; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 10px; color: #64748b; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; text-align: center; margin-bottom: 12px; overflow-y: auto; }
+      .db-item { background: rgba(255,255,255,0.03); border: 1px solid #334155; padding: 8px; border-radius: 4px; margin-bottom: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+      .db-item.selected { border-color: #10b981; background: rgba(16,185,129,0.15); }
 
-      /* Интерфейс правого окна (Бланк) */
-      .document-paper { background: #fdfdfd; color: #1e293b; padding: 35px; border-radius: 2px; box-shadow: inset 0 0 30px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.2); position: relative; height: 100%; display: flex; flex-direction: column; }
-      .doc-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 10rem; font-weight: 900; color: rgba(0,0,0,0.03); pointer-events: none; font-family: Arial, sans-serif; }
-      
-      .doc-header { text-align: right; font-family: 'Times New Roman', serif; font-size: 1.05rem; margin-bottom: 25px; line-height: 1.5; }
-      .doc-title { text-align: center; font-family: 'Times New Roman', serif; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 25px; }
-      .doc-body { font-family: 'Times New Roman', serif; font-size: 1.15rem; line-height: 1.8; text-align: justify; flex: 1; }
-      .doc-field { font-weight: bold; color: #2563eb; border-bottom: 1px dashed #2563eb; min-width: 80px; display: inline-block; padding: 0 5px; }
-      
-      .doc-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #cbd5e1; padding-top: 15px; font-family: 'Times New Roman', serif; }
-      .doc-sign { font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #0f172a; transform: rotate(-5deg); display: inline-block; }
+      .btn-submit { width: 100%; background: #3b82f6; color: #fff; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+      .btn-submit:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
 
-      .stamp-final { position: absolute; bottom: 20px; right: 20px; border: 4px solid #dc2626; color: #dc2626; font-family: 'PT Sans', sans-serif; font-size: 1.4rem; font-weight: 900; padding: 10px 15px; transform: rotate(-15deg) scale(3); opacity: 0; pointer-events: none; border-radius: 8px; }
-      .stamp-final.visible { animation: stampSlam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-      @keyframes stampSlam { to { transform: rotate(-15deg) scale(1); opacity: 0.9; } }
-      
-      /* Мигание текста */
+      /* ПРАВОЕ ОКНО (БЛАНК) */
+      .document-paper { background: #fdfdfd; color: #1e293b; padding: 20px 25px; border-radius: 2px; height: 100%; display: flex; flex-direction: column; position: relative; }
+      .doc-header { text-align: right; font-family: 'Times New Roman', serif; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.3; }
+      .doc-title { text-align: center; font-family: 'Times New Roman', serif; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 15px; }
+      .doc-body { font-family: 'Times New Roman', serif; font-size: 0.95rem; line-height: 1.5; text-align: justify; flex: 1; }
+      .doc-field { font-weight: bold; color: #2563eb; border-bottom: 1px dashed #2563eb; padding: 0 4px; }
+      .doc-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #cbd5e1; margin-top: auto; padding-top: 10px; font-family: 'Times New Roman', serif; font-size: 0.9rem; }
+      .doc-sign { font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #0f172a; transform: rotate(-5deg); display: inline-block; }
+
+      .stamp-final { position: absolute; bottom: 15px; right: 15px; border: 3px solid #dc2626; color: #dc2626; font-size: 1.1rem; font-weight: 900; padding: 6px 10px; transform: rotate(-15deg); opacity: 0; }
+      .stamp-final.visible { opacity: 0.9; }
+
+      /* === АДАПТАЦИЯ ДЛЯ МОБИЛЬНИКОВ И ПЛАНШЕТОВ === */
+      @media (max-width: 850px) {
+        .laptop-perspective { margin: 0; }
+        /* Отключаем 3D-крышку на мобилках, делаем просто скроллящийся планшет */
+        .laptop-lid { transform: none !important; min-height: 100vh; height: auto; border-width: 6px; border-bottom-width: 15px; }
+        .btn-open-laptop { display: none !important; } /* Сразу показываем ОС на мобилке */
+        .os-bios { display: none !important; }
+        .os-workspace { display: flex !important; }
+        
+        .os-windows-container { flex-direction: column; position: static; padding: 10px; gap: 10px; overflow-y: auto; pointer-events: auto; }
+        .os-window { flex: none; min-height: 450px; opacity: 1; transform: none; animation: none; }
+        #window-doc { max-width: 100% !important; }
+        .document-paper { padding: 15px; }
+        .doc-body { font-size: 0.85rem; line-height: 1.4; }
+      }
+
       .blink { animation: blinker 1s linear infinite; }
       @keyframes blinker { 50% { opacity: 0; } }
     `;
