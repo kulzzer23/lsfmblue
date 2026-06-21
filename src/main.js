@@ -6,11 +6,12 @@ import { renderLearningSection } from './sections/learning.js';
 import { renderPracticeResult, renderPracticeSection } from './sections/practice.js';
 import { renderExamSection } from './sections/exam.js';
 import { createSubmissionStore, normalizeSubmissionRecord } from './lib/submissions.js';
+import { renderApplicationSection } from './sections/application.js';
 
 
 // ВОТ ЭТА СТРОКА КРИТИЧЕСКИ ВАЖНА (Без неё будет ошибка createClient is not defined)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
+export let supabaseClient = null;
 export let examQuestions = []; 
 const store = createSubmissionStore();
 
@@ -58,10 +59,13 @@ const state = {
   isAdmin: sessionStorage.getItem(config.adminSessionKey) === 'true',
   submissions: [],
   selectedSubmissionId: null,
+  applications: [], // НОВОЕ: массив заявлений
+  selectedAppId: null, // НОВОЕ: выбранное заявление
+  adminViewMode: 'exams', // НОВОЕ: 'exams' или 'apps'
   adminStatusFilter: 'all',
-  practiceAnswers: {}, // Заполним в init()
+  practiceAnswers: {}, 
   practiceResult: null,
-  examAnswers: {}, // Заполним в init()
+  examAnswers: {}, 
   examMeta: { name: '', squad: '', contact: '' },
 };
 
@@ -92,6 +96,7 @@ function setSection(section) {
   dom.learnSection.classList.toggle('hidden', section !== 'learn');
   dom.practiceSection.classList.toggle('hidden', section !== 'practice');
   dom.examSection.classList.toggle('hidden', section !== 'exam');
+  dom.applySection.classList.toggle('hidden', section !== 'apply'); // НОВОЕ
   dom.tabButtons.forEach((button) => {
     button.classList.toggle('active', button.dataset.section === section);
   });
@@ -341,7 +346,156 @@ function renderAdminDetail() {
 function renderPracticeSummary() {
   renderPracticeResult(dom.practiceResult, state.practiceResult);
 }
+// Вспомогательная функция для генерации превьюшек Imgur
+// --- УПРОЩЕННАЯ ВЕРСИЯ БЕЗ API IMGUR ---
+async function fetchImgurAlbumImages(albumUrl, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
+  container.innerHTML = `
+    <div style="background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(100, 116, 139, 0.4); padding: 15px; border-radius: 12px; text-align: center;">
+      <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🖼️</span>
+      <span style="color: #94a3b8; font-size: 0.9rem;">Предпросмотр отключен.<br>Нажмите на синюю кнопку выше, чтобы просмотреть альбом на Imgur.</span>
+    </div>
+  `;
+}
+
+// Рендер деталей заявления (с новой анимацией и кнопкой)
+async function renderAdminAppDetail() {
+  if (!dom.adminDetail) return;
+  const selected = state.applications.find(app => app.id === state.selectedAppId);
+
+  if (!selected) {
+    dom.adminDetail.innerHTML = '<div class="empty-state">Выбери заявление слева, чтобы увидеть подробности.</div>';
+    return;
+  }
+
+  const linkedExam = state.submissions.find(sub => sub.id === selected.exam_id);
+  const statusColor = selected.status === 'approved' ? '#10b981' : (selected.status === 'rejected' ? '#ef4444' : '#f59e0b');
+  const statusText = selected.status === 'approved' ? 'ОДОБРЕНО' : (selected.status === 'rejected' ? 'ОТКЛОНЕНО' : 'ОЖИДАЕТ ПРОВЕРКИ');
+  const finalAlbumUrl = selected.album_url || selected.passport_url;
+
+  dom.adminDetail.innerHTML = `
+    <div class="detail-header" style="animation: fadeInUp 0.4s ease forwards;">
+      <div>
+        <span style="letter-spacing: 1px; color:#94a3b8; font-size:0.75rem; text-transform:uppercase;">Электронное заявление [3 ранг]</span>
+        <h3 style="margin: 5px 0 0 0; font-size: 1.4rem; color: #fff;">${selected.applicant_name}</h3>
+      </div>
+      <div style="text-align: right;">
+        <strong style="color: ${statusColor}; border: 1px solid ${statusColor}; padding: 4px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; background: rgba(255,255,255,0.02); display: inline-block; box-shadow: 0 0 10px ${statusColor}40;">${statusText}</strong>
+        <div style="color: #64748b; font-size: 0.8rem; margin-top: 8px;">Подано: ${formatDate(selected.created_at)}</div>
+      </div>
+    </div>
+
+    <!-- КНОПКА ПРЯМОГО ПЕРЕХОДА НА IMGUR АЛЬБОМ -->
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 16px; margin-top: 20px; animation: fadeInUp 0.4s ease forwards 0.1s; opacity:0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="color: #94a3b8; font-size: 0.95rem;">Пакет документов кандидата (/pass, /lic):</div>
+        <a href="${finalAlbumUrl}" target="_blank" class="primary-button" style="text-decoration: none; padding: 10px 20px; font-size: 0.95rem; background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); color: #fff; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); border-radius: 10px; font-weight: bold; transition: all 0.2s;">
+          📁 Открыть альбом ↗
+        </a>
+      </div>
+      <div id="admin-album-preview-box" style="color: #64748b; font-size: 0.95rem; padding: 10px 0;"></div>
+    </div>
+
+    <!-- СТАТИСТИКА ОНЛАЙН-ТЕСТА -->
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-top: 20px; animation: fadeInUp 0.4s ease forwards 0.2s; opacity:0;">
+      <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">Результаты экзамена ПРО</h4>
+      ${linkedExam ? `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+          <div>
+            <div style="color: #7fe3ff; font-size: 1.2rem; font-weight: bold;">Баллы: ${linkedExam.score} / ${linkedExam.maxScore}</div>
+            <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">Статус проверки: ${getReviewStatusLabel(linkedExam.reviewStatus)}</div>
+          </div>
+          <button id="view-linked-exam" class="secondary-button" style="margin: 0; width: auto; padding: 10px 18px; border-radius: 10px; border-color: rgba(127, 227, 255, 0.2); color: #7fe3ff;">
+            👀 Открыть тест кандидата
+          </button>
+        </div>
+      ` : `<div style="color: #ef4444; margin-top: 10px; font-size: 0.95rem;">❌ Привязанный экзамен не найден в общей базе данных.</div>`}
+    </div>
+
+    <!-- КНОПКИ ВЕРДИКТА -->
+    <div style="display: flex; gap: 12px; margin-top: 24px; animation: fadeInUp 0.4s ease forwards 0.3s; opacity:0;">
+      <button class="save-btn app-status-btn" data-status="approved" style="background: #10b981; flex: 1; padding: 14px; font-size: 1rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(16,185,129,0.2);">✅ Одобрить</button>
+      <button class="save-btn app-status-btn" data-status="rejected" style="background: #ef4444; flex: 1; padding: 14px; font-size: 1rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(239,68,68,0.2);">❌ Отклонить</button>
+    </div>
+  `;
+
+  if (finalAlbumUrl) fetchImgurAlbumImages(finalAlbumUrl, 'admin-album-preview-box');
+
+  const viewExamBtn = dom.adminDetail.querySelector('#view-linked-exam');
+  if (viewExamBtn && linkedExam) {
+    viewExamBtn.addEventListener('click', () => {
+      state.adminViewMode = 'exams';
+      state.selectedSubmissionId = linkedExam.id;
+      dom.adminModeExams.click(); 
+    });
+  }
+
+  dom.adminDetail.querySelectorAll('.app-status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newStatus = btn.dataset.status;
+      btn.textContent = 'Сохранение...';
+      const { error } = await supabaseClient.from('applications').update({ status: newStatus }).eq('id', selected.id);
+      if (!error) {
+        selected.status = newStatus;
+        renderAdminListSwitcher();
+      } else {
+        alert('Ошибка: ' + error.message);
+      }
+    });
+  });
+}
+
+// Главный свитчер списков (Экзамены <-> Заявления)
+function renderAdminListSwitcher() {
+  if (state.adminViewMode === 'exams') {
+    dom.adminModeExams.className = 'save-btn';
+    dom.adminModeExams.style.background = '#3b82f6';
+    dom.adminModeExams.style.color = '#fff';
+    
+    dom.adminModeApps.className = 'secondary-button';
+    dom.adminModeApps.style.background = 'transparent';
+    
+    renderSubmissionList(); 
+    renderAdminDetail();    
+  } else {
+    dom.adminModeApps.className = 'save-btn';
+    dom.adminModeApps.style.background = '#8b5cf6';
+    dom.adminModeApps.style.color = '#fff';
+    
+    dom.adminModeExams.className = 'secondary-button';
+    dom.adminModeExams.style.background = 'transparent';
+
+    dom.submissionList.innerHTML = state.applications.length ? state.applications.map(app => {
+      const isApproved = app.status === 'approved';
+      const isRejected = app.status === 'rejected';
+      let statusStyle = 'color: #94a3b8; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2);';
+      let statusText = 'Ожидает';
+      if (isApproved) { statusStyle = 'color: #10b981; background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3);'; statusText = 'Одобрено'; }
+      if (isRejected) { statusStyle = 'color: #ef4444; background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3);'; statusText = 'Отклонено'; }
+
+      return `
+        <button type="button" class="submission-item ${state.selectedAppId === app.id ? 'active' : ''}" data-appid="${app.id}">
+          <strong style="font-size: 1rem; color: #fff;">${app.applicant_name}</strong>
+          <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="padding: 2px 6px; border-radius: 4px; font-weight: bold; ${statusStyle}">${statusText}</span>
+            <span style="color: #64748b;">${formatDate(app.created_at)}</span>
+          </div>
+        </button>
+      `;
+    }).join('') : '<div class="empty-state">Нет поданных заявлений.</div>';
+
+    dom.submissionList.querySelectorAll('[data-appid]').forEach((button) => {
+      button.addEventListener('click', () => {
+        state.selectedAppId = button.dataset.appid;
+        renderAdminListSwitcher();
+      });
+    });
+
+    renderAdminAppDetail();
+  }
+}
 function renderAdminShell() {
   if (dom.adminStatusOff) dom.adminStatusOff.classList.toggle('hidden', state.isAdmin);
   if (dom.adminStatusOn) dom.adminStatusOn.classList.toggle('hidden', !state.isAdmin);
@@ -646,7 +800,23 @@ function bindAdminControls() {
       URL.revokeObjectURL(url);
     });
   }
-
+  if (dom.adminModeExams && dom.adminModeApps) {
+    dom.adminModeExams.addEventListener('click', () => {
+      state.adminViewMode = 'exams';
+      renderAdminListSwitcher();
+    });
+    
+    dom.adminModeApps.addEventListener('click', async () => {
+      state.adminViewMode = 'apps';
+      // Подгружаем заявления из БД при первом клике (или обновляем)
+      const { data } = await supabaseClient.from('applications').select('*').order('created_at', { ascending: false });
+      if (data) {
+        state.applications = data;
+        if (!state.selectedAppId && data.length > 0) state.selectedAppId = data[0].id;
+      }
+      renderAdminListSwitcher();
+    });
+  }
   if (dom.exportCsv) {
     dom.exportCsv.addEventListener('click', () => {
       const header = ['id', 'name', 'squad', 'contact', 'submittedAt', 'score', 'maxScore'];
@@ -676,7 +846,6 @@ function bindAdminControls() {
 async function init() {
   // 1. ЗАГРУЖАЕМ ВОПРОСЫ ПЕРЕД ТЕМ, КАК СТРОИТЬ САЙТ
   try {
-    // Берем точные названия из твоего config.js
     const url = config.supabaseUrl;
     const key = config.supabaseAnonKey; 
     
@@ -684,11 +853,12 @@ async function init() {
       throw new Error("Ключи Supabase не найдены в конфиге!");
     }
     
-    // ОБЯЗАТЕЛЬНО пишем const перед supabase!
-    const supabase = createClient(url, key);
-    const { data, error } = await supabase.from('questions').select('*');
+    // Записываем в ГЛОБАЛЬНУЮ переменную
+    supabaseClient = createClient(url, key);
+    const { data, error } = await supabaseClient.from('questions').select('*');
     
     if (error) throw error;
+    // ... дальше твой код сортировки examQuestions
     
     examQuestions = data.sort((a, b) => {
       const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
@@ -733,8 +903,12 @@ async function init() {
     adminLogout: document.getElementById('admin-logout'),
     exportCsv: document.getElementById('export-csv'),
     exportJson: document.getElementById('export-json'),
+    applySection: document.getElementById('apply-section'),
+    applicationContainer: document.getElementById('application-container'),
+    adminModeExams: document.getElementById('admin-mode-exams'),
+    adminModeApps: document.getElementById('admin-mode-apps'),
   };
-
+  renderApplicationSection(dom.applicationContainer, supabaseClient);
   renderLearningSection(dom.learningGrid, learningContent);
   
   const btnTop = document.getElementById('scroll-to-top');
