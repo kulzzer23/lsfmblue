@@ -7,43 +7,27 @@ export function renderApplicationSection(containerElement, supabase) {
 
       /* === БРОНЕБОЙНЫЙ КОНТЕЙНЕР === */
       .laptop-scroll-wrapper {
-        width: 100%;
-        overflow-x: auto; /* Позволяет скроллить пальцем на телефоне */
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 20px;
-        display: flex;
-        justify-content: center; /* Центрируем на больших экранах */
+        width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        padding-bottom: 20px; display: flex; justify-content: center;
       }
       
       .mobile-rotate-hint {
-        display: none;
-        text-align: center;
-        color: #3b82f6;
-        font-family: 'PT Sans', sans-serif;
-        font-weight: bold;
-        background: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 15px;
+        display: none; text-align: center; color: #3b82f6; font-family: 'PT Sans', sans-serif;
+        font-weight: bold; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);
+        padding: 10px; border-radius: 8px; margin-bottom: 15px;
       }
 
       /* === 3D КОРПУС === */
       .laptop-perspective {
-        perspective: 1500px;
-        width: 1100px; /* ЖЕСТКАЯ ШИРИНА - БОЛЬШЕ НИКАКОГО СЖАТИЯ */
-        min-width: 1100px; /* Запрещаем сжиматься на мобилках */
-        margin: 10px auto;
-        position: relative;
-        z-index: 10;
-        flex-shrink: 0;
+        perspective: 1500px; width: 1100px; min-width: 1100px; margin: 10px auto;
+        position: relative; z-index: 10; flex-shrink: 0;
       }
       
       .laptop-lid {
         width: 100%; height: 75vh; min-height: 550px; background: #020617;
         border: 10px solid #0f172a; border-bottom: 20px solid #0f172a; border-radius: 12px 12px 0 0;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.5), inset 0 0 10px #000;
-        position: relative; transform-origin: bottom center; transform: rotateX(-90deg);
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.5), inset 0 0 10px #000; position: relative;
+        transform-origin: bottom center; transform: rotateX(-90deg);
         transition: transform 1.5s cubic-bezier(0.25, 1, 0.2, 1); transform-style: preserve-3d;
         display: flex; flex-direction: column; overflow: hidden;
       }
@@ -63,6 +47,25 @@ export function renderApplicationSection(containerElement, supabase) {
         background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); 
         position: relative; overflow: hidden;
       }
+
+      /* ЖИРНЫЙ АЛЕРТ (ПЕРЕКРЫВАЕТ ВЕСЬ ЭКРАН) */
+      .os-critical-alert {
+        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+        z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px;
+        transition: opacity 0.3s ease;
+      }
+      .os-alert-box {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 3px solid #ef4444;
+        box-shadow: 0 0 50px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.1);
+        border-radius: 12px; padding: 40px; text-align: center; max-width: 700px; width: 100%;
+        animation: alertPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      @keyframes alertPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+      .os-alert-title { color: #ef4444; font-family: 'Share Tech Mono', monospace; font-size: 2.5rem; font-weight: bold; margin-bottom: 20px; animation: blinker 1.5s infinite; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+      .os-alert-text { color: #f8fafc; font-family: 'PT Sans', sans-serif; font-size: 1.2rem; line-height: 1.6; margin-bottom: 30px; }
+      .os-alert-text b { color: #fca5a5; font-size: 1.3rem; }
+      .btn-understand { background: #ef4444; color: #fff; border: none; padding: 20px 40px; font-size: 1.3rem; font-family: 'PT Sans', sans-serif; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 10px 20px rgba(239,68,68,0.3); width: 100%; }
+      .btn-understand:hover { background: #dc2626; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(239,68,68,0.5); }
 
       /* Панель задач */
       .os-taskbar { height: 40px; background: #0f172a; border-top: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; z-index: 45; }
@@ -88,32 +91,32 @@ export function renderApplicationSection(containerElement, supabase) {
       .os-window-controls span:nth-child(2) { background: #f59e0b; }
       .os-window-controls span:nth-child(3) { background: #10b981; }
       
-      .os-window-body { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+      .os-window-body { flex: 1; padding: 25px 25px; display: flex; flex-direction: column; overflow: hidden; }
 
       /* ФОРМА (ЛЕВОЕ ОКНО) */
-      .app-label { color: #94a3b8; font-family: 'PT Sans', sans-serif; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; display: block; text-transform: uppercase; }
-      .app-input { width: 100%; background: #000 !important; border: 1px solid #3b82f6 !important; color: #fff !important; padding: 12px 15px !important; margin-bottom: 15px; border-radius: 6px !important; font-size: 0.95rem; outline: none; }
+      .app-label { color: #94a3b8; font-family: 'PT Sans', sans-serif; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; }
+      .app-input { width: 100%; background: #000 !important; border: 1px solid #3b82f6 !important; color: #fff !important; padding: 14px 15px !important; margin-bottom: 20px; border-radius: 6px !important; font-size: 0.95rem; outline: none; }
       
-      .db-scan-box { flex: 1; border: 1px dashed #334155; background: #000; border-radius: 6px; padding: 12px; color: #64748b; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; margin-bottom: 15px; overflow-y: auto; }
+      .db-scan-box { flex: 1; border: 1px dashed #334155; background: #000; border-radius: 6px; padding: 15px; color: #64748b; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; margin-bottom: 20px; overflow-y: auto; }
       .db-item { background: rgba(255,255,255,0.02); border: 1px solid #232936; padding: 10px; border-radius: 4px; margin-bottom: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
       .db-item:hover { border-color: #3b82f6; }
       .db-item.selected { border-color: #10b981; background: rgba(16,185,129,0.1); }
 
-      .btn-submit { width: 100%; background: #3b82f6; color: #fff; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; text-transform: uppercase; transition: 0.3s; }
+      .btn-submit { width: 100%; background: #3b82f6; color: #fff; border: none; padding: 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1.1rem; text-transform: uppercase; transition: 0.3s; }
       .btn-submit:disabled { background: #232936; color: #475569; cursor: not-allowed; }
       .btn-submit:not(:disabled):hover { background: #2563eb; transform: translateY(-2px); }
 
       /* ФИЗИЧЕСКИЙ БЛАНК (ПРАВОЕ ОКНО) */
-      .document-paper { background: #fdfdfd; color: #1e293b; padding: 25px 35px; border-radius: 2px; height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+      .document-paper { background: #fdfdfd; color: #1e293b; padding: 35px 40px; border-radius: 2px; height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
       .doc-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 9rem; font-weight: 900; color: rgba(0,0,0,0.02); pointer-events: none; }
-      .doc-header { text-align: right; font-family: 'Times New Roman', serif; font-size: 1rem; margin-bottom: 20px; line-height: 1.4; }
-      .doc-title { text-align: center; font-family: 'Times New Roman', serif; font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; }
-      .doc-body { font-family: 'Times New Roman', serif; font-size: 1.05rem; line-height: 1.6; text-align: justify; flex: 1; }
+      .doc-header { text-align: right; font-family: 'Times New Roman', serif; font-size: 1.1rem; margin-bottom: 25px; line-height: 1.4; }
+      .doc-title { text-align: center; font-family: 'Times New Roman', serif; font-size: 1.4rem; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; }
+      .doc-body { font-family: 'Times New Roman', serif; font-size: 1.15rem; line-height: 1.6; text-align: justify; flex: 1; }
       .doc-field { font-weight: bold; color: #2563eb; border-bottom: 1px dashed #2563eb; padding: 0 4px; }
-      .doc-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #cbd5e1; margin-top: auto; padding-top: 10px; font-family: 'Times New Roman', serif; font-size: 1rem; }
-      .doc-sign { font-family: 'Brush Script MT', cursive; font-size: 1.8rem; color: #0f172a; transform: rotate(-5deg); display: inline-block; }
+      .doc-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #cbd5e1; margin-top: auto; padding-top: 15px; font-family: 'Times New Roman', serif; font-size: 1.1rem; }
+      .doc-sign { font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #0f172a; transform: rotate(-5deg); display: inline-block; }
 
-      .stamp-final { position: absolute; bottom: 50px; right: 30px; border: 4px solid #dc2626; color: #dc2626; font-size: 1.3rem; font-weight: 900; padding: 8px 12px; transform: rotate(-12deg); opacity: 0; border-radius: 6px; }
+      .stamp-final { position: absolute; bottom: 50px; right: 30px; border: 4px solid #dc2626; color: #dc2626; font-size: 1.5rem; font-weight: 900; padding: 10px 15px; transform: rotate(-12deg); opacity: 0; border-radius: 6px; }
       .stamp-final.visible { opacity: 0.9; }
 
       @media (max-width: 1100px) {
@@ -143,6 +146,20 @@ export function renderApplicationSection(containerElement, supabase) {
             <div class="os-bios" id="os-bios"></div>
 
             <div class="os-workspace" id="os-workspace">
+              
+              <!-- === ТОТ САМЫЙ ОГРОМНЫЙ АЛЕРТ === -->
+              <div class="os-critical-alert" id="os-disclaimer-modal">
+                <div class="os-alert-box">
+                  <div class="os-alert-title">ВНИМАНИЕ!</div>
+                  <div class="os-alert-text">
+                    ЭТОТ РАЗДЕЛ ТОЛЬКО ДЛЯ ТЕХ, КТО <b>НЕ СОСТОИТ</b> В РАДИОЦЕНТРЕ!<br><br>
+                    Если вы уже состоите в нашей организации на 2-ой порядковой должности и вам нужно просто сдать экзамен, <b>закройте эту вкладку</b> и перейдите в раздел «Экзамен».
+                  </div>
+                  <button class="btn-understand" id="btn-understand">Я понял.</button>
+                </div>
+              </div>
+              <!-- ================================== -->
+
               <div class="os-windows-container">
                 
                 <div class="os-window" id="window-form">
@@ -151,8 +168,9 @@ export function renderApplicationSection(containerElement, supabase) {
                     <div class="os-window-controls"><span></span><span></span><span></span></div>
                   </div>
                   <div class="os-window-body">
+
                     <label class="app-label">Идентификатор (Имя_Фамилия)</label>
-                    <input type="text" id="app-name" class="app-input" placeholder="Alex_Kraft" autocomplete="off">
+                    <input type="text" id="app-name" class="app-input" placeholder="Leonardo_Jemison" autocomplete="off">
 
                     <label class="app-label">Пакет документов (Imgur Link)</label>
                     <input type="text" id="app-album" class="app-input" placeholder="https://imgur.com/..." autocomplete="off">
@@ -176,7 +194,7 @@ export function renderApplicationSection(containerElement, supabase) {
                     <div class="document-paper">
                       <div class="doc-watermark">LSFM</div>
                       <div class="doc-header">
-                        Директору радиоцентра г. Los Santos Alex Kraft<br>
+                        Директору радиоцентра г. Los Santos Leonardo Jemison<br>
                         От гражданина: <span class="doc-field" id="paper-name" style="color: #0f172a; border-color: #0f172a;">...</span>
                       </div>
                       <div class="doc-title">ЗАЯВЛЕНИЕ</div>
@@ -219,10 +237,20 @@ export function renderApplicationSection(containerElement, supabase) {
   const windowForm = document.getElementById('window-form');
   const windowDoc = document.getElementById('window-doc');
   const osClock = document.getElementById('os-clock');
+  const modalAlert = document.getElementById('os-disclaimer-modal');
+  const btnUnderstand = document.getElementById('btn-understand');
 
   setInterval(() => {
     osClock.textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   }, 1000);
+
+  // Логика закрытия алерта
+  btnUnderstand.addEventListener('click', () => {
+    modalAlert.style.opacity = '0';
+    setTimeout(() => {
+      modalAlert.style.display = 'none';
+    }, 300);
+  });
 
   btnOpenLaptop.addEventListener('click', () => {
     btnOpenLaptop.style.display = 'none';
@@ -328,7 +356,7 @@ export function renderApplicationSection(containerElement, supabase) {
 
         examListContainer.innerHTML = sorted.map((ex) => {
           const rawDate = ex.submittedAt || ex.created_at;
-          const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('ru-RU', {month: '2-digit', day: '2-digit'}) : '??';
+          const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('ru-RU', {month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}) : '??';
           const score = ex.score || 0;
           const max = ex.maxScore || (ex.breakdown ? ex.breakdown.length : '23');
           return `

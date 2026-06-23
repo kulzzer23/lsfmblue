@@ -614,12 +614,10 @@ async function submitExam(event) {
 
     if (hasAnswer) {
       if (question.kind === 'single') {
-        // Сверяем строку
         const isCorrect = normalize(answer) === normalize(question.correctAnswer ?? '');
         score = isCorrect ? 1 : 0;
         note = isCorrect ? 'Авто-проверка: Верно' : 'Авто-проверка: Ошибка';
       } else if (question.kind === 'multi') {
-        // Сверяем массивы
         const correct = [...(question.correctAnswer ?? [])].map(normalize).sort();
         const selected = [...(Array.isArray(answer) ? answer : [answer])].map(normalize).filter(Boolean).sort();
         const isCorrect = correct.length > 0 && correct.length === selected.length && correct.every((item, index) => item === selected[index]);
@@ -627,13 +625,10 @@ async function submitExam(event) {
         note = isCorrect ? 'Авто-проверка: Верно' : 'Авто-проверка: Ошибка';
       } else {
         // Текстовые вопросы автоматом получают 0 баллов! 
-        // Проверяющий обязан прочитать глазами и сам поставить галочку.
         score = 0; 
         note = 'Ожидает ручной проверки';
       }
     }
-
-    // ... логика подсчета баллов (score, note) ...
 
     return {
       questionId: question.id,
@@ -642,15 +637,40 @@ async function submitExam(event) {
       maxScore: 1,
       note: note,
       answer: normalizedAnswer,
-      
-      // --- НАШ НОВЫЙ ФИКС: СНАПШОТЫ ---
-      // Намертво сохраняем правильный ответ и подсказку прямо в файл стажера
       snapshotCorrect: question.correctAnswer,
       snapshotHint: question.reviewHint,
       snapshotKind: question.kind
     };
   });
 
+  // --- ТОЧЕЧНАЯ ПРОВЕРКА НА ЛИМИТ ОШИБОК ---
+  // Считаем только те вопросы, где авто-проверка выдала «Ошибка» (игнорируем ручную проверку текста)
+  const totalErrors = breakdown.filter(item => item.note === 'Авто-проверка: Ошибка' || item.note === 'Нет ответа').length;
+
+  if (totalErrors >= 4) {
+    // Блокируем отправку везде. Очищаем форму и выводим окно провала
+    dom.examForm.innerHTML = `
+      <div style="background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444; padding: 40px; border-radius: 12px; text-align: center; max-width: 600px; margin: 40px auto; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); animation: fadeInUp 0.4s ease;">
+        <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🛑</span>
+        <h2 style="color: #ef4444; font-family: 'PT Sans', sans-serif; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Экзамен провален</h2>
+        <p style="color: #94a3b8; font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px;">
+          Вы допустили <strong style="color: #fff; font-size: 1.2rem;">${totalErrors} ошибки(ок)</strong>.<br>
+          Максимально допустимый лимит для сдачи экзамена по ПРО, ППЭ, Уставу — <strong style="color: #10b981;">4 ошибки</strong>.<br>
+          Данная попытка аннулирована и не пойдет в отчет старшему составу.
+        </p>
+        <button onclick="window.location.reload()" style="background: #ef4444; color: #fff; border: none; padding: 14px 30px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);">
+          🔄 Начать пересдачу
+        </button>
+      </div>
+    `;
+    
+    // Сбрасываем стейт ответов, чтобы не потащились в следующий раз
+    state.examAnswers = createBlankAnswers(examQuestions);
+    state.examMeta = { name: '', squad: '', contact: '' };
+    return; // Жесткий стоп-кран, дальше код не выполняется
+  }
+
+  // --- ЕСЛИ ВСЁ ОК, ИДЕТ СТАРЫЙ ФУНКЦИОНАЛ ОТПРАВКИ ---
   const answers = breakdown.reduce((accumulator, item) => {
     accumulator[item.questionId] = item.answer;
     return accumulator;
@@ -672,12 +692,11 @@ async function submitExam(event) {
   });
 
   state.submissions = await store.save(submission, state.submissions);
-  // --- ОТПРАВКА В DISCORD (С ПОЛНЫМИ ОТВЕТАМИ) ---
-  // --- ОТПРАВКА В DISCORD (УМНАЯ РАЗБИВКА НА НЕСКОЛЬКО СООБЩЕНИЙ) ---
-  const discordWebhookUrl = 'ТВОЙ_СКОПИРОВАННЫЙ_URL_ВЕБХУКА'; // <--- Твоя ссылка
+
+  // --- ОТПРАВКА В DISCORD ---
+  const discordWebhookUrl = 'ТВОЙ_СКОПИРОВАННЫЙ_URL_ВЕБХУКА'; 
 
   if (discordWebhookUrl) {
-    // 1. Формируем блоки текста для каждого вопроса по отдельности
     const answerBlocks = breakdown.map((item, i) => {
       const statusIcon = item.score > 0 ? '✅' : (item.note.includes('Ожидает ручной') ? '⏳' : '❌');
       let text = `**${i + 1}. ${item.label}**\n👤 Ответ: \`${item.answer || 'Нет ответа'}\``;
@@ -690,7 +709,6 @@ async function submitExam(event) {
       return text;
     });
 
-    // 2. Группируем блоки в "чанки" (куски), чтобы не превысить лимит в 4000 символов
     const chunks = [];
     let currentChunk = "";
     
@@ -702,10 +720,8 @@ async function submitExam(event) {
         currentChunk += (currentChunk ? '\n\n' : '') + block;
       }
     }
-    if (currentChunk) chunks.push(currentChunk); // Добавляем последний остаток
+    if (currentChunk) chunks.push(currentChunk);
 
-    // 3. Отправляем каждый кусок отдельным сообщением по очереди
-    // Выносим в отдельную функцию, чтобы не тормозить закрытие экзамена для стажёра
     const sendToDiscord = async () => {
       for (let i = 0; i < chunks.length; i++) {
         const isFirst = i === 0;
@@ -716,7 +732,6 @@ async function submitExam(event) {
           description: chunks[i]
         };
 
-        // В первое сообщение добавляем шапку с именем и баллами
         if (isFirst) {
           embed.title = `📝 Экзамен сдан: ${submission.name}`;
           embed.fields = [
@@ -728,7 +743,6 @@ async function submitExam(event) {
           embed.title = `📝 Продолжение ответов: ${submission.name} (Часть ${i + 1})`;
         }
 
-        // В последнее сообщение добавляем футер с датой
         if (isLast) {
           embed.footer = { text: "LSFM Academy System" };
           embed.timestamp = new Date().toISOString();
@@ -740,8 +754,6 @@ async function submitExam(event) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ embeds: [embed] })
           });
-          
-          // Небольшая пауза (0.5 сек) между отправками, чтобы Дискорд не заблокировал нас за спам
           await new Promise(res => setTimeout(res, 500)); 
         } catch (err) {
           console.error("Ошибка отправки части в Discord:", err);
@@ -751,7 +763,8 @@ async function submitExam(event) {
 
     sendToDiscord();
   }
-  // ------------------------------------------------
+
+  // Сброс и перерендер интерфейса для следующего раза/админки
   state.selectedSubmissionId = submission.id;
   state.examAnswers = createBlankAnswers(examQuestions);
   state.examMeta = { name: '', squad: '', contact: '' };
