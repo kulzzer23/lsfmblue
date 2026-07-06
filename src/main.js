@@ -25,7 +25,10 @@ function createBlankAnswers(questions) {
 }
 
 function normalize(text) {
-  return String(text).trim().toLowerCase();
+  if (!text) return '';
+  // Удаляем вообще ВСЕ пробелы, табы и невидимые символы, приводим к нижнему регистру
+  // 'LS | ПРО', 'ls|про', ' LS  |  ПРО ' -> всё превратится строго в 'ls|про'
+  return String(text).toLowerCase().replace(/[\s\u200B-\u200D\uFEFF]/g, '');
 }
 
 function scorePracticeQuestion(question, answer) {
@@ -634,9 +637,21 @@ async function submitExam(event) {
         score = isCorrect ? 1 : 0;
         note = isCorrect ? 'Авто-проверка: Верно' : 'Авто-проверка: Ошибка';
       } else {
-        // Текстовые вопросы автоматом получают 0 баллов! 
-        score = 0; 
-        note = 'Ожидает ручной проверки';
+        // Автопроверка для текста: проверяем и эталон, и шпаргалку
+        const normAnswer = normalize(answer);
+        const normCorrect = normalize(question.correctAnswer);
+        const normHint = normalize(question.reviewHint);
+        
+        // Сравниваем очищенный ответ стажёра с очищенным эталоном или подсказкой
+        const isExactMatch = (normCorrect && normAnswer === normCorrect) || (normHint && normAnswer === normHint);
+        
+        if (isExactMatch) {
+          score = 1;
+          note = 'Авто-проверка: Верно';
+        } else {
+          score = 0; 
+          note = 'Ожидает ручной проверки';
+        }
       }
     }
 
@@ -654,9 +669,11 @@ async function submitExam(event) {
   });
 
   // --- ТОЧЕЧНАЯ ПРОВЕРКА НА ЛИМИТ ОШИБОК ---
+// --- ТОЧЕЧНАЯ ПРОВЕРКА НА ЛИМИТ ОШИБОК ---
   const totalErrors = breakdown.filter(item => item.note === 'Авто-проверка: Ошибка' || item.note === 'Нет ответа').length;
 
-  if (totalErrors >= 4) {
+  // Если ошибок >= 4 И при этом человек НЕ админ - выкидываем его
+  if (totalErrors >= 4 && !state.isAdmin) {
     dom.examForm.innerHTML = `
       <div style="background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444; padding: 40px; border-radius: 12px; text-align: center; max-width: 600px; margin: 40px auto; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); animation: fadeInUp 0.4s ease;">
         <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🛑</span>

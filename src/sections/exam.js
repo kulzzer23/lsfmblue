@@ -87,7 +87,7 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
       ? `<div style="color: #ff4757;">Объявление отклонено. Проверил сотрудник СМИ <span class="ad-editor-name">${escapeHtml(editorName)}</span></div>
          <div style="color: #ff4757;">Отклонено объявление: <span style="color: #ffaa00;">${escapeHtml(question.title)}</span></div>
          <div style="color: #ff4757;">Причина: <span class="ad-result-text">${escapeHtml(currentAnswer)}</span></div>`
-      : `<div style="color: #00e500;">LSFM | <span class="ad-result-text">${escapeHtml(currentAnswer ?? '')}</span> | Отправил ${randomSender}[${10 + index}] (тел. ${randomPhone})</div>
+      : `<div style="color: #00e500;"LS | <span class="ad-result-text">${escapeHtml(currentAnswer ?? '')}</span> | Отправил ${randomSender}[${10 + index}] (тел. ${randomPhone})</div>
          <div style="color: #00e500;">Объявление проверил сотрудник СМИ <span class="ad-editor-name">${escapeHtml(editorName)}</span></div>`;
 
     return `
@@ -150,7 +150,7 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
                 const inp = container.querySelector('input');
                 let val = inp.value.trim();
                 if (!val) {
-                  val = 'LSFM | ПРО';
+                  val = 'LS | ПРО';
                   inp.value = val;
                 }
                 
