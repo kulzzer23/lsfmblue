@@ -272,12 +272,21 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
   if (!isExamStarted) {
     disableAntiCheat(); 
     
-    formEl.innerHTML = `
+   formEl.innerHTML = `
       <div style="text-align: center; padding: 40px 20px; background: rgba(7, 13, 28, 0.5); border-radius: 16px; border: 1px solid rgba(127, 227, 255, 0.2);">
         <h2 style="margin-bottom: 15px; color: #fff;">Готов сдать экзамен?</h2>
-        <p style="margin-bottom: 25px; color: #97a7c6; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-          После нажатия кнопки запустится анти-чит система. Сворачивать браузер, переключать вкладки или подглядывать в «Обучение» будет запрещено. Любое из этих действий приведет к аннулированию.
-        </p>
+        
+        <!-- БЛОК АНТИ-ЧИТА -->
+        <div style="margin-bottom: 25px; max-width: 550px; margin-left: auto; margin-right: auto; background: rgba(255, 218, 117, 0.05); border: 1px solid rgba(255, 218, 117, 0.3); padding: 16px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+          <p style="margin: 0 0 8px 0; color: #ffda75; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">
+            🚨 ЗАПУСТИТСЯ АНТИ-ЧИТ СИСТЕМА
+          </p>
+          <p style="margin: 0; color: #cbd5e1; line-height: 1.5; font-size: 0.95rem;">
+            Сворачивать браузер, переключать вкладки или подглядывать в «Обучение» строго <b style="color: #ff4757;">запрещено</b>. Любое из этих действий приведет к <b style="color: #ff4757;">аннулированию</b>.
+          </p>
+        </div>
+        <!-- КОНЕЦ БЛОКА АНТИ-ЧИТА -->
+
         <div style="background: rgba(255, 71, 87, 0.04); border-left: 4px solid #ff4757; padding: 22px 28px; border-radius: 0 16px 16px 0; margin: 25px auto; font-family: sans-serif; line-height: 1.6; max-width: 600px; text-align: left; box-shadow: inset 0 0 20px rgba(255, 71, 87, 0.02);">
     
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
