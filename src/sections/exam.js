@@ -7,7 +7,7 @@ let isExamStarted = false;
 let examVisibilityHandler = null;
 let examTabCheatHandler = null;
 
-function createQuestionMarkup(question, index, currentAnswer) {
+function createQuestionMarkup(question, index, currentAnswer, currentUserName = '') {
   const options = question.options ?? [];
 
   // ЕСЛИ ЭТО ОБЫЧНЫЙ ТЕСТ С ВАРИАНТАМИ ОТВЕТОВ (Кружочки или Галочки)
@@ -46,6 +46,19 @@ function createQuestionMarkup(question, index, currentAnswer) {
   else {
     const senders = ['Haruki_Tanigawa', 'John_Doe', 'Carl_Johnson', 'Tommy_Vercetti', 'Leonard_Jemison'];
     const randomSender = senders[index % senders.length];
+    const randomPhone = 100000 + ((index + 1) * 74321) % 899999;
+    const editorName = currentUserName && currentUserName.trim() ? currentUserName.trim() : 'Неизвестно';
+
+    // Проверяем, был ли ответ уже сохранён как отказ, чтобы правильно отрендерить при загрузке страницы
+    const isRejected = currentAnswer && (currentAnswer.toUpperCase().includes('ПРО') || currentAnswer.toUpperCase().includes('ОТКАЗ') || currentAnswer.toUpperCase().includes('LS |'));
+
+    // Формируем HTML для режима просмотра (зеленый для принятых, красный для отклоненных)
+    const adHtml = isRejected 
+      ? `<div style="color: #ff4757;">Объявление отклонено. Проверил сотрудник СМИ <span class="ad-editor-name">${escapeHtml(editorName)}</span></div>
+         <div style="color: #ff4757;">Отклонено объявление: <span style="color: #ffaa00;">${escapeHtml(question.title)}</span></div>
+         <div style="color: #ff4757;">Причина: <span class="ad-result-text">${escapeHtml(currentAnswer)}</span></div>`
+      : `<div style="color: #00e500;">LSFM | <span class="ad-result-text">${escapeHtml(currentAnswer ?? '')}</span> | Отправил ${randomSender}[${10 + index}] (тел. ${randomPhone})</div>
+         <div style="color: #00e500;">Объявление проверил сотрудник СМИ <span class="ad-editor-name">${escapeHtml(editorName)}</span></div>`;
 
     return `
       <article class="question-card samp-card-override" data-question-id="${escapeHtml(question.id)}" data-original-index="${index}" style="background: transparent; border: none; box-shadow: none; padding: 0;">
@@ -53,36 +66,98 @@ function createQuestionMarkup(question, index, currentAnswer) {
           <span class="q-number" style="background: rgba(127, 227, 255, 0.1); color: #7fe3ff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; border: 1px solid rgba(127, 227, 255, 0.2);">Вопрос ${index + 1}</span>
         </div>
         
-        <div class="samp-dialog-wrapper">
-          <div class="samp-dialog-header">Отредактируйте объявления</div>
+        <div class="samp-text-container">
           
-          <div class="samp-dialog-row">
-            <div class="samp-dialog-label">Отправитель:</div>
-            <div class="samp-dialog-value">${randomSender}</div>
-          </div>
-          
-          <div class="samp-dialog-row">
-            <div class="samp-dialog-label">Текст:</div>
-            <div class="samp-dialog-value samp-dialog-text-yellow">${escapeHtml(question.title)}</div>
-          </div>
-          
-          <div class="samp-dialog-instructions">
-            Введите новый текст для этого объявления или оставьте поле пустым если редактирование не нужно.<br>
-            Вы можете пропустить это объявление с помощью команды <b>/adskip</b> или указав знак <b>"="</b> без кавычек одним символом и нажать "Принять".<br>
+          <!-- РЕЖИМ РЕДАКТИРОВАНИЯ (ДИАЛОГОВОЕ ОКНО) -->
+          <div class="samp-dialog-wrapper edit-mode" style="${currentAnswer ? 'display: none;' : 'display: block;'}">
+            <div class="samp-dialog-header">Отредактируйте объявления</div>
+            
+            <div class="samp-dialog-row">
+              <div class="samp-dialog-label">Отправитель:</div>
+              <div class="samp-dialog-value">${randomSender}</div>
+            </div>
+            
+            <div class="samp-dialog-row">
+              <div class="samp-dialog-label">Текст:</div>
+              <div class="samp-dialog-value samp-dialog-text-yellow">${escapeHtml(question.title)}</div>
+            </div>
+            
+            <div class="samp-dialog-instructions">
+              Введите новый текст для этого объявления или оставьте поле пустым если редактирование не нужно.<br>
+              Вы можете пропустить это объявление с помощью команды <b>/adskip</b> или указав знак <b>"="</b> без кавычек одним символом и нажать "Принять".<br>
+            </div>
+
+            <div class="samp-dialog-input-container">
+              <input type="text" 
+                     class="samp-dialog-input" 
+                     data-question-id="${escapeHtml(question.id)}" 
+                     value="${escapeHtml(currentAnswer ?? '')}" 
+                     autocomplete="off">
+            </div>
+
+            <div class="samp-dialog-buttons">
+              <!-- КНОПКА "ПРИНЯТЬ" -->
+              <button type="button" class="samp-btn btn-accept" onclick="
+                const container = this.closest('.samp-text-container');
+                const inp = container.querySelector('input');
+                const val = inp.value.trim();
+                if(!val) return;
+                
+                inp.dispatchEvent(new Event('input', {bubbles: true})); // Записываем в локальный стейт
+                
+                const nameField = document.getElementById('exam-name');
+                const edName = nameField && nameField.value.trim() ? nameField.value.trim() : 'Неизвестно';
+                const escapeStr = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                container.querySelector('.samp-published-ad').innerHTML = 
+                  '<div style=\\'color: #00e500;\\'>LSFM | <span class=\\'ad-result-text\\'>' + escapeStr(val) + '</span> | Отправил ${randomSender}[${10 + index}] (тел. ${randomPhone})</div>' +
+                  '<div style=\\'color: #00e500;\\'>Объявление проверил сотрудник СМИ <span class=\\'ad-editor-name\\'>' + escapeStr(edName) + '</span></div>';
+                
+                container.querySelector('.edit-mode').style.display = 'none';
+                container.querySelector('.view-mode').style.display = 'block';
+              ">Принять</button>
+              
+              <!-- КНОПКА "ОТКЛОНИТЬ" (С ПРИЧИНОЙ) -->
+              <button type="button" class="samp-btn btn-reject" onclick="
+                const container = this.closest('.samp-text-container');
+                const inp = container.querySelector('input');
+                let val = inp.value.trim();
+                if (!val) {
+                  val = 'LS | ПРО'; // Авто-причина, если стажёр ничего не ввёл
+                  inp.value = val;
+                }
+                
+                inp.dispatchEvent(new Event('input', {bubbles: true})); // Записываем отказ в локальный стейт
+                
+                const nameField = document.getElementById('exam-name');
+                const edName = nameField && nameField.value.trim() ? nameField.value.trim() : 'Неизвестно';
+                const origText = container.querySelector('.samp-dialog-text-yellow').textContent;
+                const escapeStr = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                container.querySelector('.samp-published-ad').innerHTML = 
+                  '<div style=\\'color: #ff4757;\\'>Объявление отклонено. Проверил сотрудник СМИ <span class=\\'ad-editor-name\\'>' + escapeStr(edName) + '</span></div>' +
+                  '<div style=\\'color: #ff4757;\\'>Отклонено объявление: <span style=\\'color: #ffaa00;\\'>' + escapeStr(origText) + '</span></div>' +
+                  '<div style=\\'color: #ff4757;\\'>Причина: <span class=\\'ad-result-text\\'>' + escapeStr(val) + '</span></div>';
+                
+                container.querySelector('.edit-mode').style.display = 'none';
+                container.querySelector('.view-mode').style.display = 'block';
+              ">Отклонить</button>
+            </div>
           </div>
 
-          <div class="samp-dialog-input-container">
-            <input type="text" 
-                   class="samp-dialog-input" 
-                   data-question-id="${escapeHtml(question.id)}" 
-                   value="${escapeHtml(currentAnswer ?? '')}" 
-                   autocomplete="off">
+          <!-- РЕЖИМ ПРОСМОТРА ГОТОВОГО ОБЪЯВЛЕНИЯ -->
+          <div class="view-mode" style="${currentAnswer ? 'display: block;' : 'display: none;'} margin-bottom: 25px;">
+            <div class="samp-published-ad">
+              ${adHtml}
+            </div>
+            <button type="button" class="samp-btn" style="margin-top: 12px; border-color: #ffaa00; color: #ffaa00; background: rgba(0,0,0,0.4);" onclick="
+              const container = this.closest('.samp-text-container');
+              container.querySelector('.view-mode').style.display = 'none';
+              container.querySelector('.edit-mode').style.display = 'block';
+              container.querySelector('input').focus();
+            ">Изменить</button>
           </div>
 
-          <div class="samp-dialog-buttons">
-            <button type="button" class="samp-btn btn-accept" onclick="this.closest('.samp-dialog-wrapper').querySelector('input').focus()">Принять</button>
-            <button type="button" class="samp-btn btn-reject" onclick="let inp = this.closest('.samp-dialog-wrapper').querySelector('input'); inp.value = 'LS | ПРО'; inp.dispatchEvent(new Event('input'));">Отклонить</button>
-          </div>
         </div>
       </article>
     `;
@@ -151,6 +226,20 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
       .samp-btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
       .btn-reject:active { border-color: #ff4757; color: #ff4757; }
       .btn-accept:active { border-color: #33cc33; color: #33cc33; }
+
+      /* Стили для опубликованного объявления в чате */
+      .samp-published-ad { 
+        background: rgba(0, 0, 0, 0.55); 
+        padding: 14px 18px; 
+        border-radius: 6px; 
+        font-family: 'Arial', sans-serif; 
+        font-weight: 900; 
+        font-size: 15px; 
+        text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 2px 2px 2px rgba(0,0,0,0.8);
+        line-height: 1.5; 
+        letter-spacing: 0.3px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      }
     `;
     document.head.appendChild(style);
   }
@@ -217,7 +306,7 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     </div>
     
     <div id="exam-questions-container">
-      ${questions.map((question, index) => createQuestionMarkup(question, index, state.answers[question.id])).join('')}
+      ${questions.map((question, index) => createQuestionMarkup(question, index, state.answers[question.id], state.meta.name)).join('')}
     </div>
     
     <div class="form-footer">
