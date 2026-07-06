@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1020" />
     <title>LSFM PRO Exam</title>
-    <meta
-      name="description"
-      content="Экзаменатор для ЛСФМ."
-    />
+    <meta name="description" content="Экзаменатор для ЛСФМ." />
     <style>
       :root {
         color-scheme: dark;
@@ -22,29 +19,11 @@
         font-weight: 400;
       }
 
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        min-height: 100%;
-        margin: 0;
-      }
-
-      body {
-        min-height: 100vh;
-      }
-
-      button,
-      input,
-      textarea {
-        font: inherit;
-      }
-
-      button {
-        cursor: pointer;
-      }
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; margin: 0; }
+      body { min-height: 100vh; }
+      button, input, textarea, select { font: inherit; }
+      button { cursor: pointer; }
 
       .shell {
         position: relative;
@@ -60,1040 +39,345 @@
         opacity: 0.5;
         pointer-events: none;
       }
+      .glow-a { inset: 0 auto auto 0; width: 300px; height: 300px; background: #3fe5ff; }
+      .glow-b { right: -40px; top: 120px; width: 360px; height: 360px; background: #ff7a59; }
 
-      .glow-a {
-        inset: 0 auto auto 0;
-        width: 300px;
-        height: 300px;
-        background: #3fe5ff;
-      }
-
-      .glow-b {
-        right: -40px;
-        top: 120px;
-        width: 360px;
-        height: 360px;
-        background: #ff7a59;
-      }
-
-      .hero,
-      .layout,
-      .admin-card {
-        position: relative;
-        z-index: 1;
-      }
-
-      .section-tabs {
+      .layout, .admin-card { position: relative; z-index: 1; }
+      
+      /* --- НОВЫЙ ДАШБОРД (ГЛАВНАЯ ШАПКА) --- */
+      .hero-dashboard {
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin: 0 0 24px;
-      }
-
-      /* --- АНИМИРОВАННЫЕ КНОПКИ ГЛАВНОГО МЕНЮ (Обучение, Практика, Экзамен) --- */
-.tab-button {
-  position: relative;
-  overflow: hidden; /* Важно для блика */
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px; /* Оставляем форму круглой пилюли */
-  padding: 12px 24px; /* Сделал их чуть шире для солидности */
-  background: rgba(255, 255, 255, 0.04);
-  color: #eaf0ff;
-  font-weight: 700;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  
-  /* Плавный переход для всех эффектов */
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-/* 1. Эффект при наведении мышки */
-.tab-button:hover {
-  background: rgba(127, 227, 255, 0.1);
-  border-color: rgba(127, 227, 255, 0.5);
-  color: #ffffff;
-  transform: translateY(-3px) !important; /* Кнопка всплывает */
-  box-shadow: 
-    0 6px 16px rgba(0, 0, 0, 0.4), /* Тень под кнопкой */
-    0 0 12px rgba(127, 227, 255, 0.2) inset, /* Внутреннее свечение */
-    0 0 18px rgba(127, 227, 255, 0.25); /* Внешнее свечение */
-}
-
-/* 2. Эффект "продавливания" при клике */
-.tab-button:active {
-  transform: translateY(1px) scale(0.95) !important;
-  box-shadow: 0 2px 8px rgba(127, 227, 255, 0.15) inset;
-  transition: all 0.1s ease; /* Мгновенный отклик */
-}
-
-/* 3. Стиль для АКТИВНОЙ вкладки (которая открыта сейчас) */
-.tab-button.active {
-  border-color: rgba(86, 179, 255, 0.7);
-  background: rgba(86, 179, 255, 0.15);
-  color: #ffffff;
-  box-shadow: 0 0 15px rgba(86, 179, 255, 0.25);
-}
-
-/* 4. Бегущий блик света (как на дорогих сайтах) */
-.tab-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transform: skewX(-25deg);
-}
-
-.tab-button:hover::before {
-  animation: tab-shine 0.6s ease-out;
-}
-
-@keyframes tab-shine {
-  100% { left: 200%; }
-}
-
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
-        gap: 24px;
+        justify-content: space-between;
         align-items: stretch;
-        margin-bottom: 24px;
-      }
-
-      .hero-copy,
-      .login-panel,
-      .card {
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        background: rgba(7, 13, 28, 0.72);
-        backdrop-filter: blur(18px);
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+        gap: 40px;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 10;
       }
 
       .hero-copy {
-        border-radius: 28px;
-        padding: 34px;
+        flex: 1;
+        max-width: 650px;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(127, 227, 255, 0.12);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(127, 227, 255, 0.02);
       }
 
-      .eyebrow,
-      .section-title span,
-      .question-meta span,
-      .detail-meta span,
-      .score-list span,
-      .score-grid span,
-      .panel-badge,
-      .submission-item span,
-      .submission-item small {
-        color: #97a7c6;
-        letter-spacing: 0.08em;
+      .hero-badge-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .hero-badge-text {
+        background: rgba(127, 227, 255, 0.1);
+        border: 1px solid rgba(127, 227, 255, 0.4);
+        box-shadow: 0 0 15px rgba(127, 227, 255, 0.2);
+        color: #7fe3ff;
+        padding: 6px 16px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 800;
         text-transform: uppercase;
-        font-size: 0.74rem;
+        letter-spacing: 2px;
       }
 
-      .hero h1 {
-        margin: 14px 0 14px;
-        font-size: clamp(2.4rem, 4vw, 4.6rem);
-        line-height: 0.98;
-        letter-spacing: -0.05em;
+      .hero-badge-lottie {
+        width: 45px; height: 45px;
+        background: rgba(127, 227, 255, 0.05);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(127,227,255,0.2);
       }
 
-      .hero p {
-        max-width: 62ch;
-        color: #c6d3ee;
-        font-size: 1.05rem;
+      .hero-dashboard h1 {
+        font-size: clamp(2.2rem, 4vw, 3.2rem);
+        line-height: 1.1;
+        margin: 0 0 20px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #ffffff 0%, #7fe3ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0px 4px 20px rgba(127, 227, 255, 0.15);
+      }
+
+      .hero-dashboard p {
+        color: #cbd5e1;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 30px;
       }
 
       .hero-stats {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 24px;
+        gap: 15px;
       }
 
-      .hero-stats article,
-      .score-grid div,
-      .score-list article {
-        padding: 16px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+      .hero-stats article {
+        background: rgba(0, 0, 0, 0.25);
+        padding: 20px 15px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        text-align: center;
+        transition: all 0.3s ease;
       }
+      
+      .hero-stats article:hover { background: rgba(127, 227, 255, 0.05); border-color: rgba(127, 227, 255, 0.15); transform: translateY(-5px); }
 
-      .hero-stats strong,
-      .score-grid strong {
-        display: block;
-        margin-top: 6px;
-        font-size: 1.8rem;
-        color: #fff;
-      }
-
-      .login-panel,
-      .card {
-        border-radius: 28px;
-        padding: 26px;
-      }
+      .hero-stats strong { font-size: 2.2rem; color: #fff; font-weight: 900; display: block; margin-bottom: 2px; }
+      .hero-stats span { color: #94a3b8; font-size: 0.85rem; line-height: 1.3; display: block; }
 
       .login-panel {
+        flex: 0 0 400px;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(127, 227, 255, 0.12);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         display: flex;
         flex-direction: column;
-        gap: 14px;
         justify-content: center;
       }
 
-      .login-panel h2 {
-        margin: 4px 0 0;
-        font-size: 1.7rem;
-      }
-
-      .login-panel p,
-      .question-card p,
-      .form-footer p,
-      .breakdown-item p,
-      .admin-topbar p {
-        color: #bcc8e2;
-      }
-
       .panel-badge {
-        display: inline-flex;
-        align-items: center;
-        width: fit-content;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
+      .panel-badge.restricted { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+      .panel-badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
 
-      .panel-badge.success,
-      .notice.success {
-        background: rgba(61, 203, 154, 0.14);
-        color: #85f0c7;
-        border-color: rgba(61, 203, 154, 0.28);
+      .login-panel h2 { color: #fff; font-size: 1.8rem; margin: 0 0 10px; font-weight: 700; }
+      .login-panel p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; }
+
+      .login-panel input {
+        width: 100%; padding: 16px; margin-bottom: 20px; background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; outline: none; transition: 0.3s;
       }
+      .login-panel input:focus { border-color: #7fe3ff; background: rgba(0,0,0,0.5); }
 
-
-
-
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr);
-        gap: 24px;
+      .admin-btn {
+        width: 100%; padding: 14px; border-radius: 12px; font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; transition: 0.2s; border: none;
       }
+      .admin-btn.primary { background: rgba(127, 227, 255, 0.15); color: #7fe3ff; border: 1px solid rgba(127, 227, 255, 0.4); }
+      .admin-btn.primary:hover { background: rgba(127, 227, 255, 0.25); }
+      .admin-btn.secondary { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+      .admin-btn.secondary:hover { background: rgba(255,255,255,0.1); }
+      .admin-btn.danger { background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+      .admin-btn.danger:hover { background: rgba(239, 68, 68, 0.1); }
 
+      /* --- ВКЛАДКИ --- */
+      .section-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 24px; position: relative; z-index: 10; }
+      .tab-button {
+        position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px;
+        padding: 12px 24px; background: rgba(255, 255, 255, 0.04); color: #eaf0ff; font-weight: 700; backdrop-filter: blur(10px); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+      .tab-button:hover { background: rgba(127, 227, 255, 0.1); border-color: rgba(127, 227, 255, 0.5); color: #ffffff; transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(127, 227, 255, 0.2) inset, 0 0 18px rgba(127, 227, 255, 0.25); }
+      .tab-button:active { transform: translateY(1px) scale(0.95); box-shadow: 0 2px 8px rgba(127, 227, 255, 0.15) inset; transition: all 0.1s ease; }
+      .tab-button.active { border-color: rgba(86, 179, 255, 0.7); background: rgba(86, 179, 255, 0.15); color: #ffffff; box-shadow: 0 0 15px rgba(86, 179, 255, 0.25); }
+      .tab-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent); transform: skewX(-25deg); }
+      .tab-button:hover::before { animation: tab-shine 0.6s ease-out; }
+      @keyframes tab-shine { 100% { left: 200%; } }
+
+      /* --- КАРТОЧКИ И ЛЕЙАУТ --- */
       .card {
-        margin-bottom: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(7, 13, 28, 0.72);
+        backdrop-filter: blur(18px); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35); border-radius: 28px; padding: 26px; margin-bottom: 24px;
       }
+      .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr); gap: 24px; }
+      .section-card { margin-bottom: 24px; }
+      .section-title { display: flex; flex-direction: column; gap: 4px; margin-bottom: 18px; }
+      .section-title span { color: #97a7c6; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.74rem; }
+      .section-title strong { font-size: 1.25rem; }
 
-      .section-card {
-        margin-bottom: 24px;
+      /* --- ФОРМЫ И ИНПУТЫ --- */
+      .exam-form { display: flex; flex-direction: column; gap: 18px; }
+      label { display: grid; gap: 8px; color: #dbe6fb; font-weight: 600; }
+      .text-input, .text-area {
+        width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; background: rgba(255, 255, 255, 0.03); color: #f5f8ff; padding: 14px 16px; outline: none; transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
       }
+      .text-input:focus, .text-area:focus { border-color: rgba(86, 179, 255, 0.72); background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
+      
+      .question-card, .lesson-card, .practice-result { padding: 20px; border-radius: 22px; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.06); }
+      .question-card h3, .lesson-card h3 { margin: 6px 0 8px; font-size: 1.2rem; }
+      .question-meta { display: flex; justify-content: space-between; gap: 12px; }
+      .question-meta span { color: #97a7c6; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.74rem; }
+      .question-hint { margin-top: 14px; color: #c7d3ee; }
+      .question-hint summary { cursor: pointer; color: #89cbff; }
+      
+      .options { display: grid; gap: 10px; margin-top: 16px; }
+      .option-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(7, 13, 28, 0.65); border: 1px solid rgba(255, 255, 255, 0.06); cursor: pointer; font-weight: 500; }
+      .option-row input { margin-top: 2px; }
 
-      .section-title {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        margin-bottom: 18px;
-      }
+      /* --- КНОПКИ --- */
+      .primary-button, .secondary-button, .save-btn { border: none; border-radius: 16px; padding: 14px 18px; font-weight: 700; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+      .primary-button { color: #08101d; background: linear-gradient(135deg, #7fe3ff, #ffb17b); box-shadow: 0 12px 32px rgba(127, 227, 255, 0.22); }
+      .secondary-button { color: #eff4ff; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); }
+      .primary-button:hover, .secondary-button:hover { transform: translateY(-1px); }
+      
+      /* --- АДМИНКА --- */
+      .admin-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; }
+      .admin-topbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+      .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+      .submission-list { display: grid; gap: 10px; margin-top: 12px; }
+      .submission-item { flex-direction: column; align-items: flex-start; width: 100%; padding: 14px; border-radius: 18px; color: inherit; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); text-align: left; }
+      .submission-item.active { border-color: rgba(86, 179, 255, 0.48); background: rgba(86, 179, 255, 0.1); }
+      .submission-item span, .submission-item small { color: #97a7c6; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.74rem; display: block; }
+      .admin-detail { min-height: 340px; padding: 18px; border-radius: 22px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); }
+      .empty-state { display: grid; place-items: center; min-height: 220px; border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.12); color: #9aaacf; text-align: center; padding: 20px; }
 
-      .section-title strong {
-        font-size: 1.25rem;
-      }
+      .score-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;}
+      .score-grid div { padding: 16px; border-radius: 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); }
+      .score-grid span { font-size: 0.74rem; text-transform: uppercase; color: #97a7c6; letter-spacing: 0.08em; }
+      .score-grid strong { display: block; margin-top: 6px; font-size: 1.8rem; color: #fff; }
 
-      .exam-form {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
+      .hidden { display: none !important; }
 
-      .grid-3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-      }
+      /* --- КАСТОМНЫЕ СТИЛИ (SCROLL, SAMP, BADGES) --- */
+      .scroll-actions { position: fixed !important; bottom: 30px !important; right: 30px !important; display: flex !important; flex-direction: column !important; gap: 12px !important; z-index: 9999 !important; }
+      .scroll-btn { width: 48px !important; height: 48px !important; border-radius: 50% !important; background: rgba(7, 13, 28, 0.8) !important; border: 1px solid rgba(127, 227, 255, 0.15) !important; color: #7fe3ff !important; display: flex !important; align-items: center !important; justify-content: center !important; backdrop-filter: blur(8px) !important; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important; transition: all 0.2s ease !important; padding: 0 !important; }
+      .scroll-btn:hover { background: rgba(127, 227, 255, 0.15) !important; color: #fff !important; border-color: rgba(127, 227, 255, 0.4) !important; transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(127, 227, 255, 0.15) !important; }
 
-      label {
-        display: grid;
-        gap: 8px;
-        color: #dbe6fb;
-        font-weight: 600;
-      }
+      .learning-table-row { display: flex !important; align-items: stretch !important; background: rgba(255, 255, 255, 0.03) !important; border: 1px solid rgba(127, 227, 255, 0.1) !important; border-radius: 12px !important; margin-bottom: 8px !important; overflow: hidden !important; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; }
+      .learning-table-row:hover { transform: translateX(6px) !important; background: rgba(127, 227, 255, 0.08) !important; border-color: rgba(127, 227, 255, 0.4) !important; box-shadow: 0 4px 15px rgba(127, 227, 255, 0.15) !important; }
+      .table-key { flex: 0 0 140px !important; background: rgba(7, 13, 28, 0.4) !important; padding: 14px 16px !important; font-weight: 700 !important; color: #7fe3ff !important; border-right: 1px solid rgba(127, 227, 255, 0.1) !important; display: flex !important; align-items: center !important; transition: all 0.3s ease !important; }
+      .learning-table-row:hover .table-key { background: rgba(127, 227, 255, 0.15) !important; color: #ffffff !important; }
+      .table-value { flex: 1 !important; padding: 14px 16px !important; color: #dbe6fb !important; line-height: 1.6 !important; display: flex !important; align-items: center !important; }
 
-      .text-input,
-      .text-area {
-        width: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.03);
-        color: #f5f8ff;
-        padding: 14px 16px;
-        outline: none;
-        transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
-      }
+      .rule-badge { display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 6px 12px !important; border-radius: 8px !important; font-size: 0.85rem !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; margin: 16px 0 8px 0 !important; }
+      .rule-badge.success { background: rgba(61, 203, 154, 0.15) !important; color: #85f0c7 !important; border: 1px solid rgba(61, 203, 154, 0.3) !important; }
+      .rule-badge.error { background: rgba(255, 99, 112, 0.15) !important; color: #ff8f99 !important; border: 1px solid rgba(255, 99, 112, 0.3) !important; }
+      .rule-badge.info { background: rgba(127, 227, 255, 0.15) !important; color: #7fe3ff !important; border: 1px solid rgba(127, 227, 255, 0.3) !important; }
 
-      .text-input:focus,
-      .text-area:focus {
-        border-color: rgba(86, 179, 255, 0.72);
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateY(-1px);
-      }
+      .rule-example { padding: 10px 14px !important; margin-bottom: 6px !important; border-radius: 8px !important; font-family: 'Courier New', Courier, monospace !important; font-size: 0.95rem !important; background: rgba(7, 13, 28, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.05) !important; border-left: 3px solid rgba(255, 255, 255, 0.2) !important; transition: transform 0.2s ease !important; }
+      .rule-example:hover { transform: translateX(4px) !important; }
+      .rule-example.example-success { background: linear-gradient(90deg, rgba(61, 203, 154, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important; border-left-color: #3dcb9a !important; border-top: 1px solid rgba(61, 203, 154, 0.1) !important; border-bottom: 1px solid rgba(61, 203, 154, 0.1) !important; }
+      .rule-example.example-error { background: linear-gradient(90deg, rgba(255, 99, 112, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important; border-left-color: #ff6370 !important; border-top: 1px solid rgba(255, 99, 112, 0.1) !important; border-bottom: 1px solid rgba(255, 99, 112, 0.1) !important; }
+      .rule-example.example-info { background: linear-gradient(90deg, rgba(127, 227, 255, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important; border-left-color: #7fe3ff !important; border-top: 1px solid rgba(127, 227, 255, 0.1) !important; border-bottom: 1px solid rgba(127, 227, 255, 0.1) !important; }
 
-      .question-card,
-      .lesson-card,
-      .practice-result {
-        padding: 20px;
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.035);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-      }
+      .tag-pro-badge { display: inline-block !important; background: rgba(255, 99, 112, 0.15) !important; color: #ff8f99 !important; border: 1px solid rgba(255, 99, 112, 0.3) !important; padding: 2px 6px !important; border-radius: 6px !important; font-family: Inter, sans-serif !important; font-size: 0.85em !important; font-weight: 700 !important; line-height: 1.2 !important; vertical-align: middle !important; margin: 0 4px !important; box-shadow: 0 0 8px rgba(255, 99, 112, 0.15) !important; white-space: nowrap !important; }
 
-      .question-card h3,
-      .lesson-card h3 {
-        margin: 6px 0 8px;
-        font-size: 1.2rem;
-      }
+      .mega-tag-banner { font-size: 1.6rem !important; font-weight: 900 !important; text-align: center !important; color: #ffffff !important; background: linear-gradient(135deg, rgba(255, 99, 112, 0.15), rgba(255, 177, 123, 0.15)) !important; border: 2px dashed rgba(255, 99, 112, 0.4) !important; border-radius: 20px !important; padding: 24px !important; margin: 30px 0 !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; box-shadow: 0 10px 30px rgba(255, 99, 112, 0.2) !important; }
+      .mega-tag-underline { color: #ffb17b !important; text-decoration: underline !important; text-underline-offset: 8px !important; text-decoration-thickness: 4px !important; text-shadow: 0 0 20px rgba(255, 177, 123, 0.8) !important; }
 
-      .section-tabs,
-      .question-meta,
-      .detail-header,
-      .admin-topbar,
-      .breakdown-item,
-      .submission-item,
-      .form-footer,
-      .score-list article,
-      .score-grid {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-      }
+      .samp-dialog-wrapper { background-color: rgba(0, 0, 0, 0.85); border-radius: 6px; padding: 15px 20px; font-family: 'Arimo', Arial, sans-serif; color: #ffffff; max-width: 700px; margin: 0 auto 25px auto; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); user-select: none; }
+      .samp-dialog-header { color: #33cc33; font-weight: bold; font-size: 15px; margin-bottom: 12px; }
+      .samp-dialog-row { display: flex; margin-bottom: 4px; font-size: 14px; }
+      .samp-dialog-label { width: 110px; font-weight: bold; }
+      .samp-dialog-value { flex: 1; }
+      .samp-dialog-text-yellow { color: #ffaa00; font-weight: bold; }
+      .samp-dialog-instructions { font-size: 13px; margin-top: 15px; margin-bottom: 15px; line-height: 1.4; color: #ffffff; }
+      .samp-dialog-instructions b { color: #a9c4e2; font-weight: normal; }
+      .samp-dialog-input-container { margin-bottom: 15px; }
+      .samp-dialog-input { width: 100%; background-color: #000000; border: 2px solid #ffffff; border-radius: 6px; color: #ffffff; padding: 8px 12px; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; outline: none; }
+      .samp-dialog-input:focus { border-color: #a9c4e2; }
+      .samp-dialog-buttons { display: flex; justify-content: center; gap: 15px; }
+      .samp-btn { background: transparent; border: 2px solid #ffffff; color: #ffffff; padding: 5px 20px; border-radius: 20px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; transition: background 0.2s; }
+      .samp-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
-      .options {
-        display: grid;
-        gap: 10px;
-        margin-top: 16px;
-      }
+      /* --- ПЛАВАЮЩЕЕ СТЕКЛЯННОЕ МЕНЮ --- */
+      .floating-glass-menu { position: fixed !important; top: 50% !important; right: 20px !important; transform: translateY(-50%) translateX(50px) !important; display: flex !important; flex-direction: column !important; gap: 6px !important; padding: 12px !important; max-width: 220px !important; background: rgba(7, 13, 28, 0.55) !important; backdrop-filter: blur(16px) !important; border: 1px solid rgba(127, 227, 255, 0.15) !important; border-radius: 16px !important; z-index: 9999 !important; opacity: 0 !important; pointer-events: none !important; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important; box-shadow: -4px 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(127, 227, 255, 0.1) !important; }
+      .floating-glass-menu.visible { opacity: 1 !important; pointer-events: auto !important; transform: translateY(-50%) translateX(0) !important; }
+      .floating-glass-menu button { background: rgba(255, 255, 255, 0.03) !important; border: 1px solid transparent !important; color: #97a7c6 !important; padding: 8px 12px !important; border-radius: 10px !important; font-size: 0.8rem !important; font-weight: 600 !important; text-align: left !important; cursor: pointer !important; transition: all 0.2s ease !important; white-space: nowrap !important; overflow: hidden !important; }
+      .floating-glass-menu button.active { background: rgba(86, 179, 255, 0.15) !important; border-color: rgba(86, 179, 255, 0.4) !important; color: #fff !important; box-shadow: 0 0 12px rgba(86, 179, 255, 0.15) !important; }
+      .floating-glass-menu.collapsed { width: 48px !important; height: 48px !important; padding: 0 !important; border-radius: 50% !important; overflow: hidden !important; justify-content: center !important; align-items: center !important; background: rgba(7, 13, 28, 0.9) !important; }
+      .floating-glass-menu.collapsed button { display: none !important; }
+      .toggle-btn { background: transparent !important; border: none !important; cursor: pointer !important; color: #7fe3ff !important; font-size: 20px !important; }
+      .floating-glass-menu.collapsed .toggle-btn { display: block !important; }
 
-      .option-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        background: rgba(7, 13, 28, 0.65);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        cursor: pointer;
-        font-weight: 500;
-      }
-
-      .option-row input {
-        margin-top: 2px;
-      }
-
-      .question-hint {
-        margin-top: 14px;
-        color: #c7d3ee;
-      }
-
-      .question-hint summary {
-        cursor: pointer;
-        color: #89cbff;
-      }
-
-      .primary-button,
-      .secondary-button {
-        border: none;
-        border-radius: 16px;
-        padding: 14px 18px;
-        font-weight: 700;
-        transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
-      }
-
-      .primary-button {
-        color: #08101d;
-        background: linear-gradient(135deg, #7fe3ff, #ffb17b);
-        box-shadow: 0 12px 32px rgba(127, 227, 255, 0.22);
-      }
-
-      .secondary-button {
-        color: #eff4ff;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      .primary-button:hover,
-      .secondary-button:hover,
-      .tab-button:hover {
-        transform: translateY(-1px);
-      }
-
-      .form-footer {
-        align-items: center;
-        flex-wrap: wrap;
-      }
-
-      .side-card {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-
-      .learning-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px;
-      }
-
-      .lesson-card ul {
-        margin: 14px 0 0;
-        padding-left: 18px;
-        color: #d5def2;
-      }
-
-      .section-card,
-      .practice-result {
-        margin-bottom: 24px;
-      }
-
-      .score-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .notice {
-        padding: 14px 16px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.04);
-      }
-
-      .admin-card {
-        margin-top: 4px;
-      }
-
-      .admin-grid {
-        display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
-        gap: 20px;
-      }
-
-      .admin-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .submission-list {
-        display: grid;
-        gap: 10px;
-        margin-top: 12px;
-      }
-
-      .submission-item {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-        padding: 14px;
-        border-radius: 18px;
-        color: inherit;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        text-align: left;
-      }
-
-      .submission-item.active {
-        border-color: rgba(86, 179, 255, 0.48);
-        background: rgba(86, 179, 255, 0.1);
-      }
-
-      .admin-detail {
-        min-height: 340px;
-        padding: 18px;
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-      }
-
-      .detail-meta {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin: 12px 0 18px;
-      }
-
-      .breakdown-list {
-        display: grid;
-        gap: 10px;
-      }
-
-      .breakdown-item {
-        padding: 14px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        align-items: flex-start;
-      }
-
-      .empty-state {
-        display: grid;
-        place-items: center;
-        min-height: 220px;
-        border-radius: 18px;
-        border: 1px dashed rgba(255, 255, 255, 0.12);
-        color: #9aaacf;
-        text-align: center;
-        padding: 20px;
-      }
-
-      .hidden {
-        display: none !important;
-      }
-
+      /* --- АДАПТИВНОСТЬ --- */
       @media (max-width: 1100px) {
-        .hero,
-        .layout,
-        .admin-grid,
-        .grid-3,
-        .learning-grid {
-          grid-template-columns: 1fr;
-        }
+        .hero-dashboard { flex-direction: column; }
+        .login-panel { flex: 1 1 auto; width: 100%; }
+        .hero-stats { grid-template-columns: 1fr; }
+        .layout, .admin-grid { grid-template-columns: 1fr; }
+      }
 
-        .hero-stats,
-        .score-grid {
-          grid-template-columns: 1fr;
-        }
+      @media (max-width: 768px) {
+        .floating-glass-menu { top: auto !important; bottom: 90px !important; right: 16px !important; transform: translateX(50px) !important; max-width: 180px !important; }
+        .floating-glass-menu.visible { transform: translateX(0) !important; }
       }
 
       @media (max-width: 640px) {
-        .shell {
-          padding: 16px 12px 40px;
-        }
-
-        .hero-copy,
-        .login-panel,
-        .card {
-          padding: 20px;
-          border-radius: 22px;
-        }
-
-        .question-meta,
-        .detail-header,
-        .admin-topbar,
-        .breakdown-item,
-        .submission-item,
-        .form-footer {
-          flex-direction: column;
-          align-items: flex-start;
-        }
+        .shell { padding: 16px 12px 40px; }
+        .card, .hero-copy, .login-panel { padding: 20px; border-radius: 22px; }
+        .admin-topbar, .admin-actions { flex-direction: column; align-items: flex-start; }
+        .learning-table-row { flex-direction: column !important; }
+        .table-key { flex: auto !important; border-right: none !important; border-bottom: 1px solid rgba(127, 227, 255, 0.1) !important; }
+        .scroll-actions { bottom: 20px !important; right: 16px !important; }
+        .scroll-btn { width: 42px !important; height: 42px !important; }
+        .mega-tag-banner { font-size: 1.2rem !important; padding: 16px !important; }
       }
-      .learning-image {
-        max-width: 100% !important;
-        height: auto !important;
-        border-radius: 16px !important;
-        border: 1px solid rgba(127, 227, 255, 0.15) !important;
-        margin: 20px 0 !important;
-        display: block !important;
-        transition: all 0.3s ease !important;
-        cursor: pointer !important; 
-      }
-      .learning-image:hover {
-        transform: translateY(-4px) scale(1.02) !important; 
-        box-shadow: 0 12px 30px rgba(127, 227, 255, 0.4) !important; 
-        border-color: rgba(127, 227, 255, 0.8) !important; 
-      }
-      /* --- ПЛАВАЮЩИЕ КНОПКИ СКРОЛЛА --- */
-.scroll-actions {
-  position: fixed !important; /* Отрываем от страницы */
-  bottom: 30px !important;    /* Прибиваем к низу экрана */
-  right: 30px !important;     /* Прибиваем к правому краю */
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  z-index: 9999 !important;   /* Всегда поверх других элементов */
-}
-
-.scroll-btn {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 50% !important;
-  background: rgba(7, 13, 28, 0.8) !important;
-  border: 1px solid rgba(127, 227, 255, 0.15) !important;
-  color: #7fe3ff !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  backdrop-filter: blur(8px) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-  transition: all 0.2s ease !important;
-  padding: 0 !important;
-}
-
-.scroll-btn:hover {
-  background: rgba(127, 227, 255, 0.15) !important;
-  color: #fff !important;
-  border-color: rgba(127, 227, 255, 0.4) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(127, 227, 255, 0.15) !important;
-}
-
-@media (max-width: 640px) {
-  .scroll-actions {
-    bottom: 20px !important;
-    right: 16px !important;
-  }
-  .scroll-btn {
-    width: 42px !important;
-    height: 42px !important;
-  }
-}
-/* --- АНИМИРОВАННАЯ ТАБЛИЦА (СЕТКА) --- */
-.learning-table-row {
-  display: flex !important;
-  align-items: stretch !important;
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(127, 227, 255, 0.1) !important;
-  border-radius: 12px !important;
-  margin-bottom: 8px !important;
-  overflow: hidden !important;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-}
-
-.learning-table-row:hover {
-  transform: translateX(6px) !important; /* Строка плавно выезжает вправо */
-  background: rgba(127, 227, 255, 0.08) !important;
-  border-color: rgba(127, 227, 255, 0.4) !important;
-  box-shadow: 0 4px 15px rgba(127, 227, 255, 0.15) !important;
-}
-
-.table-key {
-  flex: 0 0 140px !important; /* Фиксированная ширина левой колонки */
-  background: rgba(7, 13, 28, 0.4) !important;
-  padding: 14px 16px !important;
-  font-weight: 700 !important;
-  color: #7fe3ff !important;
-  border-right: 1px solid rgba(127, 227, 255, 0.1) !important;
-  display: flex !important;
-  align-items: center !important;
-  transition: all 0.3s ease !important;
-}
-
-.learning-table-row:hover .table-key {
-  background: rgba(127, 227, 255, 0.15) !important;
-  color: #ffffff !important;
-}
-
-.table-value {
-  flex: 1 !important;
-  padding: 14px 16px !important;
-  color: #dbe6fb !important;
-  line-height: 1.6 !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* Адаптация под телефоны, чтобы колонка не сплющивалась */
-@media (max-width: 640px) {
-  .learning-table-row {
-    flex-direction: column !important;
-  }
-  .table-key {
-    flex: auto !important;
-    border-right: none !important;
-    border-bottom: 1px solid rgba(127, 227, 255, 0.1) !important;
-  }
-}
-/* --- ПЛАШКИ ВЕРНО / НЕВЕРНО --- */
-.rule-badge {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 6px 12px !important;
-  border-radius: 8px !important;
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  margin: 16px 0 8px 0 !important;
-}
-
-.rule-badge.success {
-  background: rgba(61, 203, 154, 0.15) !important;
-  color: #85f0c7 !important;
-  border: 1px solid rgba(61, 203, 154, 0.3) !important;
-}
-
-.rule-badge.error {
-  background: rgba(255, 99, 112, 0.15) !important;
-  color: #ff8f99 !important;
-  border: 1px solid rgba(255, 99, 112, 0.3) !important;
-}
-
-.rule-badge.info {
-  background: rgba(127, 227, 255, 0.15) !important;
-  color: #7fe3ff !important;
-  border: 1px solid rgba(127, 227, 255, 0.3) !important;
-}
-
-/* --- БЛОКИ С ПРИМЕРАМИ (ТЭГ | ...) --- */
-.rule-example {
-  padding: 10px 14px !important;
-  margin-bottom: 6px !important;
-  border-radius: 8px !important;
-  font-family: 'Courier New', Courier, monospace !important; /* Делаем шрифт похожим на код */
-  font-size: 0.95rem !important;
-  background: rgba(7, 13, 28, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  border-left: 3px solid rgba(255, 255, 255, 0.2) !important;
-  transition: transform 0.2s ease !important;
-}
-
-.rule-example:hover {
-  transform: translateX(4px) !important; /* Легкое движение при наведении */
-}
-
-/* Динамические цвета для правильных примеров */
-.rule-example.example-success {
-  /* Плавный зеленый градиент, затухающий вправо */
-  background: linear-gradient(90deg, rgba(61, 203, 154, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important;
-  border-left-color: #3dcb9a !important;
-  border-top: 1px solid rgba(61, 203, 154, 0.1) !important;
-  border-bottom: 1px solid rgba(61, 203, 154, 0.1) !important;
-}
-
-/* Динамические цвета для ошибочных примеров */
-.rule-example.example-error {
-  /* Плавный красный градиент */
-  background: linear-gradient(90deg, rgba(255, 99, 112, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important;
-  border-left-color: #ff6370 !important;
-  border-top: 1px solid rgba(255, 99, 112, 0.1) !important;
-  border-bottom: 1px solid rgba(255, 99, 112, 0.1) !important;
-}
-
-/* Динамические цвета для нейтральных примеров */
-.rule-example.example-info {
-  background: linear-gradient(90deg, rgba(127, 227, 255, 0.08) 0%, rgba(7, 13, 28, 0) 100%) !important;
-  border-left-color: #7fe3ff !important;
-  border-top: 1px solid rgba(127, 227, 255, 0.1) !important;
-  border-bottom: 1px solid rgba(127, 227, 255, 0.1) !important;
-}
-/* --- ИНЛАЙН-ПЛАШКА ДЛЯ "ТЭГ | ПРО" --- */
-.tag-pro-badge {
-  display: inline-block !important;
-  background: rgba(255, 99, 112, 0.15) !important;
-  color: #ff8f99 !important;
-  border: 1px solid rgba(255, 99, 112, 0.3) !important;
-  padding: 2px 6px !important;
-  border-radius: 6px !important;
-  font-family: Inter, sans-serif !important;
-  font-size: 0.85em !important;
-  font-weight: 700 !important;
-  line-height: 1.2 !important;
-  vertical-align: middle !important;
-  margin: 0 4px !important;
-  box-shadow: 0 0 8px rgba(255, 99, 112, 0.15) !important;
-  white-space: nowrap !important; /* Чтобы плашка не разрывалась на две строки */
-}
-/* --- ПЛАВАЮЩАЯ СТЕКЛЯННАЯ ПАНЕЛЬ (ВЕРТИКАЛЬНАЯ СПРАВА) --- */
-.floating-glass-menu {
-  position: fixed !important;
-  top: 50% !important; /* Центрируем по вертикали */
-  right: 20px !important; /* Прибиваем к правому краю экрана */
-  transform: translateY(-50%) translateX(50px) !important; /* Уводим за правый край, чтобы она выезжала сбоку */
-  
-  display: flex !important;
-  flex-direction: column !important; /* Делаем меню ВЕРТИКАЛЬНЫМ */
-  gap: 6px !important;
-  padding: 12px !important;
-  max-width: 220px !important; /* Жестко ограничиваем ширину, чтобы не была громоздкой */
-  
-  /* Магия стекла */
-  background: rgba(7, 13, 28, 0.55) !important;
-  backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(127, 227, 255, 0.15) !important;
-  border-radius: 16px !important; /* Аккуратные скругленные углы вместо "таблетки" */
-  
-  z-index: 9999 !important; /* Поверх всего */
-  
-  /* Скрыта по умолчанию */
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-  box-shadow: -4px 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(127, 227, 255, 0.1) !important;
-}
-
-/* Когда скрипт добавляет класс visible, панель плавно выезжает справа */
-.floating-glass-menu.visible {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  transform: translateY(-50%) translateX(0) !important;
-}
-
-/* Кнопки внутри вертикальной панели */
-.floating-glass-menu button {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid transparent !important;
-  color: #97a7c6 !important;
-  padding: 8px 12px !important;
-  border-radius: 10px !important;
-  font-size: 0.8rem !important; /* Сделали шрифт чуть мельче */
-  font-weight: 600 !important;
-  text-align: left !important; /* Текст слева */
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  
-  /* Главная фишка от громоздкости: длинный текст обрезается с троеточием */
-  white-space: nowrap !important;
-  overflow: hidden !important;
-
-/* Активная кнопка (где мы сейчас находимся) */
-.floating-glass-menu button.active {
-  background: rgba(86, 179, 255, 0.15) !important;
-  border-color: rgba(86, 179, 255, 0.4) !important;
-  color: #fff !important;
-  box-shadow: 0 0 12px rgba(86, 179, 255, 0.15) !important;
-}
-
-/* На мобилках прижимаем ее в правый нижний угол, чтобы не мешала читать текст */
-@media (max-width: 768px) {
-  .floating-glass-menu {
-    top: auto !important;
-    bottom: 90px !important; /* Висит над твоими круглыми кнопками скролла */
-    right: 16px !important;
-    transform: translateX(50px) !important;
-    max-width: 180px !important;
-  }
-  .floating-glass-menu.visible {
-    transform: translateX(0) !important;
-  }
-}
-/* --- ЭПИЧНЫЙ БАННЕР ДЛЯ ТЭГА --- */
-.mega-tag-banner {
-  font-size: 1.6rem !important; /* Очень крупный текст */
-  font-weight: 900 !important; /* Максимальная жирность */
-  text-align: center !important;
-  color: #ffffff !important;
-  
-  /* Яркий, но приятный градиентный фон */
-  background: linear-gradient(135deg, rgba(255, 99, 112, 0.15), rgba(255, 177, 123, 0.15)) !important;
-  border: 2px dashed rgba(255, 99, 112, 0.4) !important;
-  border-radius: 20px !important;
-  padding: 24px !important;
-  margin: 30px 0 !important;
-  
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  box-shadow: 0 10px 30px rgba(255, 99, 112, 0.2) !important;
-}
-
-/* Выделение и подчеркивание для "LS | PRO" */
-.mega-tag-underline {
-  color: #ffb17b !important; /* Оранжево-персиковый цвет */
-  text-decoration: underline !important;
-  text-underline-offset: 8px !important; /* Опускаем линию чуть ниже текста */
-  text-decoration-thickness: 4px !important; /* Делаем линию жирной */
-  text-shadow: 0 0 20px rgba(255, 177, 123, 0.8) !important; /* Неоновое свечение */
-}
-
-/* Чуть уменьшаем размер на мобилках, чтобы не вылезало за края */
-@media (max-width: 640px) {
-  .mega-tag-banner {
-    font-size: 1.2rem !important;
-    padding: 16px !important;
-  }
-}
-.hero-animation {
-  display: block !important;
-  width: 200px !important; /* Укажи ширину, чтобы блок стал видимым */
-  height: 200px !important;
-  object-fit: contain;
-  background: transparent !important;
-}
-/* --- СОСТОЯНИЕ СВЕРНУТОЙ ПАНЕЛИ (КРУЖОК) --- */
-.floating-glass-menu.collapsed {
-  width: 48px !important;
-  height: 48px !important;
-  padding: 0 !important;
-  border-radius: 50% !important; /* Круглая форма */
-  overflow: hidden !important;
-  justify-content: center !important;
-  align-items: center !important;
-  background: rgba(7, 13, 28, 0.9) !important;
-}
-
-/* Скрываем кнопки внутри, когда свернуто */
-.floating-glass-menu.collapsed button {
-  display: none !important;
-}
-
-/* Кнопка "развернуть" (появляется только в кружке) */
-.toggle-btn {
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: #7fe3ff !important;
-  font-size: 20px !important;
-}
-
-.floating-glass-menu.collapsed .toggle-btn {
-  display: block !important;
-}
-/* Когда меню свернуто, прячем все кнопки навигации... */
-.floating-menu.collapsed .nav-link-btn {
-  display: none !important; 
-}
-
-/* ...но оставляем саму кнопку-переключатель видимой! */
-.floating-menu.collapsed .toggle-btn {
-  display: block;
-  width: 100%;
-}
-
-.samp-dialog-wrapper {
-  background-color: rgba(0, 0, 0, 0.85);
-  border-radius: 6px;
-  padding: 15px 20px;
-  /* Используем шрифт Arimo, он почти 1 в 1 как стандартный Arial в SAMP */
-  font-family: 'Arimo', Arial, sans-serif; 
-  color: #ffffff;
-  max-width: 700px;
-  margin: 0 auto 25px auto;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  user-select: none;
-}
-
-.samp-dialog-header {
-  color: #33cc33; /* Тот самый SAMP-зелёный */
-  font-weight: bold;
-  font-size: 15px;
-  margin-bottom: 12px;
-}
-
-.samp-dialog-row {
-  display: flex;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.samp-dialog-label {
-  width: 110px;
-  font-weight: bold;
-}
-
-.samp-dialog-value {
-  flex: 1;
-}
-
-.samp-dialog-text-yellow {
-  color: #ffaa00; /* Классический оранжево-желтый для объявлений */
-  font-weight: bold;
-}
-
-.samp-dialog-instructions {
-  font-size: 13px;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  line-height: 1.4;
-  color: #ffffff;
-}
-
-.samp-dialog-instructions b {
-  color: #a9c4e2; /* Бледно-голубой цвет для команд, как в игре */
-  font-weight: normal;
-}
-
-.samp-dialog-input-container {
-  margin-bottom: 15px;
-}
-
-.samp-dialog-input {
-  width: 100%;
-  background-color: #000000;
-  border: 2px solid #ffffff;
-  border-radius: 6px;
-  color: #ffffff;
-  padding: 8px 12px;
-  font-family: 'Arimo', Arial, sans-serif;
-  font-size: 14px;
-  outline: none;
-}
-
-.samp-dialog-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-}
-
-.samp-btn {
-  background: transparent;
-  border: 2px solid #ffffff;
-  color: #ffffff;
-  padding: 5px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: 'Arimo', Arial, sans-serif;
-  font-size: 14px;
-  transition: background 0.2s;
-}
-
-.samp-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Для красоты скрываем стандартные элементы, если они нам мешают */
-.samp-dialog-input:focus {
-  border-color: #a9c4e2; /* Легкая подсветка при вводе */
-
-/* Опционально: делаем саму менюшку компактной в свернутом виде */
-.floating-menu.collapsed {
-  width: auto;
-  min-width: 120px;
-  padding: 10px;
-}
     </style>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   </head>
-  <div class="shell">
+  <body>
+    <div class="shell">
       <div class="glow glow-a"></div>
       <div class="glow glow-b"></div>
 
-      <header class="hero">
+      <!-- ГЛАВНЫЙ HERO БЛОК (ДАШБОРД) -->
+      <header class="hero-dashboard">
+        <!-- ЛЕВАЯ ЧАСТЬ -->
         <div class="hero-copy">
-          <span class="eyebrow">LSFM / PRO / экзаменатор</span>
-          <h1>Три раздела: учись, тренируйся и сдавай экзамен отдельно.</h1>
-          <p>
-            В одном сайте есть раздел обучения с правилами и уставом, тренировка с мгновенной
-            проверкой и экзамен, который сохраняется для админов.
-          </p>
-          <p>by Henry Urban</p>
+          <div class="hero-badge-container">
+            <div class="hero-badge-text">LSFM / PRO / Экзаменатор</div>
+            <div class="hero-badge-lottie">
+              <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_q5pk6p1k.json" background="transparent" speed="1" style="width: 35px; height: 35px;" loop autoplay></lottie-player>
+            </div>
+          </div>
+
+          <h1>Три раздела: учись, тренируйся и сдавай экзамен.</h1>
+          <p>В одном месте собрано всё необходимое: раздел обучения с правилами и уставом, тренировка с мгновенной проверкой и строгий экзамен, результаты которого сохраняются для проверки старшим составом.</p>
+          
           <div class="hero-stats">
             <article>
               <strong id="questions-count">7</strong>
-              <span>вопросов для тренировки и экзамена</span>
+              <span>вопросов для<br>тренировки</span>
             </article>
             <article>
               <strong id="lessons-count">3</strong>
-              <span>раздела обучения</span>
+              <span>раздела<br>обучения</span>
             </article>
             <article>
               <strong id="saved-count">0</strong>
-              <span>экзаменов сохранено</span>
+              <span>экзаменов<br>сохранено</span>
             </article>
           </div>
         </div>
 
+        <!-- ПРАВАЯ ЧАСТЬ (АДМИНКА) -->
         <aside class="login-panel">
           <div id="admin-status-off">
-            <div class="panel-badge">Admin Gate</div>
-            <h2>LSFM Admin</h2>
-            <p>Код у старшего состава LSFM</p>
-            <input id="admin-code" class="text-input" placeholder="Введите код администратора" />
-            <button id="admin-login" class="secondary-button" type="button">Открыть админ-панель</button>
+            <div class="panel-badge restricted">🔒 Вход ограничен</div>
+            <h2>Панель управления</h2>
+            <p>Доступ только для руководства LSFM.</p>
+            <input id="admin-code" type="password" placeholder="Введите код доступа" />
+            <button id="admin-login" type="button" class="admin-btn primary">Авторизоваться</button>
           </div>
+          
           <div id="admin-status-on" class="hidden">
-            <div class="panel-badge success">Админ активен</div>
-            <h2>Панель доступа открыта</h2>
-            <p>Можно смотреть ответы, сортировать попытки и экспортировать данные.</p>
-            <button id="admin-upast" class="secondary-button" type="button">Cпуститься к админ панели</button>
-            <button id="admin-enter" class="secondary-button" type="button">Зайти в редактор вопросов</button>
-            <button id="admin-logout" class="secondary-button" type="button">Выйти</button>
+            <div class="panel-badge success">✅ Доступ разрешён</div>
+            <h2>Система активна</h2>
+            <p>Управление базой вопросов и проверка результатов.</p>
+            <button id="admin-upast" type="button" class="admin-btn primary">📋 Список экзаменов</button>
+            <button id="admin-enter" type="button" class="admin-btn secondary">⚙️ Редактор вопросов</button>
+            <button id="admin-logout" type="button" class="admin-btn danger">Выйти</button>
           </div>
         </aside>
       </header>
@@ -1146,7 +430,7 @@
               <strong id="reviewed-count">0</strong>
             </div>
           </div>
-          <div id="submitted-note" class="notice success hidden">Экзамен сохраняется для ручной проверки админом по нажатии на кнопку и правильном введении ника и организации.</div>
+          <div id="submitted-note" class="notice success hidden">Экзамен сохраняется для ручной проверки админом.</div>
           <div class="score-list" id="score-list"></div>
         </section>
       </main>
