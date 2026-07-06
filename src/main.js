@@ -29,7 +29,7 @@ function normalize(text) {
 }
 
 function scorePracticeQuestion(question, answer) {
-  if (question.kind === 'single') {
+  if (question.kind === 'single' || question.kind === 'single-image') {
     const isCorrect = normalize(answer) === normalize(question.correctAnswer ?? '');
     return { score: isCorrect ? 1 : 0, note: isCorrect ? 'Верно' : 'Неверно' };
   }
@@ -53,7 +53,6 @@ function formatDate(value) {
 
 let dom = {};
 
-// Убрали вызов createBlankAnswers отсюда, так как вопросы еще не загружены
 const state = {
   activeSection: 'learn',
   isAdmin: sessionStorage.getItem(config.adminSessionKey) === 'true',
@@ -176,8 +175,6 @@ function renderAdminDetail() {
   state.selectedSubmissionId = selected.id;
   const breakdownArray = selected.breakdown ?? selected.responses ?? [];
 
-  // --- НАЧАЛО ЗАМЕНЫ ---
-  // Определяем текущий статус, чтобы подсветить активную кнопку
   const isPassed = selected.reviewStatus === 'passed';
   const isFailed = selected.reviewStatus === 'failed';
   const isUnchecked = selected.reviewStatus === 'unchecked' || !selected.reviewStatus;
@@ -189,7 +186,7 @@ function renderAdminDetail() {
   
   const btnUncheckedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isUnchecked ? 'background: #94a3b8; color: #000; border: 1px solid #94a3b8;' : 'background: rgba(148,163,184,0.05); color: #94a3b8; border: 1px solid rgba(148,163,184,0.4);'}`;
 
-  // Блок с кнопками (вынесли в переменную, так как он у тебя дублируется сверху и снизу)
+  // Блок с кнопками
   const reviewButtonsHtml = `
     <div class="admin-actions admin-review-actions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
       <button type="button" data-review="passed" style="${btnPassedStyle}">✅ Сдал</button>
@@ -224,22 +221,25 @@ function renderAdminDetail() {
           (response, index) => {
             let hint = '';
             let correctAnswersText = '';
+            let isImageKind = false;
             
-            // Вытягиваем оригинальный вопрос из загруженной БД
-           // --- ВСТАВЬ ЭТО СЮДА ---
-            // 1. ПРОВЕРЯЕМ СНАПШОТ (Для новых экзаменов, чтобы ответы не съезжали при ред. базы)
+            // 1. ПРОВЕРЯЕМ СНАПШОТ 
             if (response.snapshotKind) {
               if (response.snapshotHint) hint = response.snapshotHint;
+              isImageKind = response.snapshotKind === 'single-image';
               
               if (response.snapshotKind === 'single') {
                 correctAnswersText = response.snapshotCorrect;
+              } else if (response.snapshotKind === 'single-image') {
+                // Если правильный ответ - это картинка
+                correctAnswersText = `<br><img src="${escapeHtml(response.snapshotCorrect)}" style="max-height: 120px; border-radius: 6px; margin-top: 8px; border: 2px solid #2ecc71; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
               } else if (response.snapshotKind === 'multi') {
                 correctAnswersText = Array.isArray(response.snapshotCorrect) ? response.snapshotCorrect.join(', ') : response.snapshotCorrect;
               } else if (response.snapshotKind === 'text' && response.snapshotCorrect) {
                 correctAnswersText = 'Эталон / Ключевые слова: ' + response.snapshotCorrect;
               }
             } 
-            // 2. ФОЛБЭК ПО ID (Для старых экзаменов, которые сдавали до внедрения снапшотов)
+            // 2. ФОЛБЭК ПО ID
             else {
               try {
                 const targetArray = typeof examQuestions !== 'undefined' ? examQuestions : [];
@@ -248,9 +248,12 @@ function renderAdminDetail() {
                 
                 if (question) {
                   if (question.reviewHint) hint = question.reviewHint;
+                  isImageKind = question.kind === 'single-image';
                   
                   if (question.kind === 'single') {
                     correctAnswersText = question.correctAnswer;
+                  } else if (question.kind === 'single-image') {
+                    correctAnswersText = `<br><img src="${escapeHtml(question.correctAnswer)}" style="max-height: 120px; border-radius: 6px; margin-top: 8px; border: 2px solid #2ecc71; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
                   } else if (question.kind === 'multi') {
                     correctAnswersText = Array.isArray(question.correctAnswer) ? question.correctAnswer.join(', ') : question.correctAnswer;
                   } else if (question.kind === 'text' && question.keywords && question.keywords.length > 0) {
@@ -263,15 +266,22 @@ function renderAdminDetail() {
                 console.error("Данные вопроса не найдены", e);
               }
             }
-            // --- КОНЕЦ ВСТАВКИ ---
 
             const isCorrect = response.score > 0;
+            
+            // --- Рендерим ответ стажёра (С учетом картинок) ---
+            let userAnswerHtml = response.answer ? escapeHtml(response.answer) : '<span style="color: #ff4757;">Нет ответа</span>';
+            
+            if (isImageKind && response.answer) {
+              userAnswerHtml = `<br><img src="${escapeHtml(response.answer)}" style="max-height: 120px; border-radius: 6px; margin-top: 8px; border: 2px solid ${isCorrect ? '#2ecc71' : '#ff4757'}; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
+            }
 
             return `
               <article class="breakdown-item" style="flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;">
                 <div style="width: 100%;">
                   <strong>${response.label ?? response.title ?? response.questionId}</strong>
-                  <p style="margin: 6px 0 0 0; font-size: 1rem;"><b>Ответ стажёра:</b> ${response.answer ? response.answer : '<span style="color: #ff4757;">Нет ответа</span>'}</p>
+                  
+                  <p style="margin: 6px 0 0 0; font-size: 1rem;"><b>Ответ стажёра:</b> ${userAnswerHtml}</p>
                   
                   ${correctAnswersText ? `
                     <p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #7fe3ff;"><b>Правильный ответ:</b> ${correctAnswersText}</p>
@@ -299,7 +309,6 @@ function renderAdminDetail() {
     
     ${reviewButtonsHtml}
   `;
-  // --- КОНЕЦ ЗАМЕНЫ ---
 
   dom.adminDetail.querySelectorAll('.review-answer-cb').forEach((checkbox) => {
     checkbox.addEventListener('change', async (event) => {
@@ -613,7 +622,8 @@ async function submitExam(event) {
     let note = 'Нет ответа';
 
     if (hasAnswer) {
-      if (question.kind === 'single') {
+      // ИЗМЕНЕНИЕ ЗДЕСЬ: картинки проверяются так же как обычный single-выбор
+      if (question.kind === 'single' || question.kind === 'single-image') {
         const isCorrect = normalize(answer) === normalize(question.correctAnswer ?? '');
         score = isCorrect ? 1 : 0;
         note = isCorrect ? 'Авто-проверка: Верно' : 'Авто-проверка: Ошибка';
@@ -644,11 +654,9 @@ async function submitExam(event) {
   });
 
   // --- ТОЧЕЧНАЯ ПРОВЕРКА НА ЛИМИТ ОШИБОК ---
-  // Считаем только те вопросы, где авто-проверка выдала «Ошибка» (игнорируем ручную проверку текста)
   const totalErrors = breakdown.filter(item => item.note === 'Авто-проверка: Ошибка' || item.note === 'Нет ответа').length;
 
   if (totalErrors >= 4) {
-    // Блокируем отправку везде. Очищаем форму и выводим окно провала
     dom.examForm.innerHTML = `
       <div style="background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444; padding: 40px; border-radius: 12px; text-align: center; max-width: 600px; margin: 40px auto; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); animation: fadeInUp 0.4s ease;">
         <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🛑</span>
@@ -664,10 +672,9 @@ async function submitExam(event) {
       </div>
     `;
     
-    // Сбрасываем стейт ответов, чтобы не потащились в следующий раз
     state.examAnswers = createBlankAnswers(examQuestions);
     state.examMeta = { name: '', squad: '', contact: '' };
-    return; // Жесткий стоп-кран, дальше код не выполняется
+    return;
   }
 
   // --- ЕСЛИ ВСЁ ОК, ИДЕТ СТАРЫЙ ФУНКЦИОНАЛ ОТПРАВКИ ---
@@ -764,7 +771,6 @@ async function submitExam(event) {
     sendToDiscord();
   }
 
-  // Сброс и перерендер интерфейса для следующего раза/админки
   state.selectedSubmissionId = submission.id;
   state.examAnswers = createBlankAnswers(examQuestions);
   state.examMeta = { name: '', squad: '', contact: '' };
@@ -841,7 +847,6 @@ function bindAdminControls() {
     
     dom.adminModeApps.addEventListener('click', async () => {
       state.adminViewMode = 'apps';
-      // Подгружаем заявления из БД при первом клике (или обновляем)
       const { data } = await supabaseClient.from('applications').select('*').order('created_at', { ascending: false });
       if (data) {
         state.applications = data;
@@ -877,7 +882,6 @@ function bindAdminControls() {
 }
 
 async function init() {
-  // 1. ЗАГРУЖАЕМ ВОПРОСЫ ПЕРЕД ТЕМ, КАК СТРОИТЬ САЙТ
   try {
     const url = config.supabaseUrl;
     const key = config.supabaseAnonKey; 
@@ -886,12 +890,10 @@ async function init() {
       throw new Error("Ключи Supabase не найдены в конфиге!");
     }
     
-    // Записываем в ГЛОБАЛЬНУЮ переменную
     supabaseClient = createClient(url, key);
     const { data, error } = await supabaseClient.from('questions').select('*');
     
     if (error) throw error;
-    // ... дальше твой код сортировки examQuestions
     
     examQuestions = data.sort((a, b) => {
       const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
@@ -902,11 +904,9 @@ async function init() {
     console.error('Ошибка загрузки БД (Экзамен будет пуст):', err.message);
   }
 
-  // 2. ТЕПЕРЬ ЗАПОЛНЯЕМ СТЕЙТ ПУСТЫМИ ОТВЕТАМИ
   state.practiceAnswers = createBlankAnswers(practiceQuestions);
   state.examAnswers = createBlankAnswers(examQuestions);
 
-  // 3. ПРИВЯЗЫВАЕМ DOM И РЕНДЕРИМ
   dom = {
     learnSection: document.getElementById('learn-section'),
     practiceSection: document.getElementById('practice-section'),
@@ -958,7 +958,6 @@ async function init() {
   }
   if (btnAdminEnter) {
   btnAdminEnter.addEventListener('click', () => {
-    // Открываем админку в новой вкладке
     window.open('https://kulzzer23.github.io/lsfmblue/admin.html', '_blank');
   });
 }
@@ -985,7 +984,7 @@ async function init() {
 
   renderExamSection({
     formEl: dom.examForm,
-    questions: examQuestions, // Передаем скачанный массив
+    questions: examQuestions, 
     state: { answers: state.examAnswers, meta: state.examMeta },
     onAnswerChange: setExamAnswer,
     onMetaChange: (field, value) => {

@@ -28,14 +28,14 @@ style.textContent = `
   .opt-pill:hover { border-color: #94a3b8; }
   .opt-pill.is-correct { border-color: #22c55e; background: #f0fdf4; }
   
-  .opt-content { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; }
+  .opt-content { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; overflow: hidden; }
   .opt-text { color: #0f172a; font-size: 0.95rem; word-break: break-word; }
   
   .icon-btn { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 6px 10px; transition: 0.2s; font-size: 1.1rem; }
   .icon-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
   .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .delete-q:hover { background: #fef2f2; border-color: #fca5a5; }
-  .opt-del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2rem; opacity: 0.6; transition: 0.2s; padding: 0 5px; }
+  .opt-del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2rem; opacity: 0.6; transition: 0.2s; padding: 0 5px; flex-shrink: 0; }
   .opt-del-btn:hover { opacity: 1; transform: scale(1.1); }
   
   .save-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; color: #fff; background: #3b82f6; margin-top: 15px; }
@@ -332,6 +332,7 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
   const selSingle = state.kind === 'single' ? 'selected' : '';
   const selMulti = state.kind === 'multi' ? 'selected' : '';
   const selText = state.kind === 'text' ? 'selected' : '';
+  const selSingleImg = state.kind === 'single-image' ? 'selected' : '';
 
   qDiv.innerHTML = headerHtml + idOrPositionHtml + `
     <div class="editor-row">
@@ -339,6 +340,7 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
       <select class="q-kind custom-select">
         <option value="single" ${selSingle}>Один вариант (single)</option>
         <option value="multi" ${selMulti}>Несколько вариантов (multi)</option>
+        <option value="single-image" ${selSingleImg}>Один вариант с картинками (single-image)</option>
         <option value="text" ${selText}>Текстовый ответ (text)</option>
       </select>
     </div>
@@ -386,11 +388,14 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
         state.correctAnswer = e.target.value;
       });
     } else {
+      const isImage = state.kind === 'single-image';
+      const placeholderText = isImage ? "Введите ссылку на картинку (https://...)" : "Введите новый вариант ответа...";
+      
       guiContainer.innerHTML = `
         <div class="gui-section">
-          <label class="gui-section-label">Варианты ответов (отметьте правильные ✅):</label>
+          <label class="gui-section-label">Варианты ответов (${isImage ? 'ссылки на изображения' : 'отметьте правильные ✅'}):</label>
           <div class="opt-add-bar">
-            <input type="text" class="new-opt-input" placeholder="Введите новый вариант ответа...">
+            <input type="text" class="new-opt-input" placeholder="${placeholderText}">
             <button type="button" class="opt-add-btn">Добавить</button>
           </div>
           <div class="opt-list"></div>
@@ -427,20 +432,29 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
           const pill = document.createElement('div');
           pill.className = 'opt-pill ' + (isCorrect ? 'is-correct' : '');
           
-          const inputType = state.kind === 'single' ? 'radio' : 'checkbox';
+          const inputType = (state.kind === 'single' || state.kind === 'single-image') ? 'radio' : 'checkbox';
           const checkedAttr = isCorrect ? 'checked' : '';
+
+          // Если это картинка, рендерим превью сбоку
+          const optPreview = isImage 
+            ? `<img src="${escapeHtml(opt)}" style="height: 40px; width: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; flex-shrink: 0; background: #e2e8f0;">` 
+            : '';
+          
+          // Стилизуем текст, чтобы длинные ссылки не ломали UI
+          const textStyles = isImage ? 'font-size: 0.75rem; color: #64748b; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' : '';
 
           pill.innerHTML = `
             <label class="opt-content">
-              <input type="${inputType}" name="correct-${state.id}" ${checkedAttr} style="transform: scale(1.2); cursor: pointer;">
-              <span class="opt-text">${escapeHtml(opt)}</span>
+              <input type="${inputType}" name="correct-${state.id}" ${checkedAttr} style="transform: scale(1.2); cursor: pointer; flex-shrink: 0;">
+              ${optPreview}
+              <span class="opt-text" style="${textStyles}">${escapeHtml(opt)}</span>
             </label>
             <button type="button" class="opt-del-btn" title="Удалить">✖</button>
           `;
 
           const inputCheck = pill.querySelector('input');
           inputCheck.addEventListener('change', () => {
-            if (state.kind === 'single') {
+            if (state.kind === 'single' || state.kind === 'single-image') {
               state.correctAnswer = opt;
             } else {
               if (inputCheck.checked) {
@@ -454,7 +468,7 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
 
           pill.querySelector('.opt-del-btn').addEventListener('click', () => {
             state.options = state.options.filter(o => o !== opt);
-            if (state.kind === 'single' && state.correctAnswer === opt) state.correctAnswer = '';
+            if ((state.kind === 'single' || state.kind === 'single-image') && state.correctAnswer === opt) state.correctAnswer = '';
             if (state.kind === 'multi') state.correctAnswer = state.correctAnswer.filter(ans => ans !== opt);
             renderOptionsList();
           });

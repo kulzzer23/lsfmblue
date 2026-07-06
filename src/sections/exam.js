@@ -41,6 +41,38 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
       </article>
     `;
   } 
+
+  // === ЕСЛИ ЭТО ТЕСТ С КАРТИНКАМИ ===
+  // === ЕСЛИ ЭТО ТЕСТ С КАРТИНКАМИ (ОТОБРАЖАЕМ СВЕРХУ ВНИЗ) ===
+  else if (question.kind === 'single-image') {
+    const optionsMarkup = `
+      <div class="options" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+        ${options.map((option) => {
+          const isChecked = currentAnswer === option;
+          return `
+            <label class="option-row ${isChecked ? 'selected-option' : ''}" style="flex-direction: column; padding: 12px; align-items: flex-start; transition: all 0.2s ease;">
+              <img src="${escapeHtml(option)}" style="width: 100%; height: auto; max-height: 400px; object-fit: contain; border-radius: 8px; margin-bottom: 12px; border: 2px solid ${isChecked ? '#7fe3ff' : 'transparent'}; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" />
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="radio" name="exam-${question.id}" value="${escapeHtml(option)}" ${isChecked ? 'checked' : ''} style="accent-color: #7fe3ff; width: 20px; height: 20px; cursor: pointer;" />
+                <span style="font-size: 1rem;">Выбрать этот вариант</span>
+              </div>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    return `
+      <article class="question-card" data-question-id="${escapeHtml(question.id)}" data-original-index="${index}">
+        <div class="question-meta">
+          <span class="q-number">Вопрос ${index + 1}</span>
+        </div>
+        <h3>${escapeHtml(question.title)}</h3>
+        <p>${escapeHtml(question.prompt)}</p>
+        ${optionsMarkup}
+      </article>
+    `;
+  }
   
   // === ЕСЛИ ЭТО ТЕКСТОВЫЙ ВОПРОС (ОТРИСОВЫВАЕМ ИНТЕРФЕЙС SAMP) ===
   else {
@@ -49,10 +81,8 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
     const randomPhone = 100000 + ((index + 1) * 74321) % 899999;
     const editorName = currentUserName && currentUserName.trim() ? currentUserName.trim() : 'Неизвестно';
 
-    // Проверяем, был ли ответ уже сохранён как отказ, чтобы правильно отрендерить при загрузке страницы
     const isRejected = currentAnswer && (currentAnswer.toUpperCase().includes('ПРО') || currentAnswer.toUpperCase().includes('ОТКАЗ') || currentAnswer.toUpperCase().includes('LS |'));
 
-    // Формируем HTML для режима просмотра (зеленый для принятых, красный для отклоненных)
     const adHtml = isRejected 
       ? `<div style="color: #ff4757;">Объявление отклонено. Проверил сотрудник СМИ <span class="ad-editor-name">${escapeHtml(editorName)}</span></div>
          <div style="color: #ff4757;">Отклонено объявление: <span style="color: #ffaa00;">${escapeHtml(question.title)}</span></div>
@@ -68,7 +98,6 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
         
         <div class="samp-text-container">
           
-          <!-- РЕЖИМ РЕДАКТИРОВАНИЯ (ДИАЛОГОВОЕ ОКНО) -->
           <div class="samp-dialog-wrapper edit-mode" style="${currentAnswer ? 'display: none;' : 'display: block;'}">
             <div class="samp-dialog-header">Отредактируйте объявления</div>
             
@@ -96,14 +125,13 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
             </div>
 
             <div class="samp-dialog-buttons">
-              <!-- КНОПКА "ПРИНЯТЬ" -->
               <button type="button" class="samp-btn btn-accept" onclick="
                 const container = this.closest('.samp-text-container');
                 const inp = container.querySelector('input');
                 const val = inp.value.trim();
                 if(!val) return;
                 
-                inp.dispatchEvent(new Event('input', {bubbles: true})); // Записываем в локальный стейт
+                inp.dispatchEvent(new Event('input', {bubbles: true})); 
                 
                 const nameField = document.getElementById('exam-name');
                 const edName = nameField && nameField.value.trim() ? nameField.value.trim() : 'Неизвестно';
@@ -117,17 +145,16 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
                 container.querySelector('.view-mode').style.display = 'block';
               ">Принять</button>
               
-              <!-- КНОПКА "ОТКЛОНИТЬ" (С ПРИЧИНОЙ) -->
               <button type="button" class="samp-btn btn-reject" onclick="
                 const container = this.closest('.samp-text-container');
                 const inp = container.querySelector('input');
                 let val = inp.value.trim();
                 if (!val) {
-                  val = 'LS | ПРО'; // Авто-причина, если стажёр ничего не ввёл
+                  val = 'LSFM | ПРО';
                   inp.value = val;
                 }
                 
-                inp.dispatchEvent(new Event('input', {bubbles: true})); // Записываем отказ в локальный стейт
+                inp.dispatchEvent(new Event('input', {bubbles: true})); 
                 
                 const nameField = document.getElementById('exam-name');
                 const edName = nameField && nameField.value.trim() ? nameField.value.trim() : 'Неизвестно';
@@ -145,7 +172,6 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
             </div>
           </div>
 
-          <!-- РЕЖИМ ПРОСМОТРА ГОТОВОГО ОБЪЯВЛЕНИЯ -->
           <div class="view-mode" style="${currentAnswer ? 'display: block;' : 'display: none;'} margin-bottom: 25px;">
             <div class="samp-published-ad">
               ${adHtml}
@@ -227,7 +253,6 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
       .btn-reject:active { border-color: #ff4757; color: #ff4757; }
       .btn-accept:active { border-color: #33cc33; color: #33cc33; }
 
-      /* Стили для опубликованного объявления в чате */
       .samp-published-ad { 
         background: rgba(0, 0, 0, 0.55); 
         padding: 14px 18px; 
@@ -329,22 +354,47 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
   formEl.querySelector('#exam-name').addEventListener('input', (event) => onMetaChange('name', event.currentTarget.value));
   formEl.querySelector('#exam-squad').addEventListener('input', (event) => onMetaChange('squad', event.currentTarget.value));
 
+  // --- ОБРАБОТКА ПОДСВЕТКИ ОБЫЧНЫХ И ГРАФИЧЕСКИХ ТЕСТОВ ---
+  const handleOptionSelect = (input) => {
+    const qCard = input.closest('.question-card');
+    const isMulti = input.type === 'checkbox';
+    const label = input.closest('.option-row');
+
+    if (!isMulti) {
+      qCard.querySelectorAll('.option-row').forEach(row => {
+        row.classList.remove('selected-option');
+        const img = row.querySelector('img');
+        if (img) img.style.borderColor = 'transparent';
+      });
+      if (input.checked) {
+        label.classList.add('selected-option');
+        const img = label.querySelector('img');
+        if (img) img.style.borderColor = '#7fe3ff';
+      }
+    } else {
+      label.classList.toggle('selected-option', input.checked);
+    }
+  };
+
   formEl.querySelectorAll('input[type="radio"]').forEach((input) => {
     input.addEventListener('change', (event) => {
+      handleOptionSelect(event.currentTarget);
+      // ВАЖНО: передаем 'single', чтобы submitExam (в main.js) правильно начислил авто-баллы
       const questionId = input.closest('[data-question-id]').dataset.questionId;
       onAnswerChange(questionId, event.currentTarget.value, 'single');
     });
   });
 
   formEl.querySelectorAll('input[type="checkbox"]').forEach((input) => {
-    input.addEventListener('change', () => {
+    input.addEventListener('change', (event) => {
+      handleOptionSelect(event.currentTarget);
       const questionId = input.closest('[data-question-id]').dataset.questionId;
       onAnswerChange(questionId, input.dataset.option, 'multi');
     });
   });
 
-  // Захватываем ввод и из старых textarea (если остались), и из новых SAMP-инпутов!
-  formEl.querySelectorAll('textarea, input.samp-dialog-input').forEach((inputField) => {
+  // Захватываем ввод из SAMP-инпутов
+  formEl.querySelectorAll('input.samp-dialog-input').forEach((inputField) => {
     inputField.addEventListener('input', () => {
       onAnswerChange(inputField.dataset.questionId, inputField.value, 'text');
     });
