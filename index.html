@@ -182,7 +182,14 @@
       .admin-btn.danger:hover { background: rgba(239, 68, 68, 0.1); }
 
       /* --- ВКЛАДКИ --- */
-      .section-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 24px; position: relative; z-index: 10; }
+     .section-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 32px;
+  justify-content: center; /* ЭТА СТРОКА ЦЕНТРИРУЕТ КНОПКИ */
+  width: 100%;
+}
       .tab-button {
         position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px;
         padding: 12px 24px; background: rgba(255, 255, 255, 0.04); color: #eaf0ff; font-weight: 700; backdrop-filter: blur(10px); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -331,56 +338,59 @@
       <div class="glow glow-a"></div>
       <div class="glow glow-b"></div>
 
-      <!-- ГЛАВНЫЙ HERO БЛОК (ДАШБОРД) -->
-      <header class="hero-dashboard">
-        <!-- ЛЕВАЯ ЧАСТЬ -->
-        <div class="hero-copy">
-          <div class="hero-badge-container">
-            <div class="hero-badge-text">LSFM / PRO / Экзаменатор</div>
-            <div class="hero-badge-lottie">
-              <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_q5pk6p1k.json" background="transparent" speed="1" style="width: 35px; height: 35px;" loop autoplay></lottie-player>
-            </div>
-          </div>
+     <header class="hero-dashboard">
+  <!-- ЛЕВАЯ ЧАСТЬ -->
+  <div class="hero-copy" style="background: linear-gradient(165deg, rgba(15, 23, 42, 0.8) 0%, rgba(7, 13, 28, 0.9) 100%); border: 1px solid rgba(127, 227, 255, 0.15);">
+    <div class="hero-badge-container">
+      <div class="hero-badge-text" style="background: rgba(127, 227, 255, 0.05); border: 1px solid rgba(127, 227, 255, 0.2);">
+        LSFM / PRO / Экзаменатор
+      </div>
+    </div>
 
-          <h1>Три раздела: учись, тренируйся и сдавай экзамен.</h1>
-          <p>В одном месте собрано всё необходимое: раздел обучения с правилами и уставом, тренировка с мгновенной проверкой и строгий экзамен, результаты которого сохраняются для проверки старшим составом.</p>
-          
-          <div class="hero-stats">
-            <article>
-              <strong id="questions-count">7</strong>
-              <span>вопросов для<br>тренировки</span>
-            </article>
-            <article>
-              <strong id="lessons-count">3</strong>
-              <span>раздела<br>обучения</span>
-            </article>
-            <article>
-              <strong id="saved-count">0</strong>
-              <span>экзаменов<br>сохранено</span>
-            </article>
-          </div>
-        </div>
+    <h1 style="background: linear-gradient(to right, #fff, #7fe3ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 24px;">
+      Три раздела: учись, тренируйся и сдавай экзамен.
+    </h1>
+    
+    <p style="font-size: 1.1rem; color: #94a3b8; line-height: 1.7; margin-bottom: 32px;">
+      В одном месте собрано всё необходимое: обучение, тренировка с мгновенной проверкой и строгий экзаменатор для проверки старшим составом.
+    </p>
+    
+    <div class="hero-stats">
+      <article style="background: rgba(127, 227, 255, 0.03); border: 1px solid rgba(127, 227, 255, 0.1);">
+        <strong id="questions-count" style="color: #7fe3ff;">7</strong>
+        <span>вопросов для тренировки</span>
+      </article>
+      <article style="background: rgba(127, 227, 255, 0.03); border: 1px solid rgba(127, 227, 255, 0.1);">
+        <strong id="lessons-count" style="color: #7fe3ff;">3</strong>
+        <span>раздела обучения</span>
+      </article>
+      <article style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.1);">
+        <strong id="saved-count" style="color: #10b981;">0</strong>
+        <span>экзаменов сохранено</span>
+      </article>
+    </div>
+  </div>
 
-        <!-- ПРАВАЯ ЧАСТЬ (АДМИНКА) -->
-        <aside class="login-panel">
-          <div id="admin-status-off">
-            <div class="panel-badge restricted">🔒 Вход ограничен</div>
-            <h2>Панель управления</h2>
-            <p>Доступ только для руководства LSFM.</p>
-            <input id="admin-code" type="password" placeholder="Введите код доступа" />
-            <button id="admin-login" type="button" class="admin-btn primary">Авторизоваться</button>
-          </div>
-          
-          <div id="admin-status-on" class="hidden">
-            <div class="panel-badge success">✅ Доступ разрешён</div>
-            <h2>Система активна</h2>
-            <p>Управление базой вопросов и проверка результатов.</p>
-            <button id="admin-upast" type="button" class="admin-btn primary">📋 Список экзаменов</button>
-            <button id="admin-enter" type="button" class="admin-btn secondary">⚙️ Редактор вопросов</button>
-            <button id="admin-logout" type="button" class="admin-btn danger">Выйти</button>
-          </div>
-        </aside>
-      </header>
+  <!-- ПРАВАЯ ЧАСТЬ -->
+  <aside class="login-panel" style="border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+    <div id="admin-status-off">
+      <div class="panel-badge restricted" style="background: rgba(239, 68, 68, 0.05);">🔒 Доступ ограничен</div>
+      <h2 style="font-weight: 700; letter-spacing: -0.5px;">Панель управления</h2>
+      <p>Служебный вход для руководства LSFM.</p>
+      <input id="admin-code" type="password" placeholder="Введите ключ доступа" style="border-radius: 12px; padding: 14px; background: rgba(0,0,0,0.4);" />
+      <button id="admin-login" type="button" class="admin-btn primary" style="padding: 14px; border-radius: 12px; font-weight: 700;">Войти в систему</button>
+    </div>
+    
+    <div id="admin-status-on" class="hidden">
+      <div class="panel-badge success" style="background: rgba(16, 185, 129, 0.05);">✅ Система активна</div>
+      <h2 style="font-weight: 700; letter-spacing: -0.5px;">Доступ разрешён</h2>
+      <p>Управление базой и мониторинг стажёров.</p>
+      <button id="admin-upast" type="button" class="admin-btn primary" style="border-radius: 10px;">📋 Список экзаменов</button>
+      <button id="admin-enter" type="button" class="admin-btn secondary" style="border-radius: 10px;">⚙️ Редактор вопросов</button>
+      <button id="admin-logout" type="button" class="admin-btn danger" style="border-radius: 10px; opacity: 0.7;">Завершить сеанс</button>
+    </div>
+  </aside>
+</header>
 
       <nav class="section-tabs" aria-label="Разделы сайта">
         <button class="tab-button active" data-section="learn" type="button">Обучение</button>
