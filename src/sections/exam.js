@@ -138,7 +138,7 @@ function createQuestionMarkup(question, index, currentAnswer, currentUserName = 
                 const escapeStr = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
                 container.querySelector('.samp-published-ad').innerHTML = 
-                  '<div style=\\'color: #00e500;\\'>LSFM | <span class=\\'ad-result-text\\'>' + escapeStr(val) + '</span> | Отправил ${randomSender}[${10 + index}] (тел. ${randomPhone})</div>' +
+                  '<div style=\\'color: #00e500;\\'<span class=\\'ad-result-text\\'>' + escapeStr(val) + '</span> | Отправил ${randomSender}[${10 + index}] (тел. ${randomPhone})</div>' +
                   '<div style=\\'color: #00e500;\\'>Объявление проверил сотрудник СМИ <span class=\\'ad-editor-name\\'>' + escapeStr(edName) + '</span></div>';
                 
                 container.querySelector('.edit-mode').style.display = 'none';
