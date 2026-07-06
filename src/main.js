@@ -190,11 +190,13 @@ function renderAdminDetail() {
   const btnUncheckedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isUnchecked ? 'background: #94a3b8; color: #000; border: 1px solid #94a3b8;' : 'background: rgba(148,163,184,0.05); color: #94a3b8; border: 1px solid rgba(148,163,184,0.4);'}`;
 
   // Блок с кнопками
+  // Блок с кнопками
   const reviewButtonsHtml = `
     <div class="admin-actions admin-review-actions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
       <button type="button" data-review="passed" style="${btnPassedStyle}">✅ Сдал</button>
       <button type="button" data-review="failed" style="${btnFailedStyle}">❌ Не сдал</button>
       <button type="button" data-review="unchecked" style="${btnUncheckedStyle}">⏳ Не проверено</button>
+      <button type="button" id="delete-submission-btn" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); margin-left: auto;">🗑️ Удалить</button>
     </div>
   `;
 
@@ -332,7 +334,7 @@ function renderAdminDetail() {
       }
     });
   });
-
+  
   dom.adminDetail.querySelectorAll('[data-review]').forEach((button) => {
     button.addEventListener('click', async () => {
       try {
@@ -354,6 +356,30 @@ function renderAdminDetail() {
       }
     });
   });
+  // --- ЛОГИКА УДАЛЕНИЯ ЭКЗАМЕНА ---
+  const deleteBtn = dom.adminDetail.querySelector('#delete-submission-btn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm('Вы уверены, что хотите навсегда удалить этот экзамен?')) return;
+      
+      deleteBtn.textContent = 'Удаление...';
+      
+      // Удаляем из Supabase
+      const { error } = await supabaseClient.from('submissions').delete().eq('id', selected.id);
+      
+      if (error) {
+        alert('Ошибка при удалении: ' + error.message);
+        deleteBtn.textContent = '🗑️ Удалить';
+      } else {
+        // Убираем из стейта и обновляем интерфейс
+        state.submissions = state.submissions.filter(sub => sub.id !== selected.id);
+        state.selectedSubmissionId = state.submissions[0]?.id ?? null;
+        renderSubmissionList();
+        renderAdminDetail();
+        updateHeroStats();
+      }
+    });
+  }
 }
 function renderPracticeSummary() {
   renderPracticeResult(dom.practiceResult, state.practiceResult);
