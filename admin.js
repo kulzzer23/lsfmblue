@@ -106,6 +106,7 @@ async function fetchQuestions() {
 
   currentQuestions = questions;
   renderQuestionsList();
+  renderAnnouncementEditor()
 }
 
 function renderQuestionsList() {
@@ -562,6 +563,31 @@ authBtn.addEventListener('click', () => {
     passwordInput.focus();
   }
 });
+
+// Добавь это в админку (например, в renderAdminShell)
+async function renderAnnouncementEditor() {
+  const { data } = await supabase.from('global_announcements').select('*').single();
+  const editor = document.createElement('div');
+  editor.className = 'question-editor';
+  editor.innerHTML = `
+    <h3>Управление объявлением на главной</h3>
+    <label><input type="checkbox" id="ann-active" ${data.active ? 'checked' : ''}> Включить объявление</label>
+    <textarea id="ann-text" placeholder="Текст объявления">${escapeHtml(data.text || '')}</textarea>
+    <input type="text" id="ann-link" placeholder="Ссылка (опционально)" value="${escapeHtml(data.link || '')}">
+    <button id="save-ann" class="save-btn">Сохранить объявление</button>
+  `;
+  listContainer.parentElement.insertBefore(editor, listContainer);
+
+  document.getElementById('save-ann').onclick = async () => {
+    await supabase.from('global_announcements').update({
+      active: document.getElementById('ann-active').checked,
+      text: document.getElementById('ann-text').value,
+      link: document.getElementById('ann-link').value
+    }).eq('id', 1);
+    alert('Обновлено!');
+  };
+}
+// Вызови renderAnnouncementEditor() после успешной авторизации админа
 
 passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') authBtn.click(); });
 checkAuth();

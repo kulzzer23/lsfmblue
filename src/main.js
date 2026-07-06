@@ -881,6 +881,28 @@ function bindAdminControls() {
   }
 }
 
+// Функция проверки объявления
+async function checkGlobalAnnouncement() {
+  const { data, error } = await supabaseClient.from('global_announcements').select('*').single();
+  if (error || !data.active) return;
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;';
+  
+  overlay.innerHTML = `
+    <div style="background:#0f172a; padding:30px; border-radius:20px; border:1px solid #3b82f6; max-width:500px; width:100%; text-align:center; color:#fff;">
+      <h2 style="margin-top:0; color:#3b82f6;">📢 ВАЖНОЕ ОБЪЯВЛЕНИЕ</h2>
+      <p style="font-size:1.1rem; margin:20px 0;">${escapeHtml(data.text)}</p>
+      ${data.link ? `<a href="${data.link}" target="_blank" class="primary-button" style="display:block; margin-bottom:15px; text-decoration:none;">Перейти по ссылке</a>` : ''}
+      <button id="close-announcement" class="secondary-button" style="width:100%;">Принять и закрыть</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#close-announcement').onclick = () => overlay.remove();
+}
+// Добавь вызов checkGlobalAnnouncement() в конце функции init()
+
+
 async function init() {
   try {
     const url = config.supabaseUrl;
@@ -1007,6 +1029,7 @@ async function init() {
   renderAdminDetail();
   updateHeroStats();
   setSection(state.activeSection);
+  checkGlobalAnnouncement();
 }
 
 if (document.readyState === 'loading') {
