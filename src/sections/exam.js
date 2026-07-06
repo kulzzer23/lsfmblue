@@ -10,47 +10,83 @@ let examTabCheatHandler = null;
 function createQuestionMarkup(question, index, currentAnswer) {
   const options = question.options ?? [];
 
-  const optionsMarkup =
-    question.kind === 'single'
+  // ЕСЛИ ЭТО ОБЫЧНЫЙ ТЕСТ С ВАРИАНТАМИ ОТВЕТОВ (Кружочки или Галочки)
+  if (question.kind === 'single' || question.kind === 'multi') {
+    const optionsMarkup = question.kind === 'single'
       ? `<div class="options">
-          ${options
-            .map(
-              (option) => `
-                <label class="option-row">
-                  <input type="radio" name="exam-${question.id}" value="${escapeHtml(option)}" ${currentAnswer === option ? 'checked' : ''} />
-                  <span>${escapeHtml(option)}</span>
-                </label>
-              `,
-            )
-            .join('')}
+          ${options.map((option) => `
+            <label class="option-row">
+              <input type="radio" name="exam-${question.id}" value="${escapeHtml(option)}" ${currentAnswer === option ? 'checked' : ''} />
+              <span>${escapeHtml(option)}</span>
+            </label>
+          `).join('')}
         </div>`
-      : question.kind === 'multi'
-        ? `<div class="options">
-            ${options
-              .map(
-                (option) => `
-                  <label class="option-row">
-                    <input type="checkbox" data-option="${escapeHtml(option)}" ${Array.isArray(currentAnswer) && currentAnswer.includes(option) ? 'checked' : ''} />
-                    <span>${escapeHtml(option)}</span>
-                  </label>
-                `,
-              )
-              .join('')}
-          </div>`
-        : `<textarea class="text-area" rows="4" data-question-id="${escapeHtml(question.id)}" placeholder="Коротко, по фактам">${escapeHtml(currentAnswer ?? '')}</textarea>`;
+      : `<div class="options">
+          ${options.map((option) => `
+            <label class="option-row">
+              <input type="checkbox" data-option="${escapeHtml(option)}" ${Array.isArray(currentAnswer) && currentAnswer.includes(option) ? 'checked' : ''} />
+              <span>${escapeHtml(option)}</span>
+            </label>
+          `).join('')}
+        </div>`;
 
-  // ВАЖНО: добавили data-original-index="${index}" для обратной сортировки
-  // и класс q-number для визуальной перенумерации
-  return `
-    <article class="question-card" data-question-id="${escapeHtml(question.id)}" data-original-index="${index}">
-      <div class="question-meta">
-        <span class="q-number">Вопрос ${index + 1}</span>
-      </div>
-      <h3>${escapeHtml(question.title)}</h3>
-      <p>${escapeHtml(question.prompt)}</p>
-      ${optionsMarkup}
-    </article>
-  `;
+    return `
+      <article class="question-card" data-question-id="${escapeHtml(question.id)}" data-original-index="${index}">
+        <div class="question-meta">
+          <span class="q-number">Вопрос ${index + 1}</span>
+        </div>
+        <h3>${escapeHtml(question.title)}</h3>
+        <p>${escapeHtml(question.prompt)}</p>
+        ${optionsMarkup}
+      </article>
+    `;
+  } 
+  
+  // === ЕСЛИ ЭТО ТЕКСТОВЫЙ ВОПРОС (ОТРИСОВЫВАЕМ ИНТЕРФЕЙС SAMP) ===
+  else {
+    const senders = ['Haruki_Tanigawa', 'John_Doe', 'Carl_Johnson', 'Tommy_Vercetti', 'Leonard_Jemison'];
+    const randomSender = senders[index % senders.length];
+
+    return `
+      <article class="question-card samp-card-override" data-question-id="${escapeHtml(question.id)}" data-original-index="${index}" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+        <div class="question-meta" style="margin-bottom: 10px;">
+          <span class="q-number" style="background: rgba(127, 227, 255, 0.1); color: #7fe3ff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; border: 1px solid rgba(127, 227, 255, 0.2);">Вопрос ${index + 1}</span>
+        </div>
+        
+        <div class="samp-dialog-wrapper">
+          <div class="samp-dialog-header">Отредактируйте объявления</div>
+          
+          <div class="samp-dialog-row">
+            <div class="samp-dialog-label">Отправитель:</div>
+            <div class="samp-dialog-value">${randomSender}</div>
+          </div>
+          
+          <div class="samp-dialog-row">
+            <div class="samp-dialog-label">Текст:</div>
+            <div class="samp-dialog-value samp-dialog-text-yellow">${escapeHtml(question.title)}</div>
+          </div>
+          
+          <div class="samp-dialog-instructions">
+            Введите новый текст для этого объявления или оставьте поле пустым если редактирование не нужно.<br>
+            Вы можете пропустить это объявление с помощью команды <b>/adskip</b> или указав знак <b>"="</b> без кавычек одним символом и нажать "Принять".<br>
+          </div>
+
+          <div class="samp-dialog-input-container">
+            <input type="text" 
+                   class="samp-dialog-input" 
+                   data-question-id="${escapeHtml(question.id)}" 
+                   value="${escapeHtml(currentAnswer ?? '')}" 
+                   autocomplete="off">
+          </div>
+
+          <div class="samp-dialog-buttons">
+            <button type="button" class="samp-btn btn-accept" onclick="this.closest('.samp-dialog-wrapper').querySelector('input').focus()">Принять</button>
+            <button type="button" class="samp-btn btn-reject" onclick="let inp = this.closest('.samp-dialog-wrapper').querySelector('input'); inp.value = 'LS | ПРО'; inp.dispatchEvent(new Event('input'));">Отклонить</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
 }
 
 // --- ФУНКЦИИ АНТИ-ЧИТА ---
@@ -90,9 +126,35 @@ function disableAntiCheat() {
   }
 }
 
-
 export function renderExamSection({ formEl, questions, state, onAnswerChange, onMetaChange, onSubmit }) {
   
+  // Внедряем стили SAMP Диалога автоматически при первом открытии
+  if (!document.getElementById('samp-dialog-css')) {
+    const style = document.createElement('style');
+    style.id = 'samp-dialog-css';
+    style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap');
+
+      .samp-dialog-wrapper { background-color: rgba(0, 0, 0, 0.85); border-radius: 6px; padding: 15px 20px; font-family: 'Arimo', Arial, sans-serif; color: #ffffff; max-width: 700px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); user-select: none; }
+      .samp-dialog-header { color: #33cc33; font-weight: bold; font-size: 15px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+      .samp-dialog-row { display: flex; margin-bottom: 4px; font-size: 14px; }
+      .samp-dialog-label { width: 110px; font-weight: bold; }
+      .samp-dialog-value { flex: 1; }
+      .samp-dialog-text-yellow { color: #ffaa00; font-weight: bold; }
+      .samp-dialog-instructions { font-size: 13px; margin-top: 15px; margin-bottom: 15px; line-height: 1.4; color: #ffffff; }
+      .samp-dialog-instructions b { color: #a9c4e2; font-weight: normal; }
+      .samp-dialog-input-container { margin-bottom: 15px; }
+      .samp-dialog-input { width: 100%; background-color: #000000; border: 2px solid #ffffff; border-radius: 6px; color: #ffffff; padding: 8px 12px; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+      .samp-dialog-input:focus { border-color: #a9c4e2; }
+      .samp-dialog-buttons { display: flex; justify-content: center; gap: 15px; }
+      .samp-btn { background: transparent; border: 2px solid #ffffff; color: #ffffff; padding: 5px 20px; border-radius: 20px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; transition: 0.2s; font-weight: bold; }
+      .samp-btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
+      .btn-reject:active { border-color: #ff4757; color: #ff4757; }
+      .btn-accept:active { border-color: #33cc33; color: #33cc33; }
+    `;
+    document.head.appendChild(style);
+  }
+
   if (!isExamStarted) {
     disableAntiCheat(); 
     
@@ -142,7 +204,6 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
   // --- ЭКЗАМЕН НАЧАЛСЯ ---
   enableAntiCheat(formEl); 
 
-  // 1. Рендерим вопросы В ОРИГИНАЛЬНОМ ПОРЯДКЕ (помещаем их в контейнер #exam-questions-container)
   formEl.innerHTML = `
     <div class="grid-3">
       <label>
@@ -165,43 +226,17 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     </div>
   `;
 
-  /*// 2. ДОМ-МАГИЯ: ПЕРЕМЕШИВАЕМ КАРТОЧКИ ВИЗУАЛЬНО
-  const container = formEl.querySelector('#exam-questions-container');
-  if (container) {
-    const cards = Array.from(container.querySelectorAll('.question-card'));
-    
-    // Перемешиваем массив карточек (Фишер-Йетс)
-    for (let i = cards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [cards[i], cards[j]] = [cards[j], cards[i]];
-    }
-    
-    // Вставляем обратно в случайном порядке и красиво перенумеровываем от 1 до N
-    cards.forEach((card, index) => {
-      container.appendChild(card); // Перемещение элемента
-      card.querySelector('.q-number').textContent = `Вопрос ${index + 1}`;
-    });
-  }*/
-
   // --- ПЕРЕХВАТ ОТПРАВКИ ---
   formEl.addEventListener('submit', (event) => {
     event.preventDefault(); 
     disableAntiCheat(); 
     isExamStarted = false; 
 
-    // 3. ДОМ-МАГИЯ: ВОЗВРАЩАЕМ КАК БЫЛО ПЕРЕД ОТПРАВКОЙ!
-    /*// Твоя система даже не узнает, что вопросы переставлялись местами
-    if (container) {
-      const currentCards = Array.from(container.querySelectorAll('.question-card'));
-      currentCards.sort((a, b) => Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex));
-      currentCards.forEach(card => container.appendChild(card));
-    }*/
-
     onSubmit(event); 
   });
 
 
-  // Слушатели данных остаются стандартными
+  // Слушатели данных
   formEl.querySelector('#exam-name').addEventListener('input', (event) => onMetaChange('name', event.currentTarget.value));
   formEl.querySelector('#exam-squad').addEventListener('input', (event) => onMetaChange('squad', event.currentTarget.value));
 
@@ -219,9 +254,10 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     });
   });
 
-  formEl.querySelectorAll('textarea').forEach((textarea) => {
-    textarea.addEventListener('input', () => {
-      onAnswerChange(textarea.dataset.questionId, textarea.value, 'text');
+  // Захватываем ввод и из старых textarea (если остались), и из новых SAMP-инпутов!
+  formEl.querySelectorAll('textarea, input.samp-dialog-input').forEach((inputField) => {
+    inputField.addEventListener('input', () => {
+      onAnswerChange(inputField.dataset.questionId, inputField.value, 'text');
     });
   });
 }

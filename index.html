@@ -946,6 +946,101 @@
   width: 100%;
 }
 
+.samp-dialog-wrapper {
+  background-color: rgba(0, 0, 0, 0.85);
+  border-radius: 6px;
+  padding: 15px 20px;
+  /* Используем шрифт Arimo, он почти 1 в 1 как стандартный Arial в SAMP */
+  font-family: 'Arimo', Arial, sans-serif; 
+  color: #ffffff;
+  max-width: 700px;
+  margin: 0 auto 25px auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.samp-dialog-header {
+  color: #33cc33; /* Тот самый SAMP-зелёный */
+  font-weight: bold;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.samp-dialog-row {
+  display: flex;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.samp-dialog-label {
+  width: 110px;
+  font-weight: bold;
+}
+
+.samp-dialog-value {
+  flex: 1;
+}
+
+.samp-dialog-text-yellow {
+  color: #ffaa00; /* Классический оранжево-желтый для объявлений */
+  font-weight: bold;
+}
+
+.samp-dialog-instructions {
+  font-size: 13px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+.samp-dialog-instructions b {
+  color: #a9c4e2; /* Бледно-голубой цвет для команд, как в игре */
+  font-weight: normal;
+}
+
+.samp-dialog-input-container {
+  margin-bottom: 15px;
+}
+
+.samp-dialog-input {
+  width: 100%;
+  background-color: #000000;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  outline: none;
+}
+
+.samp-dialog-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.samp-btn {
+  background: transparent;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  padding: 5px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.samp-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Для красоты скрываем стандартные элементы, если они нам мешают */
+.samp-dialog-input:focus {
+  border-color: #a9c4e2; /* Легкая подсветка при вводе */
+
 /* Опционально: делаем саму менюшку компактной в свернутом виде */
 .floating-menu.collapsed {
   width: auto;
