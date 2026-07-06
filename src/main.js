@@ -1,16 +1,16 @@
 import { config } from './config.js';
 import { learningContent } from './data/learning.js';
 import { practiceQuestions } from './data/practice.js';
-//import { examQuestions } from './data/exam.js';
 import { renderLearningSection } from './sections/learning.js';
 import { renderPracticeResult, renderPracticeSection } from './sections/practice.js';
 import { renderExamSection } from './sections/exam.js';
 import { createSubmissionStore, normalizeSubmissionRecord } from './lib/submissions.js';
 import { renderApplicationSection } from './sections/application.js';
+import { escapeHtml } from './lib/dom.js'; // <--- ДОБАВЬ ЭТУ СТРОКУ
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 
 // ВОТ ЭТА СТРОКА КРИТИЧЕСКИ ВАЖНА (Без неё будет ошибка createClient is not defined)
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 export let supabaseClient = null;
 export let examQuestions = []; 
 const store = createSubmissionStore();
