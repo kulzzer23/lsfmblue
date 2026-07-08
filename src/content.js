@@ -45,6 +45,7 @@ export const content = {
             "Верно:",
             "ТЭГ | ПРО - НАШ ТЭГ LS | PRO", 
             "[IMG:https://i.imgur.com/Uo2Sd06.png]",
+            "",
             "Неверно:",
             "ТЭГ | Ладно ;",
             "ТЭГ | Привет;",

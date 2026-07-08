@@ -171,7 +171,11 @@ function renderAdminDetail() {
   const selected = filtered.find((submission) => submission.id === state.selectedSubmissionId) ?? filtered[0] ?? null;
 
   if (!selected) {
-    dom.adminDetail.innerHTML = '<div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>';
+    dom.adminDetail.innerHTML = `
+      <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #64748b; font-size: 1.1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+        <span style="font-size: 2.5rem; margin-bottom: 15px;">👈</span>
+        Выбери попытку слева, чтобы увидеть ответы
+      </div>`;
     return;
   }
 
@@ -182,45 +186,51 @@ function renderAdminDetail() {
   const isFailed = selected.reviewStatus === 'failed';
   const isUnchecked = selected.reviewStatus === 'unchecked' || !selected.reviewStatus;
 
-  // Генерируем стили для кнопок
-  const btnPassedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isPassed ? 'background: #2ecc71; color: #000; border: 1px solid #2ecc71; box-shadow: 0 0 12px rgba(46,204,113,0.4);' : 'background: rgba(46,204,113,0.05); color: #2ecc71; border: 1px solid rgba(46,204,113,0.4);'}`;
-  
-  const btnFailedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isFailed ? 'background: #ff4757; color: #fff; border: 1px solid #ff4757; box-shadow: 0 0 12px rgba(255,71,87,0.4);' : 'background: rgba(255,71,87,0.05); color: #ff4757; border: 1px solid rgba(255,71,87,0.4);'}`;
-  
-  const btnUncheckedStyle = `padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; ${isUnchecked ? 'background: #94a3b8; color: #000; border: 1px solid #94a3b8;' : 'background: rgba(148,163,184,0.05); color: #94a3b8; border: 1px solid rgba(148,163,184,0.4);'}`;
+  // Стиль кнопок сброса/решения
+  const btnStyleBase = `padding: 12px 20px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-weight: bold; font-family: inherit; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;`;
+  const btnPassedStyle = `${btnStyleBase} ${isPassed ? 'background: #2ecc71; color: #000; border: 1px solid #2ecc71; box-shadow: 0 4px 15px rgba(46,204,113,0.3); transform: translateY(-2px);' : 'background: rgba(46,204,113,0.1); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3);'}`;
+  const btnFailedStyle = `${btnStyleBase} ${isFailed ? 'background: #ff4757; color: #fff; border: 1px solid #ff4757; box-shadow: 0 4px 15px rgba(255,71,87,0.3); transform: translateY(-2px);' : 'background: rgba(255,71,87,0.1); color: #ff4757; border: 1px solid rgba(255,71,87,0.3);'}`;
+  const btnUncheckedStyle = `${btnStyleBase} ${isUnchecked ? 'background: #94a3b8; color: #000; border: 1px solid #94a3b8;' : 'background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3);'}`;
 
   // Блок с кнопками
-  // Блок с кнопками
   const reviewButtonsHtml = `
-    <div class="admin-actions admin-review-actions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+    <div class="admin-actions admin-review-actions" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; width: 100%;">
       <button type="button" data-review="passed" style="${btnPassedStyle}">✅ Сдал</button>
       <button type="button" data-review="failed" style="${btnFailedStyle}">❌ Не сдал</button>
-      <button type="button" data-review="unchecked" style="${btnUncheckedStyle}">⏳ Не проверено</button>
-      <button type="button" id="delete-submission-btn" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.9rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); margin-left: auto;">🗑️ Удалить</button>
+      <button type="button" data-review="unchecked" style="${btnUncheckedStyle}">⏳ Сбросить</button>
+      <button type="button" id="delete-submission-btn" style="padding: 12px 20px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: inherit; font-size: 0.95rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); margin-left: auto; display: flex; align-items: center; gap: 8px;">🗑️ Удалить</button>
     </div>
   `;
 
   dom.adminDetail.innerHTML = `
-    <div class="detail-header">
-      <div>
-        <span>Выбрана попытка</span>
-        <h3>${selected.name}</h3>
-      </div>
-      <div style="text-align: right;">
-        <strong class="status-pill ${getReviewStatusClass(selected.reviewStatus)}" style="margin-bottom: 5px; display: inline-block;">${getReviewStatusLabel(selected.reviewStatus)}</strong>
-        <div style="color: #7fe3ff; font-size: 1.1rem; font-weight: bold; margin-top: 5px;">
-          Баллы: ${selected.score ?? 0} / ${selected.maxScore ?? breakdownArray.length}
+    <!-- Шапка попытки -->
+    <div class="detail-header" style="background: #1e293b; padding: 24px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1; min-width: 250px;">
+          <span style="font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Экзамен / Тест</span>
+          <h3 style="margin: 8px 0 0 0; font-size: 1.6rem; color: #f8fafc;">${selected.name}</h3>
+          
+          <div class="detail-meta" style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; color: #cbd5e1; font-size: 0.95rem;">
+            <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;">🏢 ${selected.squad}</span>
+            <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;">📱 ${selected.contact || 'Нет контакта'}</span>
+            <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;">📅 ${formatDate(selected.submittedAt)}</span>
+          </div>
+        </div>
+        
+        <div style="text-align: right; background: rgba(0,0,0,0.2); padding: 16px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <strong class="status-pill ${getReviewStatusClass(selected.reviewStatus)}" style="margin-bottom: 8px; display: inline-block; font-size: 0.9rem;">${getReviewStatusLabel(selected.reviewStatus)}</strong>
+          <div style="color: #38bdf8; font-size: 1.8rem; font-weight: 900; margin-top: 4px;">
+            ${selected.score ?? 0} <span style="font-size: 1.1rem; color: #64748b;">/ ${selected.maxScore ?? breakdownArray.length}</span>
+          </div>
+          <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin-top: 4px; font-weight: bold;">Баллов набрано</div>
         </div>
       </div>
+      
       ${reviewButtonsHtml}
     </div>
-    <div class="detail-meta">
-      <span>${selected.squad}</span>
-      <span>${selected.contact || 'Нет контакта'}</span>
-      <span>${formatDate(selected.submittedAt)}</span>
-      <span>${getReviewStatusLabel(selected.reviewStatus)}</span>
-    </div>
-    <div class="breakdown-list">
+
+    <!-- Список ответов -->
+    <div class="breakdown-list" style="display: flex; flex-direction: column; gap: 24px;">
       ${breakdownArray
         .map(
           (response, index) => {
@@ -228,7 +238,7 @@ function renderAdminDetail() {
             let correctAnswersText = '';
             let isImageKind = false;
             
-            // 1. ПРОВЕРЯЕМ СНАПШОТ 
+            // --- Логика Снапшотов или Фолбэк ---
             if (response.snapshotKind) {
               if (response.snapshotHint) hint = response.snapshotHint;
               isImageKind = response.snapshotKind === 'single-image';
@@ -236,16 +246,14 @@ function renderAdminDetail() {
               if (response.snapshotKind === 'single') {
                 correctAnswersText = response.snapshotCorrect;
               } else if (response.snapshotKind === 'single-image') {
-                // Если правильный ответ - это картинка
-                correctAnswersText = `<br><img src="${escapeHtml(response.snapshotCorrect)}" style="max-height: 120px; border-radius: 6px; margin-top: 8px; border: 2px solid #2ecc71; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
+                correctAnswersText = `<img src="${escapeHtml(response.snapshotCorrect)}" style="max-height: 180px; max-width: 100%; object-fit: contain; border-radius: 8px; margin-top: 10px; border: 2px solid #2ecc71; box-shadow: 0 4px 12px rgba(46,204,113,0.15); display: block;">`;
               } else if (response.snapshotKind === 'multi') {
-                correctAnswersText = Array.isArray(response.snapshotCorrect) ? response.snapshotCorrect.join(', ') : response.snapshotCorrect;
+                const arr = Array.isArray(response.snapshotCorrect) ? response.snapshotCorrect : response.snapshotCorrect.split(',');
+                correctAnswersText = `<ul style="margin: 5px 0 0 0; padding-left: 20px; color: #e2e8f0;"><li>${arr.join('</li><li>')}</li></ul>`;
               } else if (response.snapshotKind === 'text' && response.snapshotCorrect) {
-                correctAnswersText = 'Эталон / Ключевые слова: ' + response.snapshotCorrect;
+                correctAnswersText = response.snapshotCorrect;
               }
-            } 
-            // 2. ФОЛБЭК ПО ID
-            else {
+            } else {
               try {
                 const targetArray = typeof examQuestions !== 'undefined' ? examQuestions : [];
                 const qId = response.questionId || response.id;
@@ -258,13 +266,14 @@ function renderAdminDetail() {
                   if (question.kind === 'single') {
                     correctAnswersText = question.correctAnswer;
                   } else if (question.kind === 'single-image') {
-                    correctAnswersText = `<br><img src="${escapeHtml(question.correctAnswer)}" style="max-height: 120px; border-radius: 6px; margin-top: 8px; border: 2px solid #2ecc71; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
+                    correctAnswersText = `<img src="${escapeHtml(question.correctAnswer)}" style="max-height: 180px; max-width: 100%; object-fit: contain; border-radius: 8px; margin-top: 10px; border: 2px solid #2ecc71; box-shadow: 0 4px 12px rgba(46,204,113,0.15); display: block;">`;
                   } else if (question.kind === 'multi') {
-                    correctAnswersText = Array.isArray(question.correctAnswer) ? question.correctAnswer.join(', ') : question.correctAnswer;
+                    const arr = Array.isArray(question.correctAnswer) ? question.correctAnswer : question.correctAnswer.split(',');
+                    correctAnswersText = `<ul style="margin: 5px 0 0 0; padding-left: 20px; color: #e2e8f0;"><li>${arr.join('</li><li>')}</li></ul>`;
                   } else if (question.kind === 'text' && question.keywords && question.keywords.length > 0) {
-                    correctAnswersText = 'Ключевые слова: ' + question.keywords.join(', ');
+                    correctAnswersText = question.keywords.join(', ');
                   } else if (question.kind === 'text' && question.correctAnswer) {
-                    correctAnswersText = 'Ключевые слова: ' + question.correctAnswer;
+                    correctAnswersText = question.correctAnswer;
                   }
                 }
               } catch (e) {
@@ -274,37 +283,74 @@ function renderAdminDetail() {
 
             const isCorrect = response.score > 0;
             
-            // --- Рендерим ответ стажёра (С учетом картинок) ---
-            let userAnswerHtml = response.answer ? escapeHtml(response.answer) : '<span style="color: #ff4757;">Нет ответа</span>';
+            // --- Рендерим ответ стажёра ---
+            let userAnswerHtml = response.answer ? escapeHtml(response.answer) : '<span style="color: #ff4757; font-style: italic;">Ответ не предоставлен</span>';
             
             if (isImageKind && response.answer) {
-              userAnswerHtml = `<br><img src="${escapeHtml(response.answer)}" style="max-height: 120px; border-radius: 6px; margin-top: 8px; border: 2px solid ${isCorrect ? '#2ecc71' : '#ff4757'}; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
+              userAnswerHtml = `<img src="${escapeHtml(response.answer)}" style="max-height: 180px; max-width: 100%; object-fit: contain; border-radius: 8px; margin-top: 10px; border: 2px solid ${isCorrect ? '#2ecc71' : '#ff4757'}; box-shadow: 0 4px 12px ${isCorrect ? 'rgba(46,204,113,0.15)' : 'rgba(255,71,87,0.15)'}; display: block;">`;
+            } else if (typeof response.answer === 'string' && response.answer.includes(',')) {
+               const splitAnswer = response.answer.split(',').map(s => s.trim()).filter(Boolean);
+               if(splitAnswer.length > 1) {
+                   userAnswerHtml = `<ul style="margin: 5px 0 0 0; padding-left: 20px; color: #e2e8f0;"><li>${splitAnswer.join('</li><li>')}</li></ul>`;
+               }
             }
 
             return `
-              <article class="breakdown-item" style="flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;">
-                <div style="width: 100%;">
-                  <strong>${response.label ?? response.title ?? response.questionId}</strong>
-                  
-                  <p style="margin: 6px 0 0 0; font-size: 1rem;"><b>Ответ стажёра:</b> ${userAnswerHtml}</p>
-                  
-                  ${correctAnswersText ? `
-                    <p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #7fe3ff;"><b>Правильный ответ:</b> ${correctAnswersText}</p>
-                  ` : ''}
-                  
-                </div>
-                ${hint ? `
-                  <div style="margin-top: 6px; padding: 10px 14px; background: rgba(255, 187, 0, 0.08); border: 1px solid rgba(255, 187, 0, 0.15); border-radius: 8px; font-size: 0.9rem; color: #ffda75; width: 100%;">
-                    <b style="color: #ffbb00;">Шпаргалка ПРО:</b> ${hint}
-                  </div>
-                ` : ''}
+              <article class="breakdown-item" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <!-- Левый цветовой индикатор -->
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: ${isCorrect ? '#2ecc71' : '#ff4757'}; transition: background 0.3s; border-radius: 12px 0 0 12px;"></div>
                 
-                <label style="display: flex; align-items: center; gap: 10px; margin-top: 8px; cursor: pointer; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; width: 100%; border: 1px solid ${isCorrect ? 'rgba(46, 204, 113, 0.3)' : 'transparent'};">
-                  <input type="checkbox" class="review-answer-cb" data-index="${index}" ${isCorrect ? 'checked' : ''} style="transform: scale(1.3); cursor: pointer;" />
-                  <span style="color: ${isCorrect ? '#2ecc71' : '#97a7c6'}; font-weight: ${isCorrect ? 'bold' : 'normal'};">Ответ верный (1 балл)</span>
-                  <span style="color: #64748b; font-size: 0.8rem; margin-left: auto;">${response.note || ''}</span>
-                </label>
+                <div style="width: 100%; padding-left: 12px;">
+                  <h4 style="margin: 0 0 20px 0; font-size: 1.15rem; color: #f8fafc; line-height: 1.5; font-weight: 600;">
+                    <span style="color: #94a3b8; font-weight: bold; margin-right: 8px;">Вопрос ${index + 1}:</span> 
+                    ${response.label ?? response.title ?? response.questionId}
+                  </h4>
+                  
+                  <!-- ВАЖНО: align-items: start не даёт панелям растягиваться, позволяя sticky работать -->
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: start;">
+                    
+                    <!-- ЛЕВАЯ КОЛОНКА (ДЛИННАЯ): Ответ стажёра -->
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                      <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                        <span>👤</span> Ответ стажёра
+                      </div>
+                      <div style="font-size: 1.05rem; color: #f1f5f9; line-height: 1.6; word-wrap: break-word;">${userAnswerHtml}</div>
+                    </div>
+                    
+                    <!-- ПРАВАЯ КОЛОНКА (ПЛАВАЮЩАЯ): Эталон, Шпаргалка, Вердикт -->
+                    <div style="position: sticky; top: 24px; display: flex; flex-direction: column; gap: 16px;">
+                      
+                      ${correctAnswersText ? `
+                        <div style="background: rgba(46, 204, 113, 0.05); padding: 16px; border-radius: 10px; border: 1px dashed rgba(46, 204, 113, 0.3);">
+                          <div style="font-size: 0.75rem; color: #2ecc71; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                            <span>🎯</span> Эталон
+                          </div>
+                          <div style="font-size: 1.05rem; color: #f1f5f9; line-height: 1.6; word-wrap: break-word;">${correctAnswersText}</div>
+                        </div>
+                      ` : ''}
+                      
+                      ${hint ? `
+                        <div style="padding: 14px 18px; background: rgba(234, 179, 8, 0.08); border-left: 4px solid #eab308; border-radius: 0 10px 10px 0; font-size: 0.95rem; color: #fef08a; line-height: 1.6;">
+                          <b style="color: #eab308; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">
+                            <span>💡</span> Шпаргалка проверяющему
+                          </b> 
+                          ${hint}
+                        </div>
+                      ` : ''}
+                      
+                      <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: ${isCorrect ? 'rgba(46, 204, 113, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; padding: 16px 20px; border-radius: 10px; width: 100%; border: 1px solid ${isCorrect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.1)'}; transition: all 0.2s ease; margin: 0;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                          <input type="checkbox" class="review-answer-cb" data-index="${index}" ${isCorrect ? 'checked' : ''} style="width: 24px; height: 24px; cursor: pointer; accent-color: #2ecc71; margin: 0;" />
+                          <span style="color: ${isCorrect ? '#2ecc71' : '#cbd5e1'}; font-weight: bold; font-size: 1.1rem; user-select: none;">
+                            ${isCorrect ? 'Ответ засчитан (1 балл)' : 'Засчитать ответ (1 балл)'}
+                          </span>
+                        </div>
+                        ${response.note ? `<span style="color: #64748b; font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 6px;">${response.note}</span>` : ''}
+                      </label>
 
+                    </div>
+                  </div>
+                </div>
               </article>
             `;
           }
@@ -312,9 +358,16 @@ function renderAdminDetail() {
         .join('')}
     </div>
     
-    ${reviewButtonsHtml}
+    <!-- Дублируем кнопки внизу -->
+    ${breakdownArray.length > 2 ? `
+      <div style="margin-top: 40px; border-top: 1px solid #334155; padding-top: 30px; padding-bottom: 20px;">
+        <h4 style="color: #f8fafc; margin: 0 0 15px 0; font-size: 1.2rem;">Завершить проверку:</h4>
+        ${reviewButtonsHtml}
+      </div>
+    ` : ''}
   `;
 
+  // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
   dom.adminDetail.querySelectorAll('.review-answer-cb').forEach((checkbox) => {
     checkbox.addEventListener('change', async (event) => {
       const index = parseInt(event.target.dataset.index, 10);
@@ -326,7 +379,7 @@ function renderAdminDetail() {
       try {
         state.submissions = await store.save(selected, state.submissions);
         renderSubmissionList();
-        renderAdminDetail();
+        renderAdminDetail(); 
       } catch (error) {
         console.error("Ошибка сохранения балла:", error);
         alert('Не удалось сохранить баллы в базу!');
@@ -356,22 +409,20 @@ function renderAdminDetail() {
       }
     });
   });
-  // --- ЛОГИКА УДАЛЕНИЯ ЭКЗАМЕНА ---
-  const deleteBtn = dom.adminDetail.querySelector('#delete-submission-btn');
-  if (deleteBtn) {
+
+  const deleteBtnList = dom.adminDetail.querySelectorAll('#delete-submission-btn');
+  deleteBtnList.forEach(deleteBtn => {
     deleteBtn.addEventListener('click', async () => {
       if (!confirm('Вы уверены, что хотите навсегда удалить этот экзамен?')) return;
       
-      deleteBtn.textContent = 'Удаление...';
+      deleteBtn.innerHTML = '⏳ Удаление...';
       
-      // Удаляем из Supabase
       const { error } = await supabaseClient.from('submissions').delete().eq('id', selected.id);
       
       if (error) {
         alert('Ошибка при удалении: ' + error.message);
-        deleteBtn.textContent = '🗑️ Удалить';
+        deleteBtn.innerHTML = '🗑️ Удалить';
       } else {
-        // Убираем из стейта и обновляем интерфейс
         state.submissions = state.submissions.filter(sub => sub.id !== selected.id);
         state.selectedSubmissionId = state.submissions[0]?.id ?? null;
         renderSubmissionList();
@@ -379,8 +430,9 @@ function renderAdminDetail() {
         updateHeroStats();
       }
     });
-  }
+  });
 }
+
 function renderPracticeSummary() {
   renderPracticeResult(dom.practiceResult, state.practiceResult);
 }

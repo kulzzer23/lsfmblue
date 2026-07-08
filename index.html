@@ -405,7 +405,12 @@
       .primary-button:hover, .secondary-button:hover { transform: translateY(-1px); }
       
       /* --- АДМИНКА --- */
-      .admin-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; }
+      .admin-grid { 
+  display: grid; 
+  grid-template-columns: 320px minmax(0, 1fr); 
+  gap: 20px; 
+  align-items: start; /* ВАЖНО: без этого sticky в гридах не работает! */
+}
       .admin-topbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
       .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
       .submission-list { display: grid; gap: 10px; margin-top: 12px; }
@@ -649,15 +654,27 @@
           </div>
         </div>
 
-        <div class="admin-grid">
-          <div class="admin-list">
-            <input id="admin-search" class="text-input" placeholder="Поиск по имени, отряду или ID" />
-            <div id="submission-list" class="submission-list"></div>
+        <!-- ОСНОВНАЯ СЕТКА АДМИНКИ -->
+        <div class="admin-grid" style="margin-top: 24px; height: calc(100vh - 200px); min-height: 500px; display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: stretch;">
+          
+          <!-- Левая колонка (Список стажёров) -->
+          <div class="admin-list" style="background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; overflow: hidden;">
+            
+            <!-- Поле поиска -->
+            <input id="admin-search" class="text-input" placeholder="🔍 Поиск по имени..." style="background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; flex-shrink: 0;" />
+            
+            <!-- Скролл списка (min-height: 0 - это фикс, чтобы список не ломал контейнер) -->
+            <div id="submission-list" class="submission-list" style="overflow-y: auto; padding-right: 5px; flex: 1; min-height: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;"></div>
           </div>
 
-          <div id="admin-detail" class="admin-detail">
-            <div class="empty-state">Выбери попытку слева, чтобы увидеть ответы.</div>
+          <!-- Правая колонка (Детали экзамена) -->
+          <div id="admin-detail" class="admin-detail" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.2); overflow-y: auto; padding: 24px; display: flex; flex-direction: column; margin: 0;">
+            <div class="empty-state" style="border: none; opacity: 0.6; margin: auto;">
+              <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
+              <div>Выбери карточку слева,<br>чтобы загрузить ответы стажёра.</div>
+            </div>
           </div>
+          
         </div>
       </section>
     </div>
