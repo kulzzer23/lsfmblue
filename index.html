@@ -7,6 +7,74 @@
     <title>LSFM PRO Exam</title>
     <meta name="description" content="Экзаменатор для ЛСФМ." />
     <style>
+      /* =========================================
+   ФИКСЫ ДЛЯ МОБИЛЬНОЙ ВЕРСИИ (ТЕЛЕФОНЫ И ПЛАНШЕТЫ)
+   ========================================= */
+@media (max-width: 1024px) {
+  /* 1. Расширяем всё на 100% экрана, убиваем гигантские отступы */
+  .shell {
+    padding: 10px 8px 80px !important; 
+  }
+  
+  .hero-copy, 
+  .login-panel, 
+  .card, 
+  .premium-toc-container, 
+  .learning-section-card,
+  .admin-detail {
+    padding: 16px !important; /* Было 30-40px, поэтому контент был узким */
+    border-radius: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* 2. Чиним админ-панель (чтобы правая часть не улетала за экран) */
+  .admin-grid {
+    display: flex !important;
+    flex-direction: column !important; /* Ставим панели друг под друга */
+    height: auto !important; /* Отключаем высоту в 100vh */
+  }
+  
+  .admin-list {
+    height: 350px !important; /* Ограничиваем список стажеров, чтобы он не занял весь экран */
+    position: relative !important; /* Отключаем "прилипание", чтобы можно было скроллить вниз */
+    top: 0 !important;
+    width: 100% !important;
+  }
+
+  .admin-detail {
+    height: auto !important; /* Правая часть подстраивается под контент */
+    overflow: visible !important;
+  }
+
+  /* 3. Фиксим сетку ответов и шапку админки */
+  .admin-topbar, .detail-header > div {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  
+  .detail-header > div > div {
+    text-align: left !important;
+    width: 100% !important;
+  }
+
+  .options {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* 4. Текст в обучении: чтобы не был зажат */
+  .learning-section-card p, 
+  .subsection-text-rules p,
+  .rule-example {
+    font-size: 1rem !important;
+    word-break: break-word !important;
+  }
+}
       :root {
         color-scheme: dark;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
