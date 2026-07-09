@@ -8,66 +8,80 @@
     <meta name="description" content="Экзаменатор для ЛСФМ." />
     <style>
       /* =========================================
-   ФИКСЫ ДЛЯ МОБИЛЬНОЙ ВЕРСИИ (ТЕЛЕФОНЫ И ПЛАНШЕТЫ)
+   ИДЕАЛЬНАЯ МОБИЛЬНАЯ ВЕРСИЯ (ТЕЛЕФОНЫ И ПЛАНШЕТЫ)
    ========================================= */
 @media (max-width: 1024px) {
-  /* 1. Расширяем всё на 100% экрана, убиваем гигантские отступы */
-  .shell {
-    padding: 10px 8px 80px !important; 
-  }
-  
-  .hero-copy, 
-  .login-panel, 
-  .card, 
-  .premium-toc-container, 
-  .learning-section-card,
-  .admin-detail {
-    padding: 16px !important; /* Было 30-40px, поэтому контент был узким */
-    border-radius: 16px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+  /* 1. Глобальные отступы (убираем пустые края) */
+  .shell { padding: 10px !important; }
+  .card, .admin-card, .premium-toc-container, .learning-section-card { 
+    padding: 16px !important; 
+    border-radius: 16px !important; 
   }
 
-  /* 2. Чиним админ-панель (чтобы правая часть не улетала за экран) */
-  .admin-grid {
-    display: flex !important;
-    flex-direction: column !important; /* Ставим панели друг под друга */
-    height: auto !important; /* Отключаем высоту в 100vh */
+  /* 2. Шапка админки: чиним разъехавшиеся кнопки CSV и JSON */
+  .admin-topbar { 
+    flex-direction: column !important; 
+    gap: 15px !important; 
+    padding: 16px !important;
+  }
+  .admin-topbar > div { width: 100% !important; }
+  
+  .admin-actions { 
+    flex-direction: column !important; 
+    width: 100% !important; 
+    gap: 10px !important;
+  }
+  .admin-actions select { 
+    width: 100% !important; 
+  }
+  /* Группируем CSV и JSON в один ровный ряд */
+  .admin-actions > div { 
+    display: flex !important; 
+    flex-direction: row !important; 
+    width: 100% !important; 
+    gap: 10px !important; 
+  }
+  .admin-actions > div > button { 
+    flex: 1 !important; 
+    margin: 0 !important;
+  }
+
+  /* 3. Сетка админки (перестраиваем в вертикаль) */
+  .admin-grid { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    height: auto !important; 
+    min-height: 0 !important;
+    gap: 15px !important;
+  }
+
+  /* 4. СПИСОК СТАЖЁРОВ (Компактное окно) */
+  .admin-list { 
+    height: 320px !important; /* Фиксируем высоту, чтобы низ экрана был свободен */
+    position: relative !important; 
+    top: 0 !important; 
+    padding: 12px !important;
+  }
+
+  /* 5. ОТВЕТЫ СТАЖЁРА (Растягиваются вниз как лента) */
+  .admin-detail { 
+    height: auto !important; 
+    overflow: visible !important; 
+    padding: 16px !important;
+  }
+
+  /* 6. Карточки ответов: ставим "Эталон" и "Ответ" друг под друга */
+  .breakdown-item > div > div {
+    grid-template-columns: 1fr !important;
   }
   
-  .admin-list {
-    height: 350px !important; /* Ограничиваем список стажеров, чтобы он не занял весь экран */
-    position: relative !important; /* Отключаем "прилипание", чтобы можно было скроллить вниз */
+  /* Отключаем плавающее меню эталона на мобилке, чтобы не ломало верстку */
+  .breakdown-item > div > div > div:nth-child(2) {
+    position: relative !important;
     top: 0 !important;
-    width: 100% !important;
   }
 
-  .admin-detail {
-    height: auto !important; /* Правая часть подстраивается под контент */
-    overflow: visible !important;
-  }
-
-  /* 3. Фиксим сетку ответов и шапку админки */
-  .admin-topbar, .detail-header > div {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-  }
-  
-  .detail-header > div > div {
-    text-align: left !important;
-    width: 100% !important;
-  }
-
-  .options {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  /* 4. Текст в обучении: чтобы не был зажат */
+  /* 7. Обучение: делаем текст крупнее и читабельнее */
   .learning-section-card p, 
   .subsection-text-rules p,
   .rule-example {
