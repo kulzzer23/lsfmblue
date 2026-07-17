@@ -236,7 +236,8 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
     style.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap');
 
-      .samp-dialog-wrapper { background-color: rgba(0, 0, 0, 0.85); border-radius: 6px; padding: 15px 20px; font-family: 'Arimo', Arial, sans-serif; color: #ffffff; max-width: 700px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); user-select: none; }
+      .samp-dialog-wrapper { background-color: rgba(0, 0, 0, 0.85); border-radius: 6px; padding: 15px 20px; font-family: 'Arimo', Arial, sans-serif; color: #ffffff; max-width: 700px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); user-select: none; transition: box-shadow 0.2s ease; }
+
       .samp-dialog-header { color: #33cc33; font-weight: bold; font-size: 15px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
       .samp-dialog-row { display: flex; margin-bottom: 4px; font-size: 14px; }
       .samp-dialog-label { width: 110px; font-weight: bold; }
@@ -250,6 +251,9 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
       .samp-dialog-buttons { display: flex; justify-content: center; gap: 15px; }
       .samp-btn { background: transparent; border: 2px solid #ffffff; color: #ffffff; padding: 5px 20px; border-radius: 20px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; transition: 0.2s; font-weight: bold; }
       .samp-btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
+      .samp-btn:active { transform: translateY(0) scale(0.96); }
+      .btn-reject:hover { border-color: #ff4757; color: #ff4757; }
+      .btn-accept:hover { border-color: #33cc33; color: #33cc33; }
       .btn-reject:active { border-color: #ff4757; color: #ff4757; }
       .btn-accept:active { border-color: #33cc33; color: #33cc33; }
 
@@ -264,7 +268,14 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
         line-height: 1.5; 
         letter-spacing: 0.3px;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        animation: samp-ad-appear 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
+
+      @keyframes samp-ad-appear {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
     `;
     document.head.appendChild(style);
   }

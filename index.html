@@ -2,10 +2,10 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1200" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0b1020" />
-    <title>LSFM PRO Exam</title>
-    <meta name="description" content="Экзаменатор для ЛСФМ." />
+    <title>LSFM PRO — Учись, тренируйся, сдавай</title>
+    <meta name="description" content="Экзаменатор LSFM PRO: обучение, практика и строгий экзамен в одном месте." />
     <style>
       /* =========================================
    ИДЕАЛЬНАЯ МОБИЛЬНАЯ ВЕРСИЯ (ТЕЛЕФОНЫ И ПЛАНШЕТЫ)
@@ -148,7 +148,11 @@
         border-radius: 28px;
         padding: 44px;
         box-shadow: 0 30px 90px rgba(0,0,0,0.35), inset 0 0 20px rgba(127, 227, 255, 0.04);
+        opacity: 0;
+        transform: translateY(14px);
+        animation: hero-board-appear 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.05s forwards;
       }
+
 
       .hero-copy::before {
         content: '';
@@ -285,6 +289,11 @@
       }
       
       .hero-stats article:hover { background: rgba(127, 227, 255, 0.08); border-color: rgba(127, 227, 255, 0.18); transform: translateY(-6px); box-shadow: inset 0 0 24px rgba(127, 227, 255, 0.05), 0 20px 45px rgba(0, 0, 0, 0.22); }
+      .hero-stats article { opacity: 0; transform: translateY(10px); animation: hero-panel-appear 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+      .hero-stats article:nth-child(1) { animation-delay: 0.25s; }
+      .hero-stats article:nth-child(2) { animation-delay: 0.35s; }
+      .hero-stats article:nth-child(3) { animation-delay: 0.45s; }
+
 
       .hero-stats strong { font-size: 2.2rem; color: #fff; font-weight: 900; display: block; margin-bottom: 2px; }
       .hero-stats span { color: #94a3b8; font-size: 0.85rem; line-height: 1.3; display: block; }
@@ -302,18 +311,11 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        opacity: 0;
+        transform: translateY(14px);
+        animation: hero-panel-appear 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.15s forwards;
       }
 
-      .login-panel::after {
-        content: '⚡ ПАНЕЛЬ АДМИНА';
-        position: absolute;
-        right: 34px;
-        top: 28px;
-        font-size: 0.78rem;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: rgba(126, 229, 255, 0.72);
-      }
 
       .login-panel::after {
         content: '⚡ ПАНЕЛЬ АДМИНА';
@@ -323,8 +325,9 @@
         font-size: 0.78rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: rgba(126, 229, 255, 0.7);
+        color: rgba(126, 229, 255, 0.72);
       }
+
 
       .hero-divider {
         display: flex;
@@ -446,6 +449,8 @@
       .tab-button:hover { background: rgba(127, 227, 255, 0.1); border-color: rgba(127, 227, 255, 0.5); color: #ffffff; transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(127, 227, 255, 0.2) inset, 0 0 18px rgba(127, 227, 255, 0.25); }
       .tab-button:active { transform: translateY(1px) scale(0.95); box-shadow: 0 2px 8px rgba(127, 227, 255, 0.15) inset; transition: all 0.1s ease; }
       .tab-button.active { border-color: rgba(86, 179, 255, 0.7); background: rgba(86, 179, 255, 0.15); color: #ffffff; box-shadow: 0 0 15px rgba(86, 179, 255, 0.25); }
+      .tab-button.active::after { content: ''; position: absolute; left: 50%; bottom: -1px; width: 6px; height: 6px; border-radius: 50%; background: #7fe3ff; transform: translateX(-50%); box-shadow: 0 0 8px rgba(127, 227, 255, 0.8); }
+
       .tab-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent); transform: skewX(-25deg); }
       .tab-button:hover::before { animation: tab-shine 0.6s ease-out; }
       @keyframes tab-shine { 100% { left: 200%; } }
@@ -454,7 +459,10 @@
       .card {
         border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(7, 13, 28, 0.72);
         backdrop-filter: blur(18px); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35); border-radius: 28px; padding: 26px; margin-bottom: 24px;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
       }
+      .card:hover { border-color: rgba(127, 227, 255, 0.16); }
+
       .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr); gap: 24px; }
       .section-card { margin-bottom: 24px; }
       .section-title { display: flex; flex-direction: column; gap: 4px; margin-bottom: 18px; }
@@ -469,7 +477,9 @@
       }
       .text-input:focus, .text-area:focus { border-color: rgba(86, 179, 255, 0.72); background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
       
-      .question-card, .lesson-card, .practice-result { padding: 20px; border-radius: 22px; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.06); }
+      .question-card, .lesson-card, .practice-result { padding: 20px; border-radius: 22px; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.06); transition: border-color 0.2s ease, transform 0.2s ease; }
+      .question-card:hover { border-color: rgba(127, 227, 255, 0.14); }
+
       .question-card h3, .lesson-card h3 { margin: 6px 0 8px; font-size: 1.2rem; }
       .question-meta { display: flex; justify-content: space-between; gap: 12px; }
       .question-meta span { color: #97a7c6; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.74rem; }
@@ -477,14 +487,19 @@
       .question-hint summary { cursor: pointer; color: #89cbff; }
       
       .options { display: grid; gap: 10px; margin-top: 16px; }
-      .option-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(7, 13, 28, 0.65); border: 1px solid rgba(255, 255, 255, 0.06); cursor: pointer; font-weight: 500; }
+      .option-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(7, 13, 28, 0.65); border: 1px solid rgba(255, 255, 255, 0.06); cursor: pointer; font-weight: 500; transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
+      .option-row:hover { background: rgba(127, 227, 255, 0.06); border-color: rgba(127, 227, 255, 0.2); transform: translateX(2px); }
       .option-row input { margin-top: 2px; }
+      .option-row.selected-option { background: rgba(127, 227, 255, 0.1); border-color: rgba(127, 227, 255, 0.4); box-shadow: 0 0 14px rgba(127, 227, 255, 0.08); }
+
 
       /* --- КНОПКИ --- */
       .primary-button, .secondary-button, .save-btn { border: none; border-radius: 16px; padding: 14px 18px; font-weight: 700; transition: transform 0.18s ease, box-shadow 0.18s ease; }
       .primary-button { color: #08101d; background: linear-gradient(135deg, #7fe3ff, #ffb17b); box-shadow: 0 12px 32px rgba(127, 227, 255, 0.22); }
       .secondary-button { color: #eff4ff; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); }
       .primary-button:hover, .secondary-button:hover { transform: translateY(-1px); }
+      .primary-button:active, .secondary-button:active, .save-btn:active { transform: translateY(0) scale(0.97); }
+
       
       /* --- АДМИНКА --- */
       .admin-grid { 
@@ -584,10 +599,117 @@
         .scroll-btn { width: 42px !important; height: 42px !important; }
         .mega-tag-banner { font-size: 1.2rem !important; padding: 16px !important; }
       }
+
+      /* --- ПЛАВНОЕ ПОЯВЛЕНИЕ РАЗДЕЛОВ ПРИ ПЕРЕКЛЮЧЕНИИ ВКЛАДОК --- */
+      .section-fade-in {
+        animation: section-fade-in 0.38s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+      @keyframes section-fade-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* --- ИКОНКИ В ЗАГОЛОВКАХ РАЗДЕЛОВ --- */
+      .section-title span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* --- ФОНОВАЯ СЕТКА --- */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(127, 227, 255, 0.028) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(127, 227, 255, 0.028) 1px, transparent 1px);
+        background-size: 64px 64px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* --- УВЕДОМЛЕНИЕ (NOTICE) --- */
+      .notice {
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-top: 12px;
+      }
+      .notice.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: #6ee7b7;
+      }
+      .notice.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        color: #fca5a5;
+      }
+
+      /* --- АНИМАЦИЯ СЧЁТЧИКОВ --- */
+      @keyframes count-pop {
+        0%   { transform: scale(0.75); opacity: 0; }
+        65%  { transform: scale(1.12); }
+        100% { transform: scale(1);    opacity: 1; }
+      }
+      .counter-pop { animation: count-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+      /* --- ТОП-АКЦЕНТНАЯ ЛИНИЯ (декоративная, гаснет после загрузки) --- */
+      .page-topbar {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 3px;
+        background: linear-gradient(90deg, #7fe3ff 0%, #ffb17b 50%, #7fe3ff 100%);
+        background-size: 200% 100%;
+        animation: topbar-slide 1.6s ease-in-out 2, topbar-fade 0.6s ease-out 3.2s forwards;
+        z-index: 99999;
+        opacity: 0.85;
+        pointer-events: none;
+      }
+      @keyframes topbar-slide {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      @keyframes topbar-fade {
+        to { opacity: 0; }
+      }
+
+      /* --- КАСТОМНЫЙ СКРОЛЛБАР --- */
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-track { background: rgba(7, 13, 28, 0.4); }
+      ::-webkit-scrollbar-thumb { background: rgba(127, 227, 255, 0.25); border-radius: 999px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(127, 227, 255, 0.45); }
+
+      /* --- ПОДВАЛ --- */
+      .site-footer {
+        margin-top: 48px;
+        padding: 24px 12px 8px;
+        text-align: center;
+        color: #4a5568;
+        font-size: 0.84rem;
+        border-top: 1px solid rgba(127, 227, 255, 0.08);
+        position: relative;
+      }
+      .site-footer::before {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(127, 227, 255, 0.5), transparent);
+        margin: 0 auto 16px;
+        border-radius: 999px;
+      }
+      .site-footer .footer-brand { color: #7fe3ff; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.05em; }
+      .site-footer .footer-sep { color: rgba(127, 227, 255, 0.25); margin: 0 8px; }
+      .site-footer .footer-sub { display: block; margin-top: 6px; font-size: 0.75rem; color: #334155; }
     </style>
+
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   </head>
   <body>
+    <div class="page-topbar"></div>
     <div class="shell">
       <div class="glow glow-a"></div>
       <div class="glow glow-b"></div>
@@ -654,15 +776,15 @@
 </header>
 
       <nav class="section-tabs" aria-label="Разделы сайта">
-        <button class="tab-button active" data-section="learn" type="button">Обучение</button>
-        <button class="tab-button" data-section="practice" type="button">Практика</button>
-        <button class="tab-button" data-section="exam" type="button">Экзамен</button>
-        <button class="tab-button" data-section="apply" type="button">Заявление (3 ранг)</button>
+        <button class="tab-button active" data-section="learn" type="button">📘 Обучение</button>
+        <button class="tab-button" data-section="practice" type="button">🎯 Практика</button>
+        <button class="tab-button" data-section="exam" type="button">📝 Экзамен</button>
+        <button class="tab-button" data-section="apply" type="button">📁 Заявление (3 ранг)</button>
       </nav>
 
       <section id="learn-section" class="card section-card">
         <div class="section-title">
-          <span>Обучение</span>
+          <span>📘 Обучение</span>
           <strong>Правила, устав и ПРО</strong>
         </div>
         <div id="learning-grid"></div>
@@ -670,7 +792,7 @@
 
       <section id="practice-section" class="card section-card hidden">
         <div class="section-title">
-          <span>Практика</span>
+          <span>🎯 Практика</span>
           <strong>Пробуй тесты без сохранения попыток</strong>
         </div>
         <form id="practice-form" class="exam-form"></form>
@@ -680,17 +802,19 @@
       <main id="exam-section" class="layout hidden">
         <section class="card exam-card section-card">
           <div class="section-title">
-            <span>Экзамен</span>
+            <span>📝 Экзамен</span>
             <strong>НЕ ПЕРЕКЛЮЧАЙТЕ ВКЛАДКИ ИНАЧЕ ЭКЗАМЕН АННУЛИРУЕТСЯ!</strong>
           </div>
           <form id="exam-form" class="exam-form"></form>
         </section>
 
+
         <section class="card side-card section-card">
           <div class="section-title">
-            <span>Результаты</span>
+            <span>📊 Результаты</span>
             <strong>Текущая статистика</strong>
           </div>
+
           <div class="score-grid">
             <div>
               <span>Ожидают проверки</span>
@@ -759,11 +883,21 @@
           
         </div>
       </section>
+
+      <footer class="site-footer">
+        <span class="footer-brand">LSFM PRO</span>
+        <span class="footer-sep">&middot;</span>
+        сделано для <span style="color:#7fe3ff; font-weight:700;">LSFM</span>
+        <span class="footer-sep">&middot;</span>
+        обучение, практика и экзамен в одном месте
+        <span class="footer-sub">© 2026 · Все права защищены</span>
+      </footer>
     </div>
 
     <script type="module">
       import('./src/main.js?v=20260612-1');
     </script>
+
     <div class="scroll-actions">
       <button id="scroll-to-top" class="scroll-btn" title="В самый верх">
         <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>

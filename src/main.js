@@ -102,7 +102,17 @@ function setSection(section) {
   dom.tabButtons.forEach((button) => {
     button.classList.toggle('active', button.dataset.section === section);
   });
+
+  // Плавное появление активного раздела при переключении вкладки
+  const activeMap = { learn: dom.learnSection, practice: dom.practiceSection, exam: dom.examSection, apply: dom.applySection };
+  const activeEl = activeMap[section];
+  if (activeEl) {
+    activeEl.classList.remove('section-fade-in');
+    // Перезапускаем анимацию на следующем кадре
+    requestAnimationFrame(() => activeEl.classList.add('section-fade-in'));
+  }
 }
+
 
 function updateHeroStats() {
   dom.questionsCount.textContent = String(practiceQuestions.length + examQuestions.length);
