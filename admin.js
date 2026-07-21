@@ -923,25 +923,55 @@ authBtn.addEventListener('click', () => {
 
 // Добавь это в админку (например, в renderAdminShell)
 async function renderAnnouncementEditor() {
-  const { data } = await supabase.from('global_announcements').select('*').single();
+  const { data, error } = await supabase.from('global_announcements').select('*').limit(1).single();
+  
+  if (error || !data) {
+    console.warn('Не удалось загрузить объявление:', error?.message);
+    return;
+  }
+
+  const recordId = data.id; // Используем реальный id записи из базы
+
   const editor = document.createElement('div');
   editor.className = 'question-editor';
   editor.innerHTML = `
     <h3>Управление объявлением на главной</h3>
-    <label><input type="checkbox" id="ann-active" ${data.active ? 'checked' : ''}> Включить объявление</label>
-    <textarea id="ann-text" placeholder="Текст объявления">${escapeHtml(data.text || '')}</textarea>
-    <input type="text" id="ann-link" placeholder="Ссылка (опционально)" value="${escapeHtml(data.link || '')}">
+    <div class="editor-row">
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+        <input type="checkbox" id="ann-active" ${data.active ? 'checked' : ''} style="width: 20px; height: 20px;"> 
+        <span>Включить объявление</span>
+      </label>
+    </div>
+    <div class="editor-row">
+      <label>Текст объявления:</label>
+      <textarea id="ann-text" rows="4" placeholder="Текст объявления">${escapeHtml(data.text || '')}</textarea>
+    </div>
+    <div class="editor-row">
+      <label>Ссылка (опционально):</label>
+      <input type="text" id="ann-link" placeholder="https://..." value="${escapeHtml(data.link || '')}">
+    </div>
     <button id="save-ann" class="save-btn">Сохранить объявление</button>
   `;
   listContainer.parentElement.insertBefore(editor, listContainer);
 
   document.getElementById('save-ann').onclick = async () => {
-    await supabase.from('global_announcements').update({
+    const btn = document.getElementById('save-ann');
+    btn.textContent = 'Сохраняю...';
+    
+    const { error: updateError } = await supabase.from('global_announcements').update({
       active: document.getElementById('ann-active').checked,
       text: document.getElementById('ann-text').value,
       link: document.getElementById('ann-link').value
-    }).eq('id', 1);
-    alert('Обновлено!');
+    }).eq('id', recordId);
+    
+    if (updateError) {
+      alert('Ошибка сохранения: ' + updateError.message);
+      btn.textContent = 'Сохранить объявление';
+    } else {
+      btn.textContent = '✅ Обновлено!';
+      btn.style.background = '#10b981';
+      setTimeout(() => { btn.textContent = 'Сохранить объявление'; btn.style.background = '#3b82f6'; }, 2000);
+    }
   };
 }
 // Вызови renderAnnouncementEditor() после успешной авторизации админа
