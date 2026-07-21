@@ -949,7 +949,7 @@ function bindAdminControls() {
       }
 
       state.isAdmin = true;
-      state.adminSquad = adminSquad;
+      state.adminSquad = adminSquad ? adminSquad.toUpperCase() : null;
       dom.adminCodeInput.value = '';
       renderAdminShell();
       renderSubmissionList();
@@ -999,7 +999,12 @@ function bindAdminControls() {
     
     dom.adminModeApps.addEventListener('click', async () => {
       state.adminViewMode = 'apps';
-      const { data } = await supabaseClient.from('applications').select('*').order('created_at', { ascending: false });
+      let query = supabaseClient.from('applications').select('*').order('created_at', { ascending: false });
+      // Фильтруем по подразделению (если не суперадмин) - case-insensitive
+      if (state.adminSquad) {
+        query = query.ilike('squad', state.adminSquad);
+      }
+      const { data } = await query;
       if (data) {
         state.applications = data;
         if (!state.selectedAppId && data.length > 0) state.selectedAppId = data[0].id;
