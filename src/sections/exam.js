@@ -345,8 +345,14 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
         <input id="exam-name" class="text-input" value="${escapeHtml(state.meta.name)}" placeholder="Имя_Фамилия" />
       </label>
       <label>
-        Организация
-        <input id="exam-squad" class="text-input" value="${escapeHtml(state.meta.squad)}" placeholder="Организация" />
+        Подразделение
+        <select id="exam-squad" class="text-input">
+          <option value="" disabled ${!state.meta.squad ? 'selected' : ''}>Выберите подразделение</option>
+          <option value="TVC" ${state.meta.squad === 'TVC' ? 'selected' : ''}>TVC (Телецентр)</option>
+          <option value="LSFM" ${state.meta.squad === 'LSFM' ? 'selected' : ''}>LSFM (Лос-Сантос)</option>
+          <option value="SFFM" ${state.meta.squad === 'SFFM' ? 'selected' : ''}>SFFM (Сан-Фиерро)</option>
+          <option value="LVFM" ${state.meta.squad === 'LVFM' ? 'selected' : ''}>LVFM (Лас-Вентурас)</option>
+        </select>
       </label>
     </div>
     
@@ -372,7 +378,7 @@ export function renderExamSection({ formEl, questions, state, onAnswerChange, on
 
   // Слушатели данных
   formEl.querySelector('#exam-name').addEventListener('input', (event) => onMetaChange('name', event.currentTarget.value));
-  formEl.querySelector('#exam-squad').addEventListener('input', (event) => onMetaChange('squad', event.currentTarget.value));
+  formEl.querySelector('#exam-squad').addEventListener('change', (event) => onMetaChange('squad', event.currentTarget.value));
 
   // --- ОБРАБОТКА ПОДСВЕТКИ ОБЫЧНЫХ И ГРАФИЧЕСКИХ ТЕСТОВ ---
   const handleOptionSelect = (input) => {

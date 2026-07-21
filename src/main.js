@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { learningContent } from './data/learning.js';
+import { getLearningContent } from './data/learning.js';
 import { practiceQuestions } from './data/practice.js';
 import { renderLearningSection } from './sections/learning.js';
 import { renderPracticeResult, renderPracticeSection } from './sections/practice.js';
@@ -115,19 +115,45 @@ function setSection(section) {
 
 
 function updateHeroStats() {
-  dom.questionsCount.textContent = String(practiceQuestions.length + examQuestions.length);
-  dom.lessonsCount.textContent = String(learningContent.sections.length);
-  dom.savedCount.textContent = String(state.submissions.length);
+  if (dom.questionsCount) {
+    dom.questionsCount.textContent = String(practiceQuestions.length + examQuestions.length);
+  }
+  if (dom.lessonsCount) {
+    dom.lessonsCount.textContent = String((window.__learningContent?.sections ?? []).length);
+  }
+  if (dom.savedCount) {
+    dom.savedCount.textContent = String(state.submissions.length);
+  }
 
   const pending = state.submissions.filter((submission) => submission.reviewStatus === 'unchecked').length;
   const reviewed = state.submissions.length - pending;
 
-  dom.pendingCount.textContent = String(pending);
-  dom.reviewedCount.textContent = String(reviewed);
-  dom.adminCountText.textContent = `${state.submissions.length} сохраненных экзаменов, поиск, фильтр и ручная проверка.`;
+  if (dom.pendingCount) dom.pendingCount.textContent = String(pending);
+  if (dom.reviewedCount) dom.reviewedCount.textContent = String(reviewed);
+  if (dom.adminCountText) {
+    dom.adminCountText.textContent = `${state.submissions.length} сохраненных экзаменов, поиск, фильтр и ручная проверка.`;
+  }
   if (dom.submittedNote) {
     dom.submittedNote.classList.toggle('hidden', !state.submissions.some((submission) => submission.id === state.selectedSubmissionId));
   }
+}
+
+async function loadLearningSection() {
+  const learningContent = await getLearningContent();
+  window.__learningContent = learningContent;
+
+  const learningContainer =
+    dom.learningGrid ||
+    dom.learnSection?.querySelector('[data-learning-root]') ||
+    dom.learnSection?.querySelector('#learning-grid');
+
+  if (learningContainer) {
+    renderLearningSection(learningContainer, learningContent);
+  } else {
+    console.warn('Learning section container not found. Expected #learning-grid or [data-learning-root].');
+  }
+
+  updateHeroStats();
 }
 
 function renderSubmissionList() {
@@ -1068,8 +1094,10 @@ async function init() {
     adminModeExams: document.getElementById('admin-mode-exams'),
     adminModeApps: document.getElementById('admin-mode-apps'),
   };
+
+  await loadLearningSection();
+
   renderApplicationSection(dom.applicationContainer, supabaseClient);
-  renderLearningSection(dom.learningGrid, learningContent);
   
   const btnTop = document.getElementById('scroll-to-top');
   const btnBottom = document.getElementById('scroll-to-bottom');

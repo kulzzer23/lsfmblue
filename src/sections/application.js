@@ -172,6 +172,15 @@ export function renderApplicationSection(containerElement, supabase) {
                     <label class="app-label">Идентификатор (Имя_Фамилия)</label>
                     <input type="text" id="app-name" class="app-input" placeholder="Leonardo_Jemison" autocomplete="off">
 
+                    <label class="app-label">Подразделение</label>
+                    <select id="app-squad" class="app-input" style="cursor: pointer;">
+                      <option value="" disabled selected>Выберите подразделение</option>
+                      <option value="TVC">TVC (Телецентр)</option>
+                      <option value="LSFM">LSFM (Лос-Сантос)</option>
+                      <option value="SFFM">SFFM (Сан-Фиерро)</option>
+                      <option value="LVFM">LVFM (Лас-Вентурас)</option>
+                    </select>
+
                     <label class="app-label">Пакет документов (Imgur Link)</label>
                     <input type="text" id="app-album" class="app-input" placeholder="https://imgur.com/..." autocomplete="off">
 
@@ -388,8 +397,10 @@ export function renderApplicationSection(containerElement, supabase) {
     submitBtn.innerHTML = '<span class="blink">ОТПРАВКА СИСТЕМНОГО ПАКЕТА...</span>';
     submitBtn.disabled = true;
 
+    const squadSelect = document.getElementById('app-squad');
     const { error } = await supabase.from('applications').insert([{
       applicant_name: nameInput.value.trim(),
+      squad: squadSelect ? squadSelect.value : '',
       passport_url: albumInput.value.trim(),
       licenses_url: albumInput.value.trim(),
       exam_id: selectedExamId,

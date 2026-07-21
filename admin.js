@@ -1,5 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { config } from './src/config.js';
+import { content } from './src/content.js';
+import { LEARNING_CONTENT_KEY, getLearningContent, saveLearningContent } from './src/data/learning.js';
 
 // --- СТИЛИ ДЛЯ АДМИНКИ (СВЕТЛАЯ ТЕМА + DRAG & DROP МОДАЛКА) ---
 const style = document.createElement('style');
@@ -42,6 +44,34 @@ style.textContent = `
   .save-btn:hover { background: #2563eb; }
   .save-btn.is-new { background: #f59e0b; }
   .save-btn.is-new:hover { background: #d97706; }
+
+  .learning-editor-shell { display: grid; gap: 18px; }
+  .learning-editor-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .learning-editor-actions .icon-btn { padding: 10px 14px; }
+  .learning-meta-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .learning-section-card-editor,
+  .learning-subsection-card-editor {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .learning-section-card-editor { margin-top: 16px; }
+  .learning-subsection-card-editor { margin-top: 12px; background: #ffffff; }
+  .learning-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .learning-card-head h4,
+  .learning-card-head h5 { margin: 0; color: #0f172a; }
+  .learning-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .learning-card-actions .icon-btn { padding: 6px 10px; }
+  .learning-editor textarea[data-field] { min-height: 90px; resize: vertical; }
+  .learning-editor .mini-note { font-size: 0.85rem; color: #64748b; margin-top: 6px; line-height: 1.45; }
+  .learning-divider { height: 1px; background: #e2e8f0; margin: 16px 0; }
   
   /* --- СТИЛИ ДЛЯ DRAG & DROP МОДАЛКИ --- */
   .reorder-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
@@ -65,6 +95,23 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const listContainer = document.getElementById('admin-questions-list');
 const addBtn = document.getElementById('add-new-btn');
+const adminTabExams = document.getElementById('admin-tab-exams');
+const adminTabLearning = document.getElementById('admin-tab-learning');
+const adminExamsActions = document.getElementById('admin-exams-actions');
+const adminLearningActions = document.getElementById('admin-learning-actions');
+const saveLearningBtn = document.getElementById('save-learning-btn');
+const resetLearningBtn = document.getElementById('reset-learning-btn');
+
+let adminMode = 'exams';
+let learningDraft = null;
+
+async function ensureLearningDraft() {
+  if (!learningDraft) {
+    learningDraft = cloneLearningContent(await getLearningContent());
+  }
+
+  return learningDraft;
+}
 
 // ВНЕДРЯЕМ КНОПКУ РЕЖИМА СОРТИРОВКИ
 const reorderBtn = document.createElement('button');
@@ -80,6 +127,309 @@ let currentQuestions = [];
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function cloneLearningContent(source) {
+  return JSON.parse(JSON.stringify(source));
+}
+
+function createEmptySection(index = 0) {
+  return {
+    id: `section-${index + 1}`,
+    title: 'Новый раздел',
+    summary: '',
+    paragraphs: [],
+    bullets: [],
+    subsections: [createEmptySubsection()],
+  };
+}
+
+function createEmptySubsection() {
+  return {
+    title: 'Новая глава',
+    text: [''],
+  };
+}
+
+function splitTextareaLines(value) {
+  return String(value ?? '').split(/\r?\n/);
+}
+
+function joinTextareaLines(value) {
+  return Array.isArray(value) ? value.join('\n') : '';
+}
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function setAdminMode(mode) {
+  adminMode = mode;
+
+  adminTabExams?.classList.toggle('active', mode === 'exams');
+  adminTabLearning?.classList.toggle('active', mode === 'learning');
+  adminExamsActions && (adminExamsActions.style.display = mode === 'exams' ? '' : 'none');
+  adminLearningActions && (adminLearningActions.style.display = mode === 'learning' ? 'flex' : 'none');
+
+  if (mode === 'exams') {
+    renderQuestionsList();
+  } else {
+    renderLearningEditor();
+  }
+}
+
+async function renderLearningEditor() {
+  const current = await ensureLearningDraft();
+  listContainer.innerHTML = '';
+
+  const editor = document.createElement('div');
+  editor.className = 'question-editor learning-editor';
+  editor.innerHTML = `
+    <h3 style="margin-top:0; color:#0f172a;">Редактор раздела обучения</h3>
+    <p style="margin-top:-6px; color:#475569; line-height:1.5;">Здесь можно менять заголовок, вводный текст, разделы и главы обучения. Сохранение идёт в тот же override-ключ, который использует сайт.</p>
+    <div class="learning-editor-actions">
+      <button type="button" id="learning-add-section-btn" class="icon-btn">➕ Добавить раздел</button>
+      <button type="button" id="learning-restore-btn" class="icon-btn">↩️ Восстановить из src/content.js</button>
+      <button type="button" id="learning-save-preview-btn" class="icon-btn">💾 Сохранить сейчас</button>
+    </div>
+    <div class="learning-divider"></div>
+    <div class="learning-meta-grid">
+      <div class="editor-row">
+        <label>Заголовок страницы</label>
+        <input type="text" data-field="title" value="${escapeHtml(current.title ?? '')}" placeholder="Название раздела обучения">
+      </div>
+      <div class="editor-row">
+        <label>Вступление</label>
+        <textarea data-field="intro" rows="4" placeholder="Короткое описание для страницы">${escapeHtml(current.intro ?? '')}</textarea>
+      </div>
+    </div>
+    <div id="learning-sections-list"></div>
+  `;
+  listContainer.appendChild(editor);
+
+  const sectionsList = editor.querySelector('#learning-sections-list');
+
+  const renderSections = () => {
+    sectionsList.innerHTML = (current.sections ?? []).map((section, sectionIndex) => {
+      const subsections = safeArray(section.subsections);
+      const paragraphs = safeArray(section.paragraphs);
+
+      return `
+        <section class="learning-section-card-editor" data-section-index="${sectionIndex}">
+          <div class="learning-card-head">
+            <div>
+              <h4>Раздел ${sectionIndex + 1}</h4>
+              <div class="mini-note">Редактируется напрямую в форме — без JSON.</div>
+            </div>
+            <div class="learning-card-actions">
+              <button type="button" class="icon-btn" data-action="move-section-up" data-section-index="${sectionIndex}" ${sectionIndex === 0 ? 'disabled' : ''}>↑</button>
+              <button type="button" class="icon-btn" data-action="move-section-down" data-section-index="${sectionIndex}" ${sectionIndex === (current.sections.length - 1) ? 'disabled' : ''}>↓</button>
+              <button type="button" class="icon-btn delete-q" data-action="remove-section" data-section-index="${sectionIndex}">Удалить</button>
+            </div>
+          </div>
+
+          <div class="learning-meta-grid">
+            <div class="editor-row">
+              <label>ID раздела</label>
+              <input type="text" data-field="section-id" data-section-index="${sectionIndex}" value="${escapeHtml(section.id ?? '')}" placeholder="pro">
+            </div>
+            <div class="editor-row">
+              <label>Заголовок раздела</label>
+              <input type="text" data-field="section-title" data-section-index="${sectionIndex}" value="${escapeHtml(section.title ?? '')}" placeholder="Название раздела">
+            </div>
+          </div>
+
+          <div class="editor-row" style="margin-top: 12px;">
+            <label>Краткое описание</label>
+            <textarea data-field="section-summary" data-section-index="${sectionIndex}" rows="3" placeholder="Краткий анонс раздела">${escapeHtml(section.summary ?? '')}</textarea>
+          </div>
+
+          <div class="editor-row">
+            <label>Абзацы сверху раздела</label>
+            <textarea data-field="section-paragraphs" data-section-index="${sectionIndex}" rows="4" placeholder="Один абзац = одна строка">${escapeHtml(joinTextareaLines(paragraphs))}</textarea>
+            <div class="mini-note">Каждая строка станет отдельным абзацем на сайте.</div>
+          </div>
+
+          <div class="learning-divider"></div>
+
+          <div class="learning-card-head">
+            <div>
+              <h5>Подразделы</h5>
+              <div class="mini-note">Добавляйте, удаляйте и меняйте порядок глав внутри раздела.</div>
+            </div>
+            <div class="learning-card-actions">
+              <button type="button" class="icon-btn" data-action="add-subsection" data-section-index="${sectionIndex}">➕ Глава</button>
+            </div>
+          </div>
+
+          <div>
+            ${subsections.map((subsection, subIndex) => `
+              <article class="learning-subsection-card-editor" data-sub-index="${subIndex}">
+                <div class="learning-card-head">
+                  <h5>Глава ${subIndex + 1}</h5>
+                  <div class="learning-card-actions">
+                    <button type="button" class="icon-btn" data-action="move-subsection-up" data-section-index="${sectionIndex}" data-sub-index="${subIndex}" ${subIndex === 0 ? 'disabled' : ''}>↑</button>
+                    <button type="button" class="icon-btn" data-action="move-subsection-down" data-section-index="${sectionIndex}" data-sub-index="${subIndex}" ${subIndex === (subsections.length - 1) ? 'disabled' : ''}>↓</button>
+                    <button type="button" class="icon-btn delete-q" data-action="remove-subsection" data-section-index="${sectionIndex}" data-sub-index="${subIndex}">Удалить</button>
+                  </div>
+                </div>
+
+                <div class="editor-row">
+                  <label>Название главы</label>
+                  <input type="text" data-field="subsection-title" data-section-index="${sectionIndex}" data-sub-index="${subIndex}" value="${escapeHtml(subsection.title ?? '')}" placeholder="Например: I. ОСНОВНЫЕ ПРАВИЛА">
+                </div>
+
+                <div class="editor-row">
+                  <label>Текст главы</label>
+                  <textarea data-field="subsection-text" data-section-index="${sectionIndex}" data-sub-index="${subIndex}" rows="7" placeholder="Одна строка = один элемент массива text">${escapeHtml(joinTextareaLines(safeArray(subsection.text)))}</textarea>
+                  <div class="mini-note">Если нужна пустая строка в контенте — оставьте пустую строку в textarea.</div>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }).join('');
+  };
+
+  renderSections();
+
+  const syncField = (target) => {
+    const sectionIndex = target.dataset.sectionIndex !== undefined ? Number(target.dataset.sectionIndex) : null;
+    const subIndex = target.dataset.subIndex !== undefined ? Number(target.dataset.subIndex) : null;
+    const field = target.dataset.field;
+
+    if (field === 'title') {
+      current.title = target.value;
+      return;
+    }
+    if (field === 'intro') {
+      current.intro = target.value;
+      return;
+    }
+
+    if (sectionIndex === null || Number.isNaN(sectionIndex) || !current.sections?.[sectionIndex]) return;
+    const section = current.sections[sectionIndex];
+
+    if (field === 'section-id') section.id = target.value;
+    if (field === 'section-title') section.title = target.value;
+    if (field === 'section-summary') section.summary = target.value;
+    if (field === 'section-paragraphs') section.paragraphs = splitTextareaLines(target.value);
+
+    if (subIndex !== null && !Number.isNaN(subIndex) && safeArray(section.subsections)[subIndex]) {
+      const subsection = section.subsections[subIndex];
+      if (field === 'subsection-title') subsection.title = target.value;
+      if (field === 'subsection-text') subsection.text = splitTextareaLines(target.value);
+    }
+  };
+
+  editor.addEventListener('input', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+    syncField(target);
+  });
+
+  editor.addEventListener('click', (event) => {
+    const btn = event.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const sectionIndex = Number(btn.dataset.sectionIndex);
+    const subIndex = btn.dataset.subIndex !== undefined ? Number(btn.dataset.subIndex) : null;
+
+    if (action === 'add-section') {
+      current.sections = safeArray(current.sections);
+      current.sections.push(createEmptySection(current.sections.length));
+      renderSections();
+      return;
+    }
+
+    if (!safeArray(current.sections)[sectionIndex]) return;
+    const section = current.sections[sectionIndex];
+
+    if (action === 'remove-section') {
+      if (!confirm(`Удалить раздел «${section.title || section.id || sectionIndex + 1}»?`)) return;
+      current.sections.splice(sectionIndex, 1);
+      renderSections();
+      return;
+    }
+
+    if (action === 'move-section-up' && sectionIndex > 0) {
+      [current.sections[sectionIndex - 1], current.sections[sectionIndex]] = [current.sections[sectionIndex], current.sections[sectionIndex - 1]];
+      renderSections();
+      return;
+    }
+
+    if (action === 'move-section-down' && sectionIndex < current.sections.length - 1) {
+      [current.sections[sectionIndex + 1], current.sections[sectionIndex]] = [current.sections[sectionIndex], current.sections[sectionIndex + 1]];
+      renderSections();
+      return;
+    }
+
+    if (action === 'add-subsection') {
+      section.subsections = safeArray(section.subsections);
+      section.subsections.push(createEmptySubsection());
+      renderSections();
+      return;
+    }
+
+    if (subIndex !== null && safeArray(section.subsections)[subIndex]) {
+      if (action === 'remove-subsection') {
+        if (!confirm(`Удалить главу «${section.subsections[subIndex].title || subIndex + 1}»?`)) return;
+        section.subsections.splice(subIndex, 1);
+        renderSections();
+        return;
+      }
+
+      if (action === 'move-subsection-up' && subIndex > 0) {
+        [section.subsections[subIndex - 1], section.subsections[subIndex]] = [section.subsections[subIndex], section.subsections[subIndex - 1]];
+        renderSections();
+        return;
+      }
+
+      if (action === 'move-subsection-down' && subIndex < section.subsections.length - 1) {
+        [section.subsections[subIndex + 1], section.subsections[subIndex]] = [section.subsections[subIndex], section.subsections[subIndex + 1]];
+        renderSections();
+        return;
+      }
+    }
+  });
+
+  editor.querySelector('#learning-restore-btn').onclick = () => {
+    learningDraft = cloneLearningContent(content.learning);
+    renderLearningEditor();
+  };
+
+  editor.querySelector('#learning-add-section-btn').onclick = () => {
+    learningDraft.sections = safeArray(learningDraft.sections);
+    learningDraft.sections.push(createEmptySection(learningDraft.sections.length));
+    renderLearningEditor();
+  };
+
+  editor.querySelector('#learning-save-preview-btn').onclick = persistLearningDraft;
+}
+
+async function persistLearningDraft() {
+  try {
+    await ensureLearningDraft();
+    learningDraft = cloneLearningContent(learningDraft);
+    if (!learningDraft || typeof learningDraft !== 'object') {
+      alert('Неверная структура данных');
+      return;
+    }
+
+    await saveLearningContent(learningDraft);
+    alert('Раздел обучения сохранён в базе данных. Обновите сайт, чтобы увидеть изменения.');
+  } catch (err) {
+    alert('Не удалось сохранить: ' + err.message);
+  }
+}
+
+function resetLearningDraft() {
+  if (!confirm('Сбросить раздел обучения к исходному src/content.js?')) return;
+  learningDraft = cloneLearningContent(content.learning);
+  renderLearningEditor();
+  alert('Сброшено. Сохраните изменения, чтобы записать их в базу.');
 }
 
 const warningBanner = document.createElement('div');
@@ -537,10 +887,16 @@ function createEditorComponent(initialData, isNew = false, index = 0, totalQuest
 }
 
 addBtn.addEventListener('click', () => {
+  if (adminMode !== 'exams') return;
   const newEditor = createEditorComponent({ kind: 'text' }, true);
   listContainer.prepend(newEditor);
   window.scrollTo({ top: newEditor.offsetTop - 50, behavior: 'smooth' });
 });
+
+adminTabExams?.addEventListener('click', () => setAdminMode('exams'));
+adminTabLearning?.addEventListener('click', () => setAdminMode('learning'));
+saveLearningBtn?.addEventListener('click', persistLearningDraft);
+resetLearningBtn?.addEventListener('click', resetLearningDraft);
 
 const overlay = document.getElementById('admin-auth-overlay');
 const passwordInput = document.getElementById('admin-password-input');
@@ -549,6 +905,7 @@ const authBtn = document.getElementById('admin-auth-btn');
 function checkAuth() {
   if (sessionStorage.getItem(config.adminSessionKey) === 'true') {
     if (overlay) overlay.remove(); 
+    setAdminMode('exams');
     fetchQuestions(); 
   }
 }
@@ -588,6 +945,10 @@ async function renderAnnouncementEditor() {
   };
 }
 // Вызови renderAnnouncementEditor() после успешной авторизации админа
+
+ensureLearningDraft().catch((error) => {
+  console.error('Не удалось загрузить раздел обучения:', error);
+});
 
 passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') authBtn.click(); });
 checkAuth();
