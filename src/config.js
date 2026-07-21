@@ -1,6 +1,6 @@
 export const config = {
   // Супер-пароль (видит ВСЕ подразделения)
-  adminCode: 'pro-2026',
+  adminCode: 'mm-2026',
   adminSessionKey: 'lsfm-pro-admin-session',
   supabaseUrl: 'https://eijjetlaiourgzkzsqpx.supabase.co',
   supabaseAnonKey:

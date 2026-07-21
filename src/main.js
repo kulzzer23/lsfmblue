@@ -86,8 +86,10 @@ function getReviewStatusClass(status) {
 function getFilteredSubmissions() {
   const query = normalize(dom.adminSearch?.value ?? '');
   const filter = state.adminStatusFilter;
+  const squadFilter = state.adminSquad; // null = суперадмин видит всё
 
   return [...state.submissions]
+    .filter((submission) => !squadFilter || normalize(submission.squad) === normalize(squadFilter))
     .filter((submission) => !filter || filter === 'all' || submission.reviewStatus === filter)
     .filter((submission) => !query || [submission.name, submission.squad, submission.contact, submission.id].some((value) => normalize(value).includes(query)))
     .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
@@ -924,15 +926,37 @@ async function submitExam(event) {
 
 function bindAdminControls() {
   if (dom.adminLogin) {
-    dom.adminLogin.addEventListener('click', () => {
-      if (normalize(dom.adminCodeInput.value) === normalize(config.adminCode)) {
-        sessionStorage.setItem(config.adminSessionKey, 'true');
-        state.isAdmin = true;
-        dom.adminCodeInput.value = '';
-        renderAdminShell();
-        renderSubmissionList();
-        renderAdminDetail();
+    dom.adminLogin.addEventListener('click', async () => {
+      // Проверяем супер-пароль (все подразделения)
+      const inputCode = dom.adminCodeInput.value.trim();
+      let adminSquad = null; // null = суперадмин (видит всё)
+
+      if (normalize(inputCode) === normalize(config.adminCode)) {
+        adminSquad = null;
+      } else {
+        // Проверяем пароли подразделений из Supabase
+        const { data: pwRows } = await supabaseClient
+          .from(config.adminPasswordsTable)
+          .select('squad, password')
+          .eq('password', inputCode)
+          .limit(1);
+        if (pwRows && pwRows.length > 0) {
+          adminSquad = pwRows[0].squad;
+        } else {
+          alert('Неверный ключ доступа');
+          return;
+        }
       }
+
+      sessionStorage.setItem(config.adminSessionKey, 'true');
+      if (adminSquad) sessionStorage.setItem('admin_squad', adminSquad);
+      else sessionStorage.removeItem('admin_squad');
+      state.isAdmin = true;
+      state.adminSquad = adminSquad;
+      dom.adminCodeInput.value = '';
+      renderAdminShell();
+      renderSubmissionList();
+      renderAdminDetail();
     });
   }
 
