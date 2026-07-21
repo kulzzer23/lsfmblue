@@ -58,7 +58,7 @@ let dom = {};
 
 const state = {
   activeSection: 'learn',
-  isAdmin: sessionStorage.getItem(config.adminSessionKey) === 'true',
+  isAdmin: false,
   submissions: [],
   selectedSubmissionId: null,
   applications: [], // НОВОЕ: массив заявлений
@@ -545,12 +545,12 @@ async function renderAdminAppDetail() {
     <div class="admin-doc-paper">
       <div class="admin-doc-watermark">LSFM</div>
       <div class="admin-doc-header">
-        Директору радиоцентра г. Los Santos Leonardo Jemison<br>
+        Директору радиоцентра<br>
         От гражданина: <span class="admin-doc-field" style="color: #0f172a; border-color: #0f172a;">${n}</span>
       </div>
       <div class="admin-doc-title">ЗАЯВЛЕНИЕ</div>
       <div class="admin-doc-body">
-        Прошу принять меня на работу в радиоцентр г. Los Santos на должность радиотехника с испытательным сроком один месяц (( 1 день )). 
+        Прошу принять меня на работу в ваш радиоцентр  на должность радиотехника с испытательным сроком один месяц (( 1 день )). 
         К заявлению прикладываю копии паспорта и лицензий (( /pass, /lic + /c 60 )): 
         <a href="${finalAlbumUrl}" target="_blank" class="admin-doc-field">ОТКРЫТЬ ДОКУМЕНТЫ ↗</a>.<br><br>
         Так же подтверждаю, что успешно прошёл квалификационный онлайн-тест ПРО: <span class="admin-doc-field" style="color: ${examColor}; border-color: ${examColor};">${examText}</span>.
@@ -948,9 +948,6 @@ function bindAdminControls() {
         }
       }
 
-      sessionStorage.setItem(config.adminSessionKey, 'true');
-      if (adminSquad) sessionStorage.setItem('admin_squad', adminSquad);
-      else sessionStorage.removeItem('admin_squad');
       state.isAdmin = true;
       state.adminSquad = adminSquad;
       dom.adminCodeInput.value = '';
@@ -962,8 +959,8 @@ function bindAdminControls() {
 
   if (dom.adminLogout) {
     dom.adminLogout.addEventListener('click', () => {
-      sessionStorage.removeItem(config.adminSessionKey);
       state.isAdmin = false;
+      state.adminSquad = null;
       renderAdminShell();
     });
   }

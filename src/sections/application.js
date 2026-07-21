@@ -19,21 +19,29 @@ export function renderApplicationSection(containerElement, supabase) {
 
       /* === 3D КОРПУС === */
       .laptop-perspective {
-        perspective: 1500px; width: 1100px; min-width: 1100px; margin: 10px auto;
+        perspective: 1800px; width: 1100px; min-width: 1100px; margin: 10px auto;
         position: relative; z-index: 10; flex-shrink: 0;
       }
       
       .laptop-lid {
         width: 100%; height: 75vh; min-height: 550px; background: #020617;
-        border: 10px solid #0f172a; border-bottom: 20px solid #0f172a; border-radius: 12px 12px 0 0;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.5), inset 0 0 10px #000; position: relative;
-        transform-origin: bottom center; transform: rotateX(-90deg);
+        border: 12px solid #111827; border-bottom: 22px solid #111827; border-radius: 14px 14px 0 0;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.6), inset 0 0 12px #000, 0 0 60px rgba(59, 130, 246, 0.05);
+        position: relative; transform-origin: bottom center; transform: rotateX(-90deg);
         transition: transform 1.5s cubic-bezier(0.25, 1, 0.2, 1); transform-style: preserve-3d;
         display: flex; flex-direction: column; overflow: hidden;
       }
-      .laptop-lid.open { transform: rotateX(0deg); }
-      .laptop-base { width: 104%; height: 30px; background: linear-gradient(to bottom, #1e293b, #0f172a); margin-left: -2%; border-radius: 0 0 15px 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); position: relative; z-index: 11; }
-      .laptop-camera { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: #000; border-radius: 50%; }
+      .laptop-lid.open { transform: rotateX(0deg); box-shadow: 0 -5px 20px rgba(0,0,0,0.6), inset 0 0 12px #000, 0 0 80px rgba(59, 130, 246, 0.12); }
+      .laptop-base { 
+        width: 106%; height: 34px; margin-left: -3%; border-radius: 0 0 18px 22px; position: relative; z-index: 11;
+        background: linear-gradient(to bottom, #1e293b 0%, #111827 40%, #0f172a 100%);
+        box-shadow: 0 22px 50px rgba(0,0,0,0.75), 0 5px 15px rgba(0,0,0,0.4);
+      }
+      .laptop-base::before {
+        content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 120px; height: 4px; background: linear-gradient(90deg, transparent, #334155, transparent); border-radius: 0 0 4px 4px;
+      }
+      .laptop-camera { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 7px; height: 7px; background: radial-gradient(circle, #1a1a2e 40%, #000 100%); border-radius: 50%; box-shadow: 0 0 3px rgba(59,130,246,0.4); }
 
       .btn-open-laptop { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.95); border: 2px solid #3b82f6; color: #3b82f6; padding: 15px 35px; font-family: 'PT Sans', sans-serif; font-size: 1.1rem; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 6px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: 0.3s; z-index: 100; }
       .btn-open-laptop:hover { background: #3b82f6; color: #fff; box-shadow: 0 0 35px rgba(59, 130, 246, 0.6); }
@@ -119,6 +127,14 @@ export function renderApplicationSection(containerElement, supabase) {
       .stamp-final { position: absolute; bottom: 50px; right: 30px; border: 4px solid #dc2626; color: #dc2626; font-size: 1.5rem; font-weight: 900; padding: 10px 15px; transform: rotate(-12deg); opacity: 0; border-radius: 6px; }
       .stamp-final.visible { opacity: 0.9; }
 
+      .doc-processed { 
+        margin-top: 15px; padding: 12px 16px; border: 2px solid #10b981; border-radius: 6px;
+        background: rgba(16, 185, 129, 0.05); font-family: 'Times New Roman', serif; font-size: 1.1rem;
+      }
+      .doc-processed-label { color: #374151; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; margin-bottom: 4px; }
+      .doc-processed-value { color: #10b981; font-weight: bold; font-size: 1.2rem; }
+      .doc-processed-value.empty { color: #9ca3af; font-style: italic; font-weight: normal; font-size: 1rem; }
+
       @media (max-width: 1100px) {
         .mobile-rotate-hint { display: block; }
         .laptop-scroll-wrapper { justify-content: flex-start; }
@@ -203,14 +219,18 @@ export function renderApplicationSection(containerElement, supabase) {
                     <div class="document-paper">
                       <div class="doc-watermark">LSFM</div>
                       <div class="doc-header">
-                        Директору радиоцентра г. Los Santos Leonardo Jemison<br>
+                        Министру связи и коммуникаций Vincent_Stefano<br>
                         От гражданина: <span class="doc-field" id="paper-name" style="color: #0f172a; border-color: #0f172a;">...</span>
                       </div>
                       <div class="doc-title">ЗАЯВЛЕНИЕ</div>
                       <div class="doc-body">
-                        Прошу принять меня на работу в радиоцентр г. Los Santos на должность радиотехника с испытательным сроком один месяц (( 1 день )). 
+                        Прошу принять меня на работу в Mass Media в организацию — <span class="doc-field" id="paper-org" style="color: #ef4444; border-color: #ef4444;">не выбрано</span> на должность радиотехника с испытательным сроком один месяц (( 1 день )). 
                         К заявлению прикладываю копии паспорта и лицензий (( /pass, /lic + /c 60 )): <span class="doc-field" id="paper-link" style="color: #ef4444; border-color: #ef4444;">НЕТ</span>.<br><br>
                         Так же подтверждаю, что успешно прошёл квалификационный онлайн-тест ПРО: <span class="doc-field" id="paper-test" style="color: #ef4444; border-color: #ef4444;">НЕТ</span>.
+                      </div>
+                      <div class="doc-processed" id="paper-processed-block">
+                        <div class="doc-processed-label">Обработан (радиоцентр):</div>
+                        <div class="doc-processed-value empty" id="paper-squad">не выбран</div>
                       </div>
                       <div class="doc-footer">
                         <div>Дата: <strong id="paper-date"></strong></div>
@@ -306,6 +326,41 @@ export function renderApplicationSection(containerElement, supabase) {
 
   paperDate.textContent = new Date().toLocaleDateString('ru-RU');
 
+  // Привязка дропдауна подразделения к бланку
+  const squadSelect = document.getElementById('app-squad');
+  const paperSquad = document.getElementById('paper-squad');
+
+  const squadFullNames = {
+    'TVC': 'TVC — Телецентр г. Los Santos',
+    'LSFM': 'LSFM — Радиоцентр г. Los Santos',
+    'SFFM': 'SFFM — Радиоцентр г. San Fierro',
+    'LVFM': 'LVFM — Радиоцентр г. Las Venturas'
+  };
+
+  const paperOrg = document.getElementById('paper-org');
+
+  squadSelect.addEventListener('change', () => {
+    const val = squadSelect.value;
+    if (val && squadFullNames[val]) {
+      paperSquad.textContent = squadFullNames[val];
+      paperSquad.classList.remove('empty');
+      // Обновляем название организации в тексте заявления
+      if (paperOrg) {
+        paperOrg.textContent = squadFullNames[val];
+        paperOrg.style.color = '#10b981';
+        paperOrg.style.borderColor = '#10b981';
+      }
+    } else {
+      paperSquad.textContent = 'не выбран';
+      paperSquad.classList.add('empty');
+      if (paperOrg) {
+        paperOrg.textContent = 'не выбрано';
+        paperOrg.style.color = '#ef4444';
+        paperOrg.style.borderColor = '#ef4444';
+      }
+    }
+  });
+
   let selectedExamId = null;
   let debounceTimer;
 
@@ -397,7 +452,6 @@ export function renderApplicationSection(containerElement, supabase) {
     submitBtn.innerHTML = '<span class="blink">ОТПРАВКА СИСТЕМНОГО ПАКЕТА...</span>';
     submitBtn.disabled = true;
 
-    const squadSelect = document.getElementById('app-squad');
     const { error } = await supabase.from('applications').insert([{
       applicant_name: nameInput.value.trim(),
       squad: squadSelect ? squadSelect.value : '',
